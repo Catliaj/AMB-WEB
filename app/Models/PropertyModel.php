@@ -4,18 +4,17 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class UsersModel extends Model
+class PropertyModel extends Model
 {
-    protected $table            = 'users';
-    protected $primaryKey       = 'UserID';
+    protected $table            = 'property';
+    protected $primaryKey       = 'propertyId';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'FirstName', 'MiddleName', 'LastName', 'Birthdate', 'phoneNumber', 'Email', 'Password', 'Role', 'status', 'created_at', 'updated_at'
+        'userID', 'title', 'description', 'propertyType', 'status', 'price', 'location', 'size', 'bedrooms', 'bathrooms', 'parking_spaces','assignAgent'
     ];
-    
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -47,12 +46,13 @@ class UsersModel extends Model
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
 
-    public function getFullname($userID)
-    {
-        return $this->select('FirstName', 'MiddleName', 'LastName')
-                     ->where('UserID', $userID);
-    }
 
-    
+    public function agentAssign($propertyID)
+    {
+        return $this->select('users.FirstName, users.MiddleName, users.LastName')
+                    ->join('users', 'property.assignAgent = users.userID')
+                    ->where('property.propertyID', $propertyID)
+                    ->first(); 
+    }
 
 }

@@ -118,3 +118,23 @@ button {
     height: 400px;
     object-fit: cover;
 }
+
+.input-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.input-wrapper input {
+    padding-right: 40px; /* space for the button */
+    /*limit the number input*/
+    width: 400px;
+
+}
+
+.input-wrapper button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: none;
+    cursor: pointer;
+}
