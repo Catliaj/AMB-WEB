@@ -316,6 +316,8 @@
                             <input type="password" name="inputPassword" class="form-control" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Login</button>
+                        
+
                         </form>
 
                         <div class="text-center mt-3">
@@ -327,74 +329,171 @@
         </div>
 
 
-           <!--Sign Up-->
-          <div class="modal fade" id="signupModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
+   <!-- ✅ Signup Modal -->
+<div class="modal fade" id="signupModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
 
-                <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Sign Up</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-                    <div class="modal-header">
-                        <h5 class="modal-title">Login</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
+      <div class="modal-body">
+        <form id="signupForm">
+          <div class="mb-3">
+            <label class="form-label">First Name</label>
+            <input type="text" name="FirstName" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Middle Name</label>
+            <input type="text" name="MiddleName" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Last Name</label>
+            <input type="text" name="LastName" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Birthdate</label>
+            <input type="date" name="Birthdate" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" name="phoneNumber" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="Email" id="signupEmail" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" name="Password" class="form-control" required>
+          </div>
 
-                    <div class="modal-body">
-                        <form action="<?= base_url('users/signup') ?>" method="post">
-                        <div class="mb-3">
-                            <label for="firstname" class="form-label">Firstname:</label>
-                            <input type="text" name="inputFirstName" class="form-control" required>
-                        </div>
+          <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
-                        <div class="mb-3">
-                            <label for="middlename" class="form-label">Middlename:</label>
-                            <input type="text" name="inputMiddleName" class="form-control" required>
-                        </div>
+<!-- ✅ OTP Modal -->
+<div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
 
-                        <div class="mb-3">
-                            <label for="lastname" class="form-label">Lastname:</label>
-                            <input type="text" name="inputLastName" class="form-control" required>
-                        </div>
+      <div class="modal-header">
+        <h5 class="modal-title">Email Verification</h5>
+      </div>
 
-                        <div class="mb-3">
-                            <label for="lastname" class="form-label">Birthdate:</label>
-                            <input type="date" name="inputBirthdate" class="form-control" required>
-                        </div>
+      <div class="modal-body">
+        <form id="otpForm">
+          <input type="hidden" name="Email" id="otpEmail">
+          <div class="mb-3">
+            <label for="otp_code" class="form-label">Enter OTP</label>
+            <input type="number" name="otp_code" class="form-control" placeholder="6-digit code" required>
+          </div>
+          <button type="submit" class="btn btn-success w-100">Verify OTP</button>
+        </form>
+      </div>
 
-                        <div class="mb-3">
-                            <label for="phoneNumber" class="form-label">Phone Number:</label>
-                            <input type="tel" name="inputPhoneNumber" class="form-control" required>
-                        </div>
 
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Email</label>
-                            <input type="text" name="inputEmail" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" name="inputPassword" class="form-control" required>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Sign up</button>
-                        </form>
-
-                        <div class="text-center mt-3">
-                            <a href="/Users/CreateUsers">Create an account</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      
+    </div>
+  </div>
+</div>
 
 
 
 
-<!-- Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- ✅ jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(document).ready(function () {
+
+    // Step 1: Sign Up → Send OTP
+    $('#signupForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const email = $('#signupEmail').val().trim();
+
+        if (email === '') {
+            alert('Please enter your email.');
+            return;
+        }
+
+        $.ajax({
+            url: '<?= base_url('users/request-otp') ?>',
+            type: 'POST',
+            data: { Email: email },
+            dataType: 'json',
+            success: function (response) {
+                if (response.status === 'success') {
+                    alert(response.message);
+
+                    // Pass email to OTP modal
+                    $('#otpEmail').val(email);
+
+                    // Hide signup modal and show OTP modal
+                    $('#signupModal').modal('hide');
+                    $('#otpModal').modal('show');
+
+                    // Save all signup form data (except OTP) in sessionStorage
+                    sessionStorage.setItem('signupData', JSON.stringify($('#signupForm').serializeArray()));
+
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert('Something went wrong while sending OTP.');
+            }
+        });
+    });
+
+
+    // Step 2: Verify OTP → Complete Registration
+    $('#otpForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const otpData = $(this).serializeArray(); // contains otp_code + email
+        const signupData = JSON.parse(sessionStorage.getItem('signupData') || '[]');
+        const fullData = [...signupData, ...otpData];
+
+        $.ajax({
+            url: '<?= base_url('/users/signup') ?>', // ✅ Correct route (matches your $routes)
+            type: 'POST',
+            data: fullData,
+            dataType: 'json',
+            success: function (response) {
+                if (response.status === 'success') {
+                    alert(response.message);
+                    $('#otpModal').modal('hide');
+                    sessionStorage.removeItem('signupData');
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function () {
+                alert('Error verifying OTP. Please try again.');
+            }
+        });
+    });
+
+});
+</script>
+
 
 
 
 
     <script src="<?= base_url('bootstrap5/js/bootstrap.min.js')?>"> </script>
+
+
 </body>
 </html>

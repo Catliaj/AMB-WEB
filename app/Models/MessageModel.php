@@ -4,18 +4,17 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class UsersModel extends Model
+class MessageModel extends Model
 {
-    protected $table            = 'users';
-    protected $primaryKey       = 'UserID';
+    protected $table            = 'messages';
+    protected $primaryKey       = 'MessageID';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'FirstName', 'MiddleName', 'LastName', 'Birthdate', 'phoneNumber', 'Email', 'Password', 'Role', 'status', 'created_at', 'updated_at'
+        'SessionID', 'SenderID', 'SenderRole', 'Content', 'Timestamp'
     ];
-    
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -47,12 +46,29 @@ class UsersModel extends Model
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
 
-    public function getFullname($userID)
+
+    // Get all messages in a session
+    public function getMessagesBySession($sessionId)
     {
-        return $this->select('FirstName', 'MiddleName', 'LastName')
-                     ->where('UserID', $userID);
+        $builder = $this->builder();
+        $builder->select('messages.*, users.FirstName as senderFirstName, users.LastName as senderLastName');
+        $builder->join('users', 'users.userID = messages.SenderID');
+        $builder->where('messages.SessionID', $sessionId);
+        $builder->whereIn('users.Role', ['Agent', 'Client']);
+        $builder->orderBy('messages.Timestamp', 'ASC');
+        $messages = $builder->get()->getResultArray();
+
+        // Add full sender name
+        foreach ($messages as &$message) {
+            $message['senderName'] = trim($message['senderFirstName'] . ' ' . $message['senderLastName']);
+        }
+
+        return $messages;
     }
 
-    
-
+    // Add new message
+    public function addMessage($data)
+    {
+        return $this->insert($data);
+    }
 }
