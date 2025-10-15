@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Optional: Your custom CSS (place after Bootstrap so it overrides styles) -->
+<link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      background: linear-gradient(180deg, #e4f3ff 0%, #e6ffe9 100%);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      color: #1b1b1b;
+    }
+
+    /* --- Top Navbar --- */
+    .navbar {
+      background-color: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      padding: 0.75rem 1.5rem;
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.3rem;
+    }
+
+    .nav-tabs {
+      background: rgba(255,255,255,0.7);
+      border-radius: 10px;
+      padding: 6px;
+      display: inline-flex;
+      gap: 6px;
+    }
+
+    .nav-tabs .nav-link {
+      border: none;
+      border-radius: 8px;
+      color: #333;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .nav-tabs .nav-link.active {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .search-bar {
+      background-color: #fff;
+      border-radius: 50px;
+      border: none;
+      padding: 6px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* --- Cards --- */
+    .card {
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      background-color: #fff;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #198754;
+    }
+
+    .stat-sub {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    /* --- Chart containers --- */
+    .chart-container {
+      height: 260px;
+    }
+
+    /* --- Client list --- */
+    .client-list img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    .client-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .client-item span {
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    /* --- Responsive tweaks --- */
+    @media (max-width: 768px) {
+      .nav-tabs { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 🔹 NAVBAR -->
+  <nav class="navbar navbar-light">
+    <div class="container-fluid">
+      <a class="navbar-brand">Dashboard</a>
+      <ul class="nav nav-tabs" id="dashboardTabs">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-dashboard">Dashboard</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-clients">Manage Clients</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-bookings">Manage Bookings</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-properties">View Assigned Properties</button></li>
+      </ul>
+      <div class="d-flex align-items-center gap-3">
+        <input type="text" class="search-bar" placeholder="Search">
+        <button class="btn btn-primary btn-sm">View Profile</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 🔹 MAIN CONTENT -->
+  <div class="container-fluid mt-4">
+    <div class="tab-content">
+      <!-- Dashboard -->
+      <div class="tab-pane fade show active" id="tab-dashboard">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card p-4">
+              <h6 class="text-muted mb-2">Total Sales</h6>
+              <div class="stat-value">$45,678.90</div>
+              <div class="stat-sub">+20% month over month</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-4">
+              <h6 class="text-muted mb-2">Total Clients</h6>
+              <div class="stat-value text-primary">405</div>
+              <div class="stat-sub">+33% month over month</div>
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <div class="card p-4">
+              <div class="d-flex justify-content-between mb-2">
+                <h6 class="text-muted">Property Views</h6>
+                <span class="badge bg-success">2024</span>
+              </div>
+              <canvas id="propertyChart" class="chart-container"></canvas>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card p-4">
+              <h6 class="text-muted mb-3">Clients</h6>
+              <div class="client-list">
+                <div class="client-item"><img src="https://via.placeholder.com/36"><div><strong>Helena</strong><br><span>email@domain.net</span></div></div>
+                <div class="client-item"><img src="https://via.placeholder.com/36"><div><strong>Daniel</strong><br><span>email@domain.net</span></div></div>
+                <div class="client-item"><img src="https://via.placeholder.com/36"><div><strong>Daniel Jay Park</strong><br><span>email@domain.net</span></div></div>
+                <div class="client-item"><img src="https://via.placeholder.com/36"><div><strong>Mark Rojas</strong><br><span>email@domain.net</span></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <div class="card p-4">
+              <div class="d-flex justify-content-between mb-2">
+                <h6 class="text-muted">Total Sales</h6>
+                <span class="badge bg-info">2025</span>
+              </div>
+              <canvas id="salesChart" class="chart-container"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manage Clients -->
+      <div class="tab-pane fade" id="tab-clients">
+        <div class="card p-4">
+          <h4>Manage Clients</h4>
+          <p class="text-muted">Add, edit, or remove clients.</p>
+          <button class="btn btn-success">Add Client</button>
+        </div>
+      </div>
+
+      <!-- Manage Bookings -->
+      <div class="tab-pane fade" id="tab-bookings">
+        <div class="card p-4">
+          <h4>Manage Bookings</h4>
+          <p class="text-muted">View and update all bookings.</p>
+          <button class="btn btn-warning">View Bookings</button>
+        </div>
+      </div>
+
+      <!-- Properties -->
+      <div class="tab-pane fade" id="tab-properties">
+        <div class="card p-4">
+          <h4>View Assigned Properties</h4>
+          <p class="text-muted">List of all assigned properties.</p>
+          <button class="btn btn-info">View Properties</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Local Bootstrap JS -->
+  <script src="bootstrap5/js/bootstrap.bundle.min.js"></script>
+  <!-- ✅ Chart.js (can be local if downloaded) -->
+  <script src="chart.min.js"></script>
+
+  <script>
+    // Property Views Chart
+    new Chart(document.getElementById('propertyChart'), {
+      type: 'line',
+      data: {
+        labels: ['23', '24', '25', '26', '27', '28', '29', '30'],
+        datasets: [{
+          label: 'Views',
+          data: [2000, 4000, 8000, 12000, 15000, 17000, 20000, 25000],
+          borderColor: '#007bff',
+          backgroundColor: 'rgba(0,123,255,0.15)',
+          tension: 0.3,
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: '#007bff'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    // Total Sales Chart
+    new Chart(document.getElementById('salesChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+        datasets: [{
+          label: 'Sales',
+          data: [40000, 42000, 48000, 60000, 72000, 80000, 70000, 74000, 65000, 60000, 50000, 30000],
+          backgroundColor: '#0d6efd'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
