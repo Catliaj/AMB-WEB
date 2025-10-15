@@ -5,368 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AMB Property - Find Your Dream Home</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-        }
-
-        header {
-             background: linear-gradient(120deg, #d3f0ff 0%, #c8f5d2 100%);
-            padding: 15px 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            margin: 15px 15px 0px;
-            border-radius: 20px 20px 0px 0px; 
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-icon {
-            background: white;
-            padding: 8px 12px;
-            border-radius: 5px;
-            font-weight: bold;
-            color: #2d9fa8;
-            font-size: 18px;
-        }
-
-        .logo-text {
-            color: #b19cd9;
-            font-size: 20px;
-            font-weight: 300;
-            letter-spacing: 3px;
-        }
-
-        nav {
-            display: flex;
-            gap: 40px;
-            align-items: center;
-        }
-
-        nav a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .header-icons {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .header-icons i {
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        .hero {
-            background: linear-gradient(120deg, #d3f0ff 0%, #c8f5d2 100%);
-            height: 560px; 
-            padding: 40px 50px; 
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 50px;
-            align-items: start;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); 
-            margin: 0 15px 15px;
-            border-radius: 0 0 20px 20px; 
-        }
-
-        .hero-content {
-            align-self: start;
-            padding-top: 30px;
-        }
-
-        .hero-content h1 {
-            font-size: 48px;
-            font-weight: 800;
-            margin-bottom: 20px;
-            line-height: 1.2;
-        }
-
-        .hero-content p {
-            color: #666;
-            margin-bottom: 30px;
-            line-height: 1.8;
-        }
-
-        .search-box {
-            display: flex;
-            background: white;
-            border-radius: 50px;
-            padding: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            max-width: 400px;
-        }
-
-        .search-box input {
-            border: none;
-            padding: 10px 20px;
-            flex: 1;
-            outline: none;
-        }
-
-        .search-box button {
-            background: #469541;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 50px;
-            cursor: pointer;
-        }
-
-        .search-box button i {
-            color: white;
-            font-size: 18px;
-        }
-
-        .hero-image img {
-            width: 150%;
-            border-radius: 10px;
-            transform: scaleX(-1);
-            position: relative;
-            left: -190px;  
-            top: -70px; 
-
-        }
-
-        .second-section {
-            padding: 70px 50px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
-            align-items: center;
-        }
-
-        .modern-home-image img {
-            width: 100%;
-            border-radius: 10px;
-        }
-
-        .content-right h1 {
-            font-size: 42px;
-            font-weight: 800;
-            margin-bottom: 30px;
-            line-height: 1.2;
-        }
-
-        .subtitle {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 30px;
-            line-height: 1.8;
-        }
-
-        .help-box {
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }
-
-        .help-box h2 {
-            font-size: 24px;
-            margin-bottom: 15px;
-        }
-
-        .help-box p {
-            line-height: 1.8;
-            margin-bottom: 30px;
-        }
-
-        .stats {
-            display: flex;
-            gap: 40px;
-        }
-
-        .stat-item h3 {
-            font-size: 32px;
-            font-weight: 800;
-            margin-bottom: 5px;
-        }
-
-        .stat-item p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .why-choose {
-            padding: 20px 50px;
-            text-align: center;
-        }
-
-        .why-choose h2 {
-            font-size: 36px;
-            font-weight: 800;
-            margin-bottom: 10px;
-        }
-
-        
-
-        .features {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-top: 40px;
-        }
-
-        .feature-card {
-            background: #C8ECCA;
-            padding: 30px;
-            border-radius: 10px;
-            text-align: left;
-        }
-
-        .feature-icon {
-            background: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-
-        .feature-card h3 {
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        .feature-card p {
-            color: #666;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .popular-residences {
-            padding: 130px 50px;
-            text-align: center;
-        }
-
-        .popular-residences h2 {
-            font-size: 36px;
-            font-weight: 800;
-            margin-bottom: 50px;
-        }
-
-        .residences-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-        }
-
-        .residence-card {
-            background: #C8ECCA;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            text-align: left;
-        }
-
-        .residence-image {
-            position: relative;
-            height: 250px;
-        }
-
-        .residence-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .heart-icon {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: white;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .residence-info {
-            padding: 20px;
-        }
-
-        .location {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .residence-details {
-            display: flex;
-            gap: 20px;
-            margin: 15px 0;
-            font-size: 13px;
-            color: #666;
-        }
-
-        .detail-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .residence-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .price-tag {
-            background: #469541;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        .price {
-            font-size: 18px;
-            font-weight: 700;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <!-- Header -->
-    <header>
-        <div class="logo">
-            <div class="logo-icon">AMB</div>
-            <div class="logo-text">PROPERTY</div>
-        </div>
-        <nav>
-            <a href="#">Home</a>
-            <a href="#">Property Finder</a>
-            <a href="#">My Bookings</a>
-        </nav>
-        <div class="header-icons">
-            <i class="fas fa-search"></i>
-            <i class="fas fa-user"></i>
-        </div>
-    </header>
+    <header id="header">
+    <div class="logo">
+        <img src="images/amb_logo.png" alt="AMB Logo">
+        <div class="logo-text">PROPERTY</div>
+    </div>
+    <nav id="nav">
+        <a href="#">Home</a>
+        <a href="#">Property Finder</a>
+        <a href="#">My Bookings</a>
+    </nav>
+    <div class="header-icons">
+        <i class="fas fa-search"></i>
+        <i class="fas fa-user"></i>
+        <i class="fas fa-bars hamburger" id="hamburger"></i>
+    </div>
+</header>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -383,6 +42,25 @@
             <img src="images/house.png" alt="Dream Home">
         </div>
     </section>
+
+    <!-- Floating Chat Support -->
+    <div class="chat-button" id="chatButton">
+        <i class="fas fa-comments"></i>
+    </div>
+
+    <div class="chat-widget" id="chatWidget">
+        <div class="chat-header">
+            <h4>Support Chat</h4>
+            <i class="fas fa-times" id="closeChat"></i>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <div class="chat-message bot">👋 Hi there! How can we help you today?</div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chatInput" placeholder="Type your message..." />
+            <button id="sendChat"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
 
     <!-- Second Section -->
     <section class="second-section">
@@ -418,8 +96,8 @@
     <!-- Why Choose Us -->
     <section class="why-choose">
         <h2>Why Choose Us</h2>
-        <p margin-bottom: 0px>Elevating Your Home Buying Experience with Expertise, Integrity,</p>
-        <p margin-bottom: 30px>and Unmatched Personalized Service</p>
+        <p style="margin-bottom: 0px">Elevating Your Home Buying Experience with Expertise, Integrity,</p>
+        <p style="margin-bottom: 30px">and Unmatched Personalized Service</p>
         
         <div class="features">
             <div class="feature-card">
@@ -552,5 +230,138 @@
             </div>
         </div>
     </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sticky Header Effect
+        const header = document.getElementById('header');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Chat Widget
+        const chatButton = document.getElementById('chatButton');
+        const chatWidget = document.getElementById('chatWidget');
+        const closeChat = document.getElementById('closeChat');
+        const sendChat = document.getElementById('sendChat');
+        const chatBody = document.getElementById('chatBody');
+        const chatInput = document.getElementById('chatInput');
+
+        chatButton.onclick = () => chatWidget.classList.add('open');
+        closeChat.onclick = () => chatWidget.classList.remove('open');
+
+        sendChat.onclick = () => {
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+            const userMsg = document.createElement('div');
+            userMsg.classList.add('chat-message', 'user');
+            userMsg.textContent = msg;
+            chatBody.appendChild(userMsg);
+            chatInput.value = '';
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            // Simulated bot reply
+            setTimeout(() => {
+                const botMsg = document.createElement('div');
+                botMsg.classList.add('chat-message', 'bot');
+                botMsg.textContent = "Thanks for reaching out! We'll get back to you soon 😊";
+                chatBody.appendChild(botMsg);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }, 800);
+        };
+
+        // Send message on Enter key
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChat.click();
+            }
+        });
+
+        // Heart icon toggle
+        document.querySelectorAll('.heart-icon').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const heartIcon = this.querySelector('i');
+                if (heartIcon.classList.contains('far')) {
+                    heartIcon.classList.remove('far');
+                    heartIcon.classList.add('fas');
+                    heartIcon.style.color = '#ff6b6b';
+                } else {
+                    heartIcon.classList.remove('fas');
+                    heartIcon.classList.add('far');
+                    heartIcon.style.color = '';
+                }
+            });
+        });
+
+        // Hamburger Menu Toggle - Replace the hamburger script in your HTML
+        const hamburger = document.getElementById('hamburger');
+        const nav = document.getElementById('nav');
+        const body = document.body;
+
+        // Create close button element
+        const closeBtn = document.createElement('i');
+        closeBtn.classList.add('fas', 'fa-times', 'nav-close');
+        closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; font-size: 24px; cursor: pointer; color: #333; transition: all 0.3s ease; display: none;';
+        nav.insertBefore(closeBtn, nav.firstChild);
+
+        // Create account settings section at bottom
+        const accountSection = document.createElement('div');
+        accountSection.classList.add('nav-account');
+        accountSection.style.cssText = 'position: absolute; left: 20px; bottom: 40px; padding-top: 0; border-top: none; display: flex; flex-direction: column; gap: 0; padding-left: 0; width: calc(100% - 20px);';
+        accountSection.innerHTML = `
+            <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 12px 0; border: none; text-decoration: none; color: #333; padding-left: 10px; white-space: nowrap;">
+                <i class="fas fa-user-circle" style="font-size: 20px; width: 25px;"></i>
+                <span>Account Settings</span>
+            </a>
+            <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 12px 0; border: none; text-decoration: none; color: #333; padding-left: 10px; white-space: nowrap;">
+                <i class="fas fa-sign-out-alt" style="font-size: 20px; width: 25px;"></i>
+                <span>Logout</span>
+            </a>
+        `;
+        nav.appendChild(accountSection);
+
+        // Toggle menu
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            nav.classList.add('active');
+            closeBtn.style.display = 'block';
+            accountSection.style.display = 'block';
+        });
+
+        // Close menu when clicking close button
+        closeBtn.addEventListener('click', () => {
+            nav.classList.remove('active');
+        });
+
+        // Close menu when clicking nav links
+        nav.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                nav.classList.remove('active');
+            });
+        });
+
+        // Hover effect for close button
+        closeBtn.addEventListener('mouseenter', () => {
+            closeBtn.style.color = '#469541';
+            closeBtn.style.transform = 'rotate(90deg)';
+        });
+        closeBtn.addEventListener('mouseleave', () => {
+            closeBtn.style.color = '#333';
+            closeBtn.style.transform = 'rotate(0deg)';
+        });
+
+        // Hide close button and account section on desktop resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                nav.classList.remove('active');
+                closeBtn.style.display = 'none';
+                accountSection.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
