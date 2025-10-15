@@ -1,0 +1,260 @@
+/* ========== BASE LAYOUT ========== */
+body {
+  background: linear-gradient(180deg, #e4f3ff 0%, #e6ffe9 100%);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  color: #1b1b1b;
+  margin: 0;
+  padding: 0;
+}
+
+/* ========== NAVBAR ========== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 0.75rem 1.5rem;
+}
+
+/* space below fixed navbar */
+.main-page-content {
+  margin-top: 80px; /* adjust if navbar taller */
+  padding: 1.25rem;
+}
+
+/* brand & title */
+.navbar-brand {
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+.page-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #555;
+  margin: 0;
+}
+
+/* ========== SEARCH BAR ========== */
+.search-bar {
+  background-color: #fff;
+  border-radius: 50px;
+  border: 1px solid #ddd;
+  padding: 6px 16px;
+  font-size: 0.9rem;
+  width: 180px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: 0.2s;
+}
+
+.search-bar:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0,123,255,0.2);
+}
+
+/* ========== NAV TABS ========== */
+.nav-tabs {
+  background-color: rgba(248, 249, 250, 0.8);
+  border-radius: 10px;
+  padding: 6px 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  border-radius: 8px;
+  color: #333;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.25s ease;
+  min-width: 120px; /* ✅ keeps equal width */
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-tabs .nav-link:hover {
+  transform: scale(1.05);
+  background-color: rgba(13,110,253,0.08);
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #007bff;
+  color: #fff !important;
+  transform: scale(1.08);
+  box-shadow: 0 0 10px rgba(0,123,255,0.2);
+}
+
+/* ========== CARD STYLING ========== */
+.card {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  background-color: #fff;
+}
+
+/* ========== CLIENT LIST ========== */
+.client-list {
+  max-height: 230px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.client-list img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+  border: 1px solid #ddd;
+}
+
+.client-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.client-item div {
+  line-height: 1.2;
+}
+
+.client-item strong {
+  font-size: 0.85rem;
+}
+
+.client-item span {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+/* ========== FRAME CONTENT AREA ========== */
+.frame-content {
+  background-color: #fff;
+  min-height: calc(100vh - 120px);
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+  margin: 0 auto;
+  max-width: 1200px;
+  overflow-y: auto;
+}
+
+/* ========== TAB CONTENT ANIMATION ========== */
+.tab-pane {
+  opacity: 0;
+  transform: translateY(15px);
+  transition: all 0.35s ease-in-out;
+}
+
+.tab-pane.active.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========== RESPONSIVE TWEAKS ========== */
+@media (max-width: 900px) {
+  .nav-tabs .nav-link {
+    min-width: 90px;
+    font-size: 0.9rem;
+  }
+
+  .navbar .search-bar {
+    display: none; /* optional hide on small screens */
+  }
+
+  .main-page-content {
+    margin-top: 90px;
+  }
+}
+body {
+      background: linear-gradient(135deg, #e4f3ff, #e6ffe9);
+      min-height: 100vh;
+    }
+
+    /* Filter Button */
+    .filter-btn {
+      background-color: #198754;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      transition: 0.2s;
+    }
+
+    .filter-btn:hover {
+      background-color: #157347;
+    }
+
+    /* House Card */
+    .house-card {
+      border: none;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .house-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    }
+
+    .house-card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+    }
+
+    .house-info {
+      padding: 15px;
+    }
+
+    .house-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #1b1b1b;
+      margin-bottom: 6px;
+    }
+
+    .house-info p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .availability {
+      font-weight: 600;
+      color: #198754;
+    }
+
+    .availability.occupied {
+      color: #dc3545;
+    }
+
+    .btn-view {
+      background-color: #0d6efd;
+      color: #fff;
+      border: none;
+      border-radius: 15px;
+      font-size: 0.85rem;
+      padding: 4px 14px;
+      float: right;
+    }
+
+    .btn-view:hover {
+      background-color: #0b5ed7;
+    }
