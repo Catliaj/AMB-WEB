@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generate Reports | Admin Dashboard</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    body { font-family: "Montserrat", sans-serif; }
+
+    .filters { margin-bottom: 20px; }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 30px;
+    }
+    .summary-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .summary-card h2 {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .summary-card .value {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .report-layout {
+      display: grid;
+      grid-template-columns: 1.8fr 1.1fr;
+      gap: 22px;
+      align-items: flex-start;
+    }
+
+    .report-preview {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    th {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+    }
+
+    .chart-section {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .chart-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .chart-card h3 {
+      font-size: 14px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 170px !important;
+    }
+
+    @media (max-width: 1000px) {
+      .report-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <aside class="sidebar">
+    <img src="amb_logo.png" alt="Logo">
+    <nav class="nav">
+      <a href="dashboard.html"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a href="manage-users.html"><i data-lucide="users"></i> Manage Users</a>
+      <a href="manage-properties.html"><i data-lucide="home"></i> Manage Properties</a>
+      <a href="user-bookings.html"><i data-lucide="calendar"></i> User Bookings</a>
+      <a href="view-chats.html"><i data-lucide="message-circle"></i> View Chats</a>
+      <a href="#" class="active"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
+    </nav>
+
+    <div class="profile-box">
+      <div class="profile-avatar">A</div>
+      <div class="profile-info">
+        <strong>Admin</strong>
+        <span>admin@company.com</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header>
+      <div class="left-header">
+        <h1><i data-lucide="bar-chart-2"></i> Generate Reports</h1>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="generateReportBtn"><i data-lucide="refresh-ccw"></i></button>
+        <button class="btn" id="exportPdf"><i data-lucide="file-down"></i></button>
+        <button class="btn" id="exportExcel"><i data-lucide="file-spreadsheet"></i></button>
+      </div>
+    </header>
+
+    <div class="filters">
+      <input type="date" id="startDate">
+      <input type="date" id="endDate">
+      <select id="propertyFilter">
+        <option>All Properties</option>
+        <option>Apartment</option>
+        <option>Condo</option>
+        <option>House</option>
+      </select>
+      <select id="agentFilter">
+        <option>All Agents</option>
+        <option>Agent A</option>
+        <option>Agent B</option>
+        <option>Agent C</option>
+      </select>
+      <select id="bookingStatus">
+        <option>All Status</option>
+        <option>Pending</option>
+        <option>Approved</option>
+        <option>Rejected</option>
+      </select>
+    </div>
+
+    <div class="summary-cards">
+      <div class="summary-card">
+        <h2>Total Sales</h2>
+        <div class="value" id="totalSales">₱1,250,000</div>
+      </div>
+      <div class="summary-card">
+        <h2>Total Properties</h2>
+        <div class="value" id="totalProperties">128</div>
+      </div>
+      <div class="summary-card">
+        <h2>Active Users</h2>
+        <div class="value" id="activeUsers">86</div>
+      </div>
+    </div>
+
+    <div class="report-layout">
+      <div class="report-preview">
+        <h3 style="margin-bottom:10px;">Report Preview</h3>
+        <table id="reportTable">
+          <thead>
+            <tr>
+              <th>Report ID</th>
+              <th>Property</th>
+              <th>Agent</th>
+              <th>Status</th>
+              <th>Sales</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="reportTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="chart-section">
+        <div class="chart-card">
+          <h3><i data-lucide="trending-up"></i> Booking Rates Over Time</h3>
+          <canvas id="bookingTrendsChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3><i data-lucide="home"></i> Property Sales by Type</h3>
+          <canvas id="propertySalesChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3><i data-lucide="user-check"></i> Agent Performance Summary</h3>
+          <canvas id="agentPerformanceChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    const reportData = [
+      { id: "REP001", property: "Modern Condo", agent: "Agent A", status: "Approved", sales: 150000, date: "2025-10-05" },
+      { id: "REP002", property: "Family Home", agent: "Agent B", status: "Pending", sales: 90000, date: "2025-09-28" },
+      { id: "REP003", property: "Luxury Villa", agent: "Agent C", status: "Approved", sales: 240000, date: "2025-09-15" },
+      { id: "REP004", property: "Apartment Block", agent: "Agent A", status: "Rejected", sales: 0, date: "2025-08-12" }
+    ];
+
+    function populateTable(data) {
+      const tbody = document.getElementById("reportTableBody");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.id}</td>
+          <td>${row.property}</td>
+          <td>${row.agent}</td>
+          <td>${row.status}</td>
+          <td>₱${row.sales.toLocaleString()}</td>
+          <td>${row.date}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterReports() {
+      const property = document.getElementById("propertyFilter").value;
+      const agent = document.getElementById("agentFilter").value;
+      const status = document.getElementById("bookingStatus").value;
+      const start = document.getElementById("startDate").value;
+      const end = document.getElementById("endDate").value;
+
+      return reportData.filter(r => {
+        const matchProperty = property === "All Properties" || r.property.includes(property);
+        const matchAgent = agent === "All Agents" || r.agent === agent;
+        const matchStatus = status === "All Status" || r.status === status;
+        const matchDate = (!start || r.date >= start) && (!end || r.date <= end);
+        return matchProperty && matchAgent && matchStatus && matchDate;
+      });
+    }
+
+    function updateCharts(filtered) {
+      const salesByType = { Apartment: 0, Condo: 0, House: 0 };
+      filtered.forEach(r => {
+        if (r.property.includes("Condo")) salesByType.Condo += r.sales;
+        else if (r.property.includes("Apartment")) salesByType.Apartment += r.sales;
+        else salesByType.House += r.sales;
+      });
+      propertySalesChart.data.datasets[0].data = Object.values(salesByType);
+      propertySalesChart.update();
+
+      const agentPerf = { "Agent A": 0, "Agent B": 0, "Agent C": 0 };
+      filtered.forEach(r => agentPerf[r.agent] += r.sales);
+      agentPerformanceChart.data.datasets[0].data = Object.values(agentPerf);
+      agentPerformanceChart.update();
+    }
+
+    document.getElementById("generateReportBtn").addEventListener("click", () => {
+      const filtered = filterReports();
+      populateTable(filtered);
+      updateCharts(filtered);
+      alert("Report updated based on filters!");
+    });
+
+    document.getElementById("exportExcel").addEventListener("click", () => {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.table_to_sheet(document.getElementById("reportTable"));
+      XLSX.utils.book_append_sheet(wb, ws, "Reports");
+      XLSX.writeFile(wb, "Reports.xlsx");
+    });
+
+    document.getElementById("exportPdf").addEventListener("click", () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text("Reports Export", 10, 10);
+      doc.autoTable({ html: "#reportTable", startY: 20 });
+      doc.save("Reports.pdf");
+    });
+
+    const chartColors = {
+      accent1: getComputedStyle(document.documentElement).getPropertyValue('--accent1').trim() || '#4e9eff',
+      accent2: getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#4effa1',
+      accent3: getComputedStyle(document.documentElement).getPropertyValue('--accent3').trim() || '#ffb84e',
+      text: '#fff',
+      muted: '#aaa'
+    };
+
+    const bookingTrendsChart = new Chart(document.getElementById('bookingTrendsChart'), {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+        datasets: [{ label: 'Bookings', data: [30, 42, 38, 50, 62, 70, 78], borderColor: chartColors.accent1, borderWidth: 2, tension: 0.3 }]
+      },
+      options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { color: chartColors.muted } }, y: { ticks: { color: chartColors.muted } } } }
+    });
+
+    const propertySalesChart = new Chart(document.getElementById('propertySalesChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Apartment', 'Condo', 'House'],
+        datasets: [{ label: 'Sales', data: [320000, 210000, 420000], backgroundColor: [chartColors.accent1, chartColors.accent2, chartColors.accent3] }]
+      },
+      options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { color: chartColors.muted } }, y: { ticks: { color: chartColors.muted } } } }
+    });
+
+    const agentPerformanceChart = new Chart(document.getElementById('agentPerformanceChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Agent A', 'Agent B', 'Agent C'],
+        datasets: [{ data: [45, 30, 25], backgroundColor: [chartColors.accent1, chartColors.accent2, chartColors.accent3], borderWidth: 0 }]
+      },
+      options: { plugins: { legend: { labels: { color: chartColors.text } } } }
+    });
+
+    populateTable(reportData);
+  </script>
+</body>
+</html>
