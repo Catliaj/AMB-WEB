@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Manage Users | Admin Dashboard</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin-style.css">
+
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      display: flex;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: none;
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background: var(--hover-overlay);
+      transform: scale(1.05);
+    }
+
+    .icon-btn.danger {
+      color: #f87171;
+    }
+
+    .icon-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      width: 380px;
+      background: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-content input, 
+    .modal-content select {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--divider);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .filters {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .filters input, 
+    .filters select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--divider);
+      background: var(--card);
+      color: var(--text);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--divider);
+    }
+
+    th {
+      background: var(--hover-overlay);
+      font-weight: 600;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .right-panel {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .profile-pic img {
+      width: 100px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+    }
+
+    .toggle {
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: white;
+      background: #f87171;
+      transition: 0.2s;
+    }
+
+    .toggle.active {
+      background: #34d399;
+    }
+  </style>
+
+  <script>
+    (function(){
+      try {
+        var t = localStorage.getItem('adm_theme_pref');
+        if (t === 'light') document.documentElement.setAttribute('data-theme','light');
+        else if (t === 'dark') document.documentElement.removeAttribute('data-theme');
+        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.setAttribute('data-theme','light');
+      } catch(e){}
+    })();
+  </script>
+</head>
+
+<body>
+  <section class="main" style="padding:20px;width:100%;">
+    <header style="display:flex;justify-content:space-between;align-items:center;">
+      <h1><i data-lucide="users"></i> Manage Users</h1>
+      <button class="btn primary" id="addUserBtn" style="padding:8px 14px;border:none;border-radius:8px;background:#2563eb;color:white;cursor:pointer;">
+        <i data-lucide="user-plus"></i> Add User
+      </button>
+    </header>
+
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="Search users...">
+      <select id="roleFilter">
+        <option value="">All Roles</option>
+        <option>Admin</option>
+        <option>Agent</option>
+        <option>Client</option>
+      </select>
+    </div>
+
+    <div class="layout">
+      <div>
+        <table id="userTable">
+          <thead>
+            <tr>
+              <th>UserID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <aside class="right-panel" id="userDetails">
+        <div class="profile-pic"><img src="https://via.placeholder.com/100" alt="Profile"></div>
+        <h3>Select a user to view details</h3>
+      </aside>
+    </div>
+  </section>
+
+  <div class="modal" id="userModal">
+    <div class="modal-content">
+      <h2><i data-lucide="user-plus"></i> Add/Edit User</h2>
+      <input id="firstName" type="text" placeholder="First Name">
+      <input id="lastName" type="text" placeholder="Last Name">
+      <input id="email" type="email" placeholder="Email">
+      <select id="role">
+        <option>Admin</option><option>Agent</option><option>Client</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn" id="closeModal" style="padding:8px 12px;border:none;border-radius:6px;background:#ccc;cursor:pointer;">Cancel</button>
+        <button class="btn primary" id="saveUser" style="padding:8px 12px;border:none;border-radius:6px;background:#2563eb;color:white;cursor:pointer;">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    const modal = document.getElementById('userModal');
+    const addBtn = document.getElementById('addUserBtn');
+    const closeModal = document.getElementById('closeModal');
+    const saveUser = document.getElementById('saveUser');
+    const userTable = document.querySelector('#userTable tbody');
+    const userDetails = document.getElementById('userDetails');
+    const searchInput = document.getElementById('searchInput');
+    const roleFilter = document.getElementById('roleFilter');
+
+    let editingIndex = null;
+    let users = [
+      { id: '#001', name: 'John Doe', email: 'john@example.com', role: 'Client', status: 'Approved' },
+      { id: '#002', name: 'Jane Smith', email: 'jane@company.com', role: 'Agent', status: 'Pending' },
+      { id: '#003', name: 'Alex Johnson', email: 'alex@admin.com', role: 'Admin', status: 'Approved' },
+    ];
+
+    function renderTable(filterText = '', filterRole = '') {
+      userTable.innerHTML = '';
+      users
+        .filter(u => Object.values(u).join(' ').toLowerCase().includes(filterText.toLowerCase()))
+        .filter(u => !filterRole || u.role === filterRole)
+        .forEach((u, i) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${u.id}</td>
+            <td>${u.name}</td>
+            <td>${u.email}</td>
+            <td>${u.role}</td>
+            <td><span class="toggle ${u.status === 'Approved' ? 'active' : ''}" data-index="${i}">${u.status}</span></td>
+            <td class="actions">
+              <button class="icon-btn" data-edit="${i}" title="Edit"><i data-lucide="edit-3"></i></button>
+              <button class="icon-btn danger" data-del="${i}" title="Delete"><i data-lucide="trash-2"></i></button>
+              <button class="icon-btn" data-view="${i}" title="View"><i data-lucide="eye"></i></button>
+            </td>`;
+          userTable.appendChild(tr);
+        });
+      lucide.createIcons();
+    }
+
+    renderTable();
+
+    addBtn.onclick = () => {
+      modal.style.display = 'flex';
+      editingIndex = null;
+      document.getElementById('firstName').value = '';
+      document.getElementById('lastName').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('role').value = 'Client';
+    };
+
+    closeModal.onclick = () => modal.style.display = 'none';
+    window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+    saveUser.onclick = () => {
+      const f = document.getElementById('firstName').value.trim();
+      const l = document.getElementById('lastName').value.trim();
+      const e = document.getElementById('email').value.trim();
+      const r = document.getElementById('role').value;
+      if (!f || !l || !e) return alert('Please complete all fields.');
+
+      if (editingIndex !== null) {
+        users[editingIndex] = { ...users[editingIndex], name: `${f} ${l}`, email: e, role: r };
+      } else {
+        const id = '#' + String(users.length + 1).padStart(3, '0');
+        users.unshift({ id, name: `${f} ${l}`, email: e, role: r, status: 'Pending' });
+        alert(`${f} ${l} has been added successfully!`);
+      }
+
+      modal.style.display = 'none';
+      renderTable(searchInput.value, roleFilter.value);
+    };
+
+    userTable.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      const toggle = e.target.closest('.toggle');
+      if (!btn && !toggle) return;
+
+      if (toggle) {
+        const i = toggle.dataset.index;
+        users[i].status = users[i].status === 'Approved' ? 'Pending' : 'Approved';
+        renderTable(searchInput.value, roleFilter.value);
+      }
+
+      if (btn?.dataset.del !== undefined) {
+        if (confirm('Delete this user?')) {
+          users.splice(btn.dataset.del, 1);
+          renderTable(searchInput.value, roleFilter.value);
+        }
+      }
+
+      if (btn?.dataset.edit !== undefined) {
+        editingIndex = btn.dataset.edit;
+        const u = users[editingIndex];
+        const [f, l] = u.name.split(' ');
+        document.getElementById('firstName').value = f;
+        document.getElementById('lastName').value = l || '';
+        document.getElementById('email').value = u.email;
+        document.getElementById('role').value = u.role;
+        modal.style.display = 'flex';
+      }
+
+      if (btn?.dataset.view !== undefined) {
+        const u = users[btn.dataset.view];
+        userDetails.innerHTML = `
+          <div class="profile-pic"><img src="https://via.placeholder.com/100" alt="Profile"></div>
+          <h3>${u.name}</h3>
+          <p style="color:var(--muted);">${u.role} • ${u.email}</p>
+          <p>Status: <strong>${u.status}</strong></p>`;
+      }
+    });
+
+    searchInput.addEventListener('input', () => renderTable(searchInput.value, roleFilter.value));
+    roleFilter.addEventListener('change', () => renderTable(searchInput.value, roleFilter.value));
+  </script>
+</body>
+</html>
