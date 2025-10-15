@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="<?= base_url('assets/styles/user-homepage.css')?>">
 </head>
 <body>
-    <!-- Bootstrap Navbar -->
+    
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="#">
