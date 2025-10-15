@@ -139,9 +139,6 @@
             </div>
         </div>
 
-
-
-
         <!-- Get data from the database-->
 
         <div class="d-flex flex-column bg-light py-3">
@@ -294,26 +291,31 @@
 
 
         <!-- Login Modal -->
-        <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+        <div class="login_backpanel modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
 
-                <div class="modal-content">
+                <div class="login_page modal-content">
 
-                    <div class="modal-header">
+                    <div class="modal-header text-center">
                         <h5 class="modal-title">Login</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn_close btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
 
                     <div class="modal-body">
+                            <img src="<?= base_url('assets/img/AMB_logo.png') ?>" alt="Account Logo" class="Account_Logo">
+
                         <form action="<?= base_url('users/login') ?>" method="post">
+                        <div class="mb-3 text-center">
+                            <h3 class="Welcome">WELCOME!</h3>
+                            <h6 class="msg">Welcome back! Log in to explore new property listings.</h6>
+                        </div>
                         <div class="mb-3">
-                            <label for="username" class="form-label">Email:</label>
-                            <input type="text" name="inputEmail" class="form-control" required>
+                            <input type="text" name="inputEmail" class="email_input form-control" placeholder="Email">
                         </div>
 
                         <div class="mb-3">
-                            <label for="password" class="form-label">Password:</label>
-                            <input type="password" name="inputPassword" class="form-control" required>
+                            <input type="password" name="inputPassword" class="form-control" placeholder="Password" required>
+                            <a href="">Forgot Password</a>
                         </div>
                         <button type="submit" class="btn btn-primary">Login</button>
                         
@@ -321,7 +323,7 @@
                         </form>
 
                         <div class="text-center mt-3">
-                            <a href="/Users/CreateUsers">Create an account</a>
+                            <p>Don't have an account yet?<a href="/Users/CreateUsers"> Join Us</a></p>
                         </div>
                     </div>
                 </div>
@@ -329,9 +331,9 @@
         </div>
 
 
-   <!-- ✅ Signup Modal -->
+<!-- ✅ Signup Modal -->
 <div class="modal fade" id="signupModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
 
       <div class="modal-header">
@@ -341,33 +343,91 @@
 
       <div class="modal-body">
         <form id="signupForm">
-          <div class="mb-3">
-            <label class="form-label">First Name</label>
-            <input type="text" name="FirstName" class="form-control" required>
+          <!-- First Row: First Name, Middle Name, Last Name -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-4">
+              <label class="form-label">First Name</label>
+              <input type="text" name="FirstName" class="form-control" placeholder="ex:Juan" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Middle Name</label>
+              <input type="text" name="MiddleName" class="form-control" placeholder="ex:Castillo" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Last Name</label>
+              <input type="text" name="LastName" class="form-control" placeholder="ex:Dela Cruz" required>
+            </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Middle Name</label>
-            <input type="text" name="MiddleName" class="form-control" required>
+
+          <!-- Second Row: Birthday, Phone Number -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Birthday</label>
+              <input type="date" name="Birthdate" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" name="phoneNumber" class="form-control" placeholder="ex:09*********" required>
+            </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Last Name</label>
-            <input type="text" name="LastName" class="form-control" required>
+
+          <!-- Third Row: Email, Password -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" name="Email" id="signupEmail" class="form-control" placeholder="ex:juan@gmail.com" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Password</label>
+              <input type="password" name="Password" class="form-control" required>
+            </div>
           </div>
+
+          <!-- Employment Status Dropdown -->
           <div class="mb-3">
-            <label class="form-label">Birthdate</label>
-            <input type="date" name="Birthdate" class="form-control" required>
+            <label class="form-label">Employment Status</label>
+            <select name="employmentStatus" id="employmentStatus" class="form-select" required>
+              <option value="" selected disabled>Select Employment Status</option>
+              <option value="locally_employed">Locally Employed</option>
+              <option value="ofw">OFW (Overseas Filipino Worker)</option>
+            </select>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Phone Number</label>
-            <input type="tel" name="phoneNumber" class="form-control" required>
+
+          <!-- If Employed Locally -->
+          <div id="locallyEmployedFields" style="display: none;">
+            <div class="row g-2 mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Government ID</label>
+                <input type="file" name="governmentID" class="form-control" accept="image/*,.pdf">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">TIN ID</label>
+                <input type="file" name="tinID" class="form-control" accept="image/*,.pdf">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Selfie with ID</label>
+                <input type="file" name="selfieWithID" class="form-control" accept="image/*">
+              </div>
+            </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" name="Email" id="signupEmail" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input type="password" name="Password" class="form-control" required>
+
+          <!-- If Employed Overseas (OFW) -->
+          <div id="ofwFields" style="display: none;">
+            <div class="row g-2 mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Job Contract</label>
+                <input type="file" name="jobContract" class="form-control" accept="image/*,.pdf">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Passport</label>
+                <input type="file" name="passport" class="form-control" accept="image/*,.pdf">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Official Identity Document</label>
+                <input type="file" name="officialID" class="form-control" accept="image/*,.pdf">
+                <small class="form-text text-muted">Driver's license or any ID with signature and photo</small>
+              </div>
+            </div>
           </div>
 
           <button type="submit" class="btn btn-primary w-100">Sign Up</button>
@@ -376,6 +436,30 @@
     </div>
   </div>
 </div>
+
+<script>
+document.getElementById('employmentStatus').addEventListener('change', function() {
+  const localFields = document.getElementById('locallyEmployedFields');
+  const ofwFields = document.getElementById('ofwFields');
+  
+  // Hide both sections first
+  localFields.style.display = 'none';
+  ofwFields.style.display = 'none';
+  
+  // Remove required attribute from all file inputs
+  localFields.querySelectorAll('input').forEach(input => input.removeAttribute('required'));
+  ofwFields.querySelectorAll('input').forEach(input => input.removeAttribute('required'));
+  
+  // Show relevant section and set required
+  if (this.value === 'locally_employed') {
+    localFields.style.display = 'block';
+    localFields.querySelectorAll('input').forEach(input => input.setAttribute('required', 'required'));
+  } else if (this.value === 'ofw') {
+    ofwFields.style.display = 'block';
+    ofwFields.querySelectorAll('input').forEach(input => input.setAttribute('required', 'required'));
+  }
+});
+</script>
 
 <!-- ✅ OTP Modal -->
 <div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true">
