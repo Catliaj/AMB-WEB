@@ -14,6 +14,8 @@ $routes->post('/users/signup', 'UserController::StoreUsers');
 $routes->post('/users/request-otp', 'UserController::requestOtp');
 $routes->get('/verify-email', 'UserController::verifyEmail');
 
+service('auth')->routes($routes);
+
 
 
 

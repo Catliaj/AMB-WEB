@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>User Bookings | Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #141414;
+      --panel: #1c1c1c;
+      --card: #1f1f1f;
+      --text: #e4e4e4;
+      --muted: #9ca3af;
+      --accent1: #5a5cff;
+      --accent2: #bb56ff;
+      --accent3: #ff5ca8;
+      --shadow: 0 0 12px rgba(0,0,0,0.25);
+      font-family: "Montserrat", sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 230px;
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 0;
+      flex-shrink: 0;
+      overflow-y: auto;
+      box-shadow: inset -1px 0 0 #2a2a2a;
+    }
+
+    .sidebar img { width: 120px; margin-bottom: 30px; }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      padding: 0 22px;
+    }
+
+    .nav a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      transition: all 0.25s ease;
+      font-size: 14px;
+    }
+
+    .nav a:hover,
+    .nav a.active {
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      color: white;
+    }
+
+    .nav a svg { width: 16px; height: 16px; color: var(--muted); }
+
+    .profile-box {
+      margin-top: auto;
+      width: 100%;
+      padding: 14px 22px;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profile-avatar {
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700;
+    }
+
+    .profile-info { font-size: 12px; line-height: 1.3; }
+    .profile-info strong { font-size: 13px; }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 36px 12px;
+      overflow: hidden;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filters {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .filters input,
+    .filters select {
+      background: var(--card);
+      border: 1px solid #2a2a2a;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 12px;
+      outline: none;
+    }
+
+    .main-row {
+      display: grid;
+      grid-template-columns: 1.8fr 0.9fr;
+      gap: 20px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .table-card {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    th {
+      color: var(--accent1);
+      font-weight: 600;
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .action-btn {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .action-btn:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .action-btn.danger:hover {
+      color: #ff5c5c;
+    }
+
+    .chart-card {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .chart-container {
+      flex: 1;
+      position: relative;
+      min-height: 0;
+    }
+
+    @media (max-width: 900px) {
+      .main-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <aside class="sidebar">
+    <img src="amb_logo.png" alt="AMB Logo">
+    <nav class="nav">
+      <a href="dashboard.html"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a href="manage-users.html"><i data-lucide="users"></i> Manage Users</a>
+      <a href="manage-properties.html"><i data-lucide="home"></i> Manage Properties</a>
+      <a href="#" class="active"><i data-lucide="calendar"></i> User Bookings</a>
+      <a href="view-chats.html"><i data-lucide="message-circle"></i> View Chats</a>
+      <a href="generate-reports.html"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
+    </nav>
+
+    <div class="profile-box">
+      <div class="profile-avatar">A</div>
+      <div class="profile-info">
+        <strong>Admin</strong>
+        <span>admin@company.com</span>
+      </div>
+    </div>
+  </aside>
+
+  <section class="main">
+    <header>
+      <h1><i data-lucide="calendar"></i> User Bookings</h1>
+    </header>
+
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="Search by client or property...">
+      <select id="filterStatus">
+        <option value="">Filter by Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Rejected">Rejected</option>
+      </select>
+    </div>
+
+    <div class="main-row">
+      <div class="table-card">
+        <table id="bookingTable">
+          <thead>
+            <tr>
+              <th>BookingID</th>
+              <th>Client Name</th>
+              <th>Property</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="chart-card">
+        <h3><i data-lucide="line-chart"></i> Booking Trends</h3>
+        <div class="chart-container">
+          <canvas id="bookingChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    lucide.createIcons();
+
+    const bookings = [
+      { id: "BOOK001", client: "John Santos", property: "Modern Studio Apartment", date: "2025-10-03", status: "Pending" },
+      { id: "BOOK002", client: "Maria Cruz", property: "Elegant Condo Unit", date: "2025-09-27", status: "Approved" },
+      { id: "BOOK003", client: "Carlos Dela Peña", property: "2BR Family House", date: "2025-10-05", status: "Rejected" },
+    ];
+
+    const tableBody = document.querySelector('#bookingTable tbody');
+    const searchInput = document.getElementById('searchInput');
+    const filterStatus = document.getElementById('filterStatus');
+
+    function renderBookings() {
+      tableBody.innerHTML = '';
+      const query = searchInput.value.toLowerCase();
+      const filter = filterStatus.value;
+
+      bookings.filter(b =>
+        (!filter || b.status === filter) &&
+        (b.client.toLowerCase().includes(query) || b.property.toLowerCase().includes(query))
+      ).forEach((b, i) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${b.id}</td>
+          <td>${b.client}</td>
+          <td>${b.property}</td>
+          <td>${b.date}</td>
+          <td>${b.status}</td>
+          <td class="actions">
+            <button class="action-btn" title="View"><i data-lucide="eye"></i></button>
+            <button class="action-btn" title="Approve"><i data-lucide="check"></i></button>
+            <button class="action-btn danger" title="Reject"><i data-lucide="x-circle"></i></button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+      lucide.createIcons();
+    }
+
+    searchInput.addEventListener('input', renderBookings);
+    filterStatus.addEventListener('change', renderBookings);
+    renderBookings();
+
+    const ctx = document.getElementById('bookingChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct"],
+        datasets: [{
+          label: "Bookings",
+          data: [8,12,9,15,18,22,20,24,28,32],
+          tension: 0.3,
+          borderWidth: 2,
+          borderColor: "#5a5cff",
+          backgroundColor: "rgba(90,92,255,0.1)",
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: "#999" }, grid: { color: "#333" } },
+          y: { ticks: { color: "#999" }, grid: { color: "#333" } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  </script>
+</body>
+</html>
