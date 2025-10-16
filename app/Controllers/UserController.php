@@ -9,6 +9,7 @@ use App\Models\MessageModel;
 use App\Models\PropertyModel;
 use App\Models\UserTokenModel;
 
+
 class UserController extends BaseController
 {
     /**
@@ -130,10 +131,17 @@ class UserController extends BaseController
         $session = session();
         $model = new UsersModel();
 
+
         $Username = $this->request->getPost('inputEmail');
         $Password = $this->request->getPost('inputPassword');
 
+      
+       
+        
+
         $user = $model->where('Email', $Username)->first();
+        $ID  = $model->where('Email', $Username)->findColumn('UserID');
+        
 
         if ($user && password_verify($Password, $user['Password'])) {
 
@@ -151,13 +159,14 @@ class UserController extends BaseController
                 'MiddleName'  => $user['MiddleName'],
                 'LastName'    => $user['LastName']
             ]);
+            $model->setOfflineToOnline($ID);
 
             // Redirect by role
             switch ($user['Role']) {
                 case 'Agent':
-                    return redirect()->to('/users/agentDashboard');
+                    return redirect()->to('/users/agentHomepage');
                 case 'Admin':
-                    return redirect()->to('/Users/AdminDashboard');
+                    return redirect()->to('/admin/adminHomepage');
                 default:
                     return redirect()->to('/users/clientHomepage');
             }
@@ -186,7 +195,7 @@ class UserController extends BaseController
 
 
 
-        return view('Pages/user_homepage', [
+        return view('Pages/client/homepage', [
             'UserID' => $userId,
             'email' => session()->get('inputEmail'),
             'fullname' => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
@@ -199,29 +208,10 @@ class UserController extends BaseController
         ]);
     }
 
-    /**
-     * Agent Dashboard
-     */
-    public function agentDashboard()
-    {
-        if (!session()->get('isLoggedIn') || session()->get('role') !== 'Agent') {
-            return redirect()->to('/');
-        }
+ 
 
-        $agentId = session()->get('userID');
-        $sessionModel = new ChatSessionModel();
+    
 
-        $sessions = $sessionModel->getAgentSessions($agentId);
 
-        return view('Pages/agent_homepage', [
-            'agentID' => $agentId,
-            'email' => session()->get('inputEmail'),
-            'fullname' => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
-            'sessions' => $sessions,
-            'messages' => [],
-            'sessionId' => null,
-            'currentUserId' => $agentId,
-            'otherUser' => null
-        ]);
-    }
+
 }

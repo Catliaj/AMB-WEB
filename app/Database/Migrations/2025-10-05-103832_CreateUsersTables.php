@@ -64,8 +64,8 @@ class CreateUsersTable extends Migration
 
             'status' => [
                 'type'           => 'ENUM',
-                'constraint'     => ['Active', 'Inactive'],
-                'default'        => 'Active',
+                'constraint'     => ['Offline', 'Online'],
+                'default'        => 'Offline',
             ],
 
             'created_at' => [

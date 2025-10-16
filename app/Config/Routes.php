@@ -35,13 +35,29 @@ $routes->setAutoRoute(true);
 $routes->get('/', 'Home::index');
 $routes->post('/users/login', 'UserController::login');
 $routes->get('/users/clientHomepage', 'UserController::clientHomepage');
-$routes->get('/users/agentHomepage', 'UserController::agentDashboard');
+$routes->get('/users/agentHomepage', 'AgentController::agentDashboard');
+
+// Admin Routes
+$routes->get('/admin/adminHomepage', 'AdminController::adminDashboard');
+$routes->get('/admin/Reports', 'AdminController::generateReports');
+$routes->get('/admin/ManageProperties', 'AdminController::manageProperties');
+$routes->get('/admin/manageUsers', 'AdminController::manageUsers');
+$routes->get('/admin/userBookings', 'AdminController::userBooking');
+$routes->get('/admin/viewChats', 'AdminController::viewChats');
+$routes->get('/admin/logout', 'AdminController::logout');
+
+//CRUD Admin
+
+
+
 
 $routes->post('/users/signup', 'UserController::StoreUsers');
 $routes->post('/users/request-otp', 'UserController::requestOtp');
 $routes->get('/verify-email', 'UserController::verifyEmail');
 
+
+/*
 if (function_exists('service') && service('auth') !== null) {
     service('auth')->routes($routes);
-}
+} */
 

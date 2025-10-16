@@ -4,16 +4,16 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class PropertyModel extends Model
+class BookingModel extends Model
 {
-    protected $table            = 'property';
-    protected $primaryKey       = 'PropertyID';
+    protected $table            = 'booking';
+    protected $primaryKey       = 'bookingID';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'UserID', 'Title', 'Description', 'Property_Type', 'Price', 'Location', 'Size', 'Bedrooms', 'Bathrooms', 'Parking_Spaces','agent_assigned','Corporation'
+        'userID', 'propertyID', 'bookingDate', 'status'
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -46,15 +46,22 @@ class PropertyModel extends Model
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
 
-
-    
-
-     public function getTotalProperties()
+    public function getTotalBookings()
     {
         return $this->builder()->countAllResults();
     }
 
+    public function getPendingBookings()
+    {
+        return $this->where('status', 'Pending')->countAllResults();
+    }
 
-
-
+    public function getTotalBookingByMonth()
+    {
+        return $this->select("MONTH(bookingDate) AS month, COUNT(*) AS total")
+                    ->where('YEAR(bookingDate)', date('Y'))
+                    ->groupBy('MONTH(bookingDate)')
+                    ->orderBy('MONTH(bookingDate)', 'ASC')
+                    ->findAll();
+    }
 }

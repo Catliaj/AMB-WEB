@@ -87,18 +87,11 @@ class CreateProperty extends Migration
                 'constraint'     => ['BellaVita', 'RCD'],
                 'null'           => true,
             ],
-
-            'Status' => [
-                'type'           => 'ENUM',
-                'constraint'     => ['For Sale',  'Sold'],
-                'null'           => true,
-                'default'        => 'For Sale',
-            ],
             
         ]);
 
            $this->forge->addKey('PropertyID', true);
-         
+           $this->forge->addForeignKey('UserID', 'users', 'UserID', 'CASCADE', 'CASCADE');
            $this->forge->createTable('property');
     }
 
