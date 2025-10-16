@@ -6,14 +6,14 @@ use CodeIgniter\Model;
 
 class ChatSessionModel extends Model
 {
-    protected $table            = 'chatsession';
+    protected $table            = 'chatSession';
     protected $primaryKey       = 'SessionID';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'UserID', 'AgentID', 'StartTime', 'EndTime', 'Status'
+        'chatSessionID', 'UserID', 'AgentID', 'startTime', 'endTime'
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -45,57 +45,6 @@ class ChatSessionModel extends Model
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
 
-    // Get all sessions for a user
-    public function getUserSessions($userId)
-    {
-        $builder = $this->builder();
-        $builder->select('chatsession.*, users.FirstName as agentFirstName, users.LastName as agentLastName');
-        $builder->join('users', 'users.userID = chatsession.AgentID');
-        $builder->where('chatsession.UserID', $userId);
-        $builder->where('users.Role', 'Agent');
-        $builder->orderBy('chatsession.StartTime', 'DESC');
-        $sessions = $builder->get()->getResultArray();
-
-        // Add full agent name
-        foreach ($sessions as &$session) {
-            $session['agentName'] = trim($session['agentFirstName'] . ' ' . $session['agentLastName']);
-        }
-
-        return $sessions;
-    }
-
-    // Get all sessions for an agent
-    public function getAgentSessions($agentId)
-    {
-        $builder = $this->builder();
-        $builder->select('chatsession.*, users.FirstName as userFirstName, users.LastName as userLastName');
-        $builder->join('users', 'users.userID = chatsession.UserID');
-        $builder->where('chatsession.AgentID', $agentId);
-        $builder->where('users.Role', 'Client');
-        $builder->orderBy('chatsession.StartTime', 'DESC');
-        $sessions = $builder->get()->getResultArray();
-
-        // Add full user name
-        foreach ($sessions as &$session) {
-            $session['userName'] = trim($session['userFirstName'] . ' ' . $session['userLastName']);
-        }
-
-        return $sessions;
-    }
-
-       // ✅ Define custom method
-    public function getActiveSessions($userID)
-    {
-        return $this->where('UserID', $userID)
-                    ->where('Status', 'Active')
-                    ->findAll();
-    }
-
-    public function getFullname($userID)
-    {
-        return $this->select('',)
-                     ->where('UserID', $userID);
-    }
 
     
 }

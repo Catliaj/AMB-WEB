@@ -13,7 +13,7 @@ class MessageModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'SessionID', 'SenderID', 'SenderRole', 'Content', 'Timestamp'
+        'messageID', 'chatSessionID', 'senderRole', 'messageContent', 'timestamp'
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -47,28 +47,4 @@ class MessageModel extends Model
     protected $afterDelete    = [];
 
 
-    // Get all messages in a session
-    public function getMessagesBySession($sessionId)
-    {
-        $builder = $this->builder();
-        $builder->select('messages.*, users.FirstName as senderFirstName, users.LastName as senderLastName');
-        $builder->join('users', 'users.userID = messages.SenderID');
-        $builder->where('messages.SessionID', $sessionId);
-        $builder->whereIn('users.Role', ['Agent', 'Client']);
-        $builder->orderBy('messages.Timestamp', 'ASC');
-        $messages = $builder->get()->getResultArray();
-
-        // Add full sender name
-        foreach ($messages as &$message) {
-            $message['senderName'] = trim($message['senderFirstName'] . ' ' . $message['senderLastName']);
-        }
-
-        return $messages;
-    }
-
-    // Add new message
-    public function addMessage($data)
-    {
-        return $this->insert($data);
-    }
 }

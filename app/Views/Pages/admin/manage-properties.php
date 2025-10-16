@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Properties | Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="<?= base_url('assets/styles/admin-style.css')?>">
+
+  <style>
+    /* smaller preview images */
+    #multiPreview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color, #ccc);
+      padding: 6px;
+      border-radius: 8px;
+    }
+
+    #multiPreview div {
+      position: relative;
+      display: inline-block;
+    }
+
+    #multiPreview img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+
+    #multiPreview .remove-img {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      line-height: 16px;
+      font-size: 14px;
+    }
+  </style>
+
+  <script>
+    (function(){
+      try {
+        var t = localStorage.getItem('adm_theme_pref');
+        if (t === 'light') document.documentElement.setAttribute('data-theme','light');
+        else if (t === 'dark') document.documentElement.removeAttribute('data-theme');
+        else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) 
+          document.documentElement.setAttribute('data-theme','light');
+      } catch(e){}
+    })();
+  </script>
+</head>
+
+<body>
+  <aside class="sidebar">
+    <img src="amb_logo.png" alt="AMB Logo">
+    <nav class="nav">
+      <a href="/admin/adminHomepage" ><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
+      <a href="/admin/ManageProperties" class="active"><i data-lucide="home"></i> Manage Properties</a>
+      <a href="/admin/userBookings"><i data-lucide="calendar"></i> User Bookings</a>
+      <a href="/admin/viewChats"><i data-lucide="message-circle"></i> View Chats</a>
+      <a href="/admin/Reports"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
+    </nav>
+
+    <div class="profile-box">
+      <div class="profile-avatar">A</div>
+       <div class="profile-info">
+        <strong><?= session('FirstName') . ' ' . session('LastName'); ?></strong>
+        <span><?= session('inputEmail'); ?></span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header>
+      <div class="left-header">
+        <button id="toggleSidebar" class="btn"><i data-lucide="menu"></i></button>
+        <h1><i data-lucide="home"></i> Manage Properties</h1>
+      </div>
+      <button class="btn" id="btnAddProperty"><i data-lucide="plus-circle"></i> Add Property</button>
+    </header>
+
+    <div class="filters-bar">
+      <input type="text" id="searchInput" placeholder="Search all columns...">
+      <select id="filterStatus">
+        <option value="">Status</option>
+        <option value="Available">Available</option>
+        <option value="Reserved">Reserved</option>
+        <option value="Sold">Sold</option>
+      </select>
+      <select id="filterType">
+        <option value="">Type</option>
+        <option value="Apartment">Apartment</option>
+        <option value="Condo">Condo</option>
+        <option value="House">House</option>
+      </select>
+      <select id="filterAgent">
+        <option value="">Agent</option>
+        <option value="Agent A">Agent A</option>
+        <option value="Agent B">Agent B</option>
+      </select>
+    </div>
+
+    <div class="table-container">
+      <table id="propertyTable">
+        <thead>
+          <tr>
+            <th>Property ID</th>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Price</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Agent</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <div class="modal" id="viewModal">
+    <div class="modal-content">
+      <h2>Property Details</h2>
+      <div id="viewImageGallery" class="image-preview-container"></div>
+      <p><strong>ID:</strong> <span id="viewID"></span></p>
+      <p><strong>Title:</strong> <span id="viewTitle"></span></p>
+      <p><strong>Type:</strong> <span id="viewType"></span></p>
+      <p><strong>Price:</strong> <span id="viewPrice"></span></p>
+      <p><strong>Location:</strong> <span id="viewLocation"></span></p>
+      <p><strong>Status:</strong> <span id="viewStatus"></span></p>
+      <p><strong>Agent:</strong> <span id="viewAgent"></span></p>
+      <button class="btn cancel" onclick="closeModal('viewModal')">Close</button>
+    </div>
+  </div>
+
+  <div class="modal" id="addModal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Add New Property</h2>
+      <input type="text" id="newTitle" placeholder="Title" required>
+      <select id="newType">
+        <option value="">Select Type</option>
+        <option value="Apartment">Apartment</option>
+        <option value="Condo">Condo</option>
+        <option value="House">House</option>
+      </select>
+      <input type="text" id="newPrice" placeholder="Price (₱)" required>
+      <input type="text" id="newLocation" placeholder="Location" required>
+
+      <label for="newImages" class="img-label">Property Images</label>
+      <input type="file" id="newImages" accept="image/*" multiple>
+      <div class="image-preview-container" id="multiPreview"></div>
+
+      <select id="newStatus">
+        <option value="Available">Available</option>
+        <option value="Reserved">Reserved</option>
+        <option value="Sold">Sold</option>
+      </select>
+      <select id="newAgent">
+        <option value="Agent A">Agent A</option>
+        <option value="Agent B">Agent B</option>
+      </select>
+
+      <div class="actions">
+        <button class="btn cancel" id="cancelAdd">Cancel</button>
+        <button class="btn" id="saveProperty">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="deleteModal">
+    <div class="modal-content">
+      <h2><i data-lucide="trash-2"></i> Confirm Deletion</h2>
+      <div align="center" style="color:var(--muted);">
+        Are you sure you want to delete this item? <br>This action cannot be undone.
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="cancelDelete"><i data-lucide="x"></i> Cancel</button>
+        <button class="btn danger" id="confirmDelete"><i data-lucide="trash-2"></i> Delete</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  lucide.createIcons();
+
+  const tableBody = document.querySelector("#propertyTable tbody");
+  const addModal = document.getElementById("addModal");
+  const viewModal = document.getElementById("viewModal");
+  const multiPreview = document.getElementById("multiPreview");
+  const newImages = document.getElementById("newImages");
+  let imageFiles = [];
+
+  const properties = [
+    { id: "PROP001", title: "Modern Studio Apartment", type: "Apartment", price: "₱25,000", location: "Makati", status: "Available", agent: "Agent A", images: [] },
+    { id: "PROP002", title: "Elegant Condo Unit", type: "Condo", price: "₱35,000", location: "Taguig", status: "Reserved", agent: "Agent B", images: [] },
+    { id: "PROP003", title: "Family House with Garden", type: "House", price: "₱50,000", location: "Quezon City", status: "Sold", agent: "Agent A", images: [] },
+  ];
+
+  function renderTable(list = properties) {
+    tableBody.innerHTML = "";
+    list.forEach((p, i) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${p.id}</td>
+        <td>${p.title}</td>
+        <td>${p.type}</td>
+        <td>${p.price}</td>
+        <td>${p.location}</td>
+        <td>${p.status}</td>
+        <td>${p.agent}</td>
+        <td class="actions">
+          <button class="action-btn" onclick="viewProperty(${i})"><i data-lucide='eye'></i></button>
+          <button class="action-btn" onclick="editProperty(${i})"><i data-lucide='edit-2'></i></button>
+          <button class="action-btn danger" onclick="openDeleteModal(${i})"><i data-lucide='trash-2'></i></button>
+        </td>`;
+      tableBody.appendChild(row);
+    });
+    lucide.createIcons();
+  }
+
+  window.viewProperty = function(i) {
+    const p = properties[i];
+    document.getElementById("viewID").textContent = p.id;
+    document.getElementById("viewTitle").textContent = p.title;
+    document.getElementById("viewType").textContent = p.type;
+    document.getElementById("viewPrice").textContent = p.price;
+    document.getElementById("viewLocation").textContent = p.location;
+    document.getElementById("viewStatus").textContent = p.status;
+    document.getElementById("viewAgent").textContent = p.agent;
+
+    const gallery = document.getElementById("viewImageGallery");
+    gallery.innerHTML = "";
+    if (p.images.length === 0)
+      gallery.innerHTML = "<p style='color:var(--muted);'>No images available.</p>";
+    else
+      p.images.forEach(src => {
+        const img = document.createElement("img");
+        img.src = src;
+        gallery.appendChild(img);
+      });
+
+    viewModal.classList.add("active");
+  };
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove("active");
+  }
+
+  document.getElementById("btnAddProperty").onclick = () => {
+    addModal.classList.add("active");
+    imageFiles = [];
+    multiPreview.innerHTML = "";
+  };
+
+  newImages.addEventListener("change", function() {
+    [...this.files].forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        imageFiles.push(e.target.result);
+        const div = document.createElement("div");
+        div.innerHTML = `<img src="${e.target.result}"><button class="remove-img">&times;</button>`;
+        div.querySelector(".remove-img").onclick = () => {
+          imageFiles = imageFiles.filter(img => img !== e.target.result);
+          div.remove();
+        };
+        multiPreview.appendChild(div);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  document.getElementById("saveProperty").onclick = () => {
+    const title = document.getElementById("newTitle").value.trim();
+    const type = document.getElementById("newType").value;
+    const priceVal = document.getElementById("newPrice").value.trim();
+    const location = document.getElementById("newLocation").value.trim();
+    const status = document.getElementById("newStatus").value;
+    const agent = document.getElementById("newAgent").value;
+
+    if (!title || !type || !priceVal || !location)
+      return alert("Please fill all fields.");
+
+    const id = "PROP" + String(properties.length + 1).padStart(3, "0");
+    const price = "₱" + priceVal;
+    properties.push({ id, title, type, price, location, status, agent, images: [...imageFiles] });
+
+    addModal.classList.remove("active");
+    renderTable();
+  };
+
+  document.getElementById("cancelAdd").onclick = () => addModal.classList.remove("active");
+
+  const searchInput = document.getElementById("searchInput");
+  const filterStatus = document.getElementById("filterStatus");
+  const filterType = document.getElementById("filterType");
+  const filterAgent = document.getElementById("filterAgent");
+
+  function applyFilters() {
+    const searchText = searchInput.value.toLowerCase();
+    const statusVal = filterStatus.value;
+    const typeVal = filterType.value;
+    const agentVal = filterAgent.value;
+
+    const filtered = properties.filter(p => {
+      const matchesSearch = Object.values(p)
+        .join(" ")
+        .toLowerCase()
+        .includes(searchText);
+      const matchesStatus = !statusVal || p.status === statusVal;
+      const matchesType = !typeVal || p.type === typeVal;
+      const matchesAgent = !agentVal || p.agent === agentVal;
+      return matchesSearch && matchesStatus && matchesType && matchesAgent;
+    });
+
+    renderTable(filtered);
+  }
+
+  searchInput.addEventListener("input", applyFilters);
+  filterStatus.addEventListener("change", applyFilters);
+  filterType.addEventListener("change", applyFilters);
+  filterAgent.addEventListener("change", applyFilters);
+
+  renderTable();
+</script>
+
+</body>
+</html>

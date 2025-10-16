@@ -47,11 +47,26 @@ class UsersModel extends Model
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
 
+
+    //assigned Agent Name to Property
     public function getFullname($userID)
     {
         return $this->select('FirstName', 'MiddleName', 'LastName')
                      ->where('UserID', $userID);
     }
+
+   public function getTotalUsers()
+    {
+        return $this->builder()->countAllResults();
+    }
+
+    public function setOfflineToOnline($userID)
+    {
+        return $this->set('status', 'Online')
+                    ->where('UserID', $userID)
+                    ->update();
+    }
+
 
     
 
