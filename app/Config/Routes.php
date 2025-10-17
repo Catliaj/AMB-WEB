@@ -44,9 +44,12 @@ $routes->get('/admin/ManageProperties', 'AdminController::manageProperties');
 $routes->get('/admin/manageUsers', 'AdminController::manageUsers');
 $routes->get('/admin/userBookings', 'AdminController::userBooking');
 $routes->get('/admin/viewChats', 'AdminController::viewChats');
-$routes->get('/admin/logout', 'AdminController::logout');
+$routes->get('/admin/logout', 'AdminController::logoutAdmin');
+$routes->get('/admin/logout', 'AdminController::getUsers');
+
 
 //CRUD Admin
+
 
 
 

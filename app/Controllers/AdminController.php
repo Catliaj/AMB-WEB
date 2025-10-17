@@ -168,27 +168,56 @@ class AdminController extends BaseController
 
     public function manageProperties()
     {
+        $Property = new \App\Models\PropertyModel();
+        $data['properties'] = $Property->getPropertiesWithStatus();
+        $db = \Config\Database::connect();
+        $data['agents'] = $db->table('users')
+                         ->select('UserID, CONCAT(FirstName, " ", LastName) AS full_name')
+                         ->where('role', 'Agent')
+                         ->get()
+                         ->getResultArray();
+
+
+
+
+
+
         return view('Pages/admin/manage-properties', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
                 'fullname' => trim(session()->get('FirstName') . ' ' . session()->
                 get('LastName')),
                 'currentUserId' => session()->get('UserID'),
-                'otherUser' => null
+                'otherUser' => null,
+                'properties' => $data['properties'],
+                'agents' => $data['agents']
+                
             ]);
     }
 
     public function manageUsers()
     {
+
+        $userModel = new \App\Models\UsersModel();
+        $data['users'] = $userModel->getUsersList();
+
         return view('Pages/admin/manage-users', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
                 'fullname' => trim(session()->get('FirstName') . ' ' . session()->
                 get('LastName')),
                 'currentUserId' => session()->get('UserID'),
-                'otherUser' => null
+                'otherUser' => null,
+                'users' => $data['users'],
+                
+
+
+                
             ]);
     }
+
+
+
 
     public function userBooking()
     {
@@ -199,6 +228,7 @@ class AdminController extends BaseController
                 get('LastName')),
                 'currentUserId' => session()->get('UserID'),
                 'otherUser' => null
+               
             ]);
     }
 
@@ -217,6 +247,11 @@ class AdminController extends BaseController
     public function logoutAdmin(): ResponseInterface
     {
 
+
+        $userModel = new \App\Models\UsersModel();
+        $adminId = session()->get('UserID');
+
+        $userModel->setOnlineToOffline($adminId);
         session()->destroy();
         return redirect()->to('/');
     }

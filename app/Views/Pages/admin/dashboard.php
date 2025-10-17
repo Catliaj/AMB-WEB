@@ -376,8 +376,8 @@
         if (logoutModal) logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) closeLogoutModal(); });
         if (confirmLogout) confirmLogout.addEventListener('click', () => {
           closeLogoutModal();
-          window.location.href = '/';
-        });
+          window.location.href = '/admin/logout';
+        }, 300);
       }
       function hideLoader() {
         const ol = document.getElementById('loadingOverlay');
