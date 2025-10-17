@@ -67,6 +67,35 @@ class UsersModel extends Model
                     ->update();
     }
 
+    public function setOnlineToOffline($userID)
+    {
+        return $this->set('status', 'Offline')
+                    ->where('UserID', $userID)
+                    ->update();
+    }
+
+    public function getUsersList()
+    {
+        return $this->select('*')
+                    ->findAll();
+    }
+
+    public function getNameByID($userID)
+    {
+        if (!$userID) return null;
+
+        $user = $this->select('FirstName, LastName')
+                    ->where('UserID', $userID)
+                    ->first();
+
+        if ($user) {
+            return $user['FirstName'] . ' ' . $user['LastName'];
+        }
+
+        return null;
+    }
+
+
 
     
 

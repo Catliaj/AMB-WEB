@@ -100,6 +100,12 @@ class PropertyStatusHistoryModel extends Model
         return $this->where('New_Status', 'Cancelled')->countAllResults();
     }
 
+    public function findPropertiesByID($properttID)
+    {
+        //get the status history of a property by its ID
+        return $this->where('PropertyID', $properttID)->findAll();
+    }
+
 
 
 

@@ -108,11 +108,14 @@
         <option value="Condo">Condo</option>
         <option value="House">House</option>
       </select>
-      <select id="filterAgent">
-        <option value="">Agent</option>
-        <option value="Agent A">Agent A</option>
-        <option value="Agent B">Agent B</option>
-      </select>
+    <select id="filterAgent">
+  <option value="">All Agents</option>
+  <?php foreach ($agents as $agent): ?>
+    <option value="<?= esc($agent['full_name']); ?>"><?= esc($agent['full_name']); ?></option>
+  <?php endforeach; ?>
+  <option value="Unassigned">Unassigned</option>
+</select>
+
     </div>
 
     <div class="table-container">
@@ -129,7 +132,39 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <!-- Dynamic rows will be inserted here -->
+        <?php
+use App\Models\UsersModel;
+
+$userModel = new UsersModel();
+
+foreach ($properties as $property):
+    $getAgentName = $userModel->getNameByID($property['agent_assigned']);
+?>
+    <tr>
+        <td><?= esc($property['PropertyID']); ?></td>
+        <td><?= esc($property['Title']); ?></td>
+        <td><?= esc($property['Property_Type']); ?></td>
+        <td>₱<?= esc(number_format($property['Price'], 2)); ?></td>
+        <td><?= esc($property['Location']); ?></td>
+        <td><?= esc($property['New_Status'] ?? 'N/A'); ?></td>
+        <td><?= esc($getAgentName ?? 'Unassigned'); ?></td>
+        <td class="actions">
+            <button class="action-btn" onclick="viewProperty(<?= $property['PropertyID']; ?>)">
+                <i data-lucide="eye"></i>
+            </button>
+            <button class="action-btn" onclick="editProperty(<?= $property['PropertyID']; ?>)">
+                <i data-lucide="edit-2"></i>
+            </button>
+            <button class="action-btn danger" onclick="openDeleteModal(<?= $property['PropertyID']; ?>)">
+                <i data-lucide="trash-2"></i>
+            </button>
+        </td>
+    </tr>
+<?php endforeach; ?>
+
+        </tbody>
       </table>
     </div>
   </main>
@@ -206,54 +241,54 @@
   const newImages = document.getElementById("newImages");
   let imageFiles = [];
 
-  const properties = [
-    { id: "PROP001", title: "Modern Studio Apartment", type: "Apartment", price: "₱25,000", location: "Makati", status: "Available", agent: "Agent A", images: [] },
-    { id: "PROP002", title: "Elegant Condo Unit", type: "Condo", price: "₱35,000", location: "Taguig", status: "Reserved", agent: "Agent B", images: [] },
-    { id: "PROP003", title: "Family House with Garden", type: "House", price: "₱50,000", location: "Quezon City", status: "Sold", agent: "Agent A", images: [] },
-  ];
+  // 🟢 Embed PHP properties into JavaScript as JSON
+  const properties = <?= json_encode($properties) ?>;
 
-  function renderTable(list = properties) {
+  // 🟢 Utility to render table rows dynamically
+  
+  function renderTable(data = properties) {
     tableBody.innerHTML = "";
-    list.forEach((p, i) => {
+    data.forEach((p) => {
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td>${p.id}</td>
-        <td>${p.title}</td>
-        <td>${p.type}</td>
-        <td>${p.price}</td>
-        <td>${p.location}</td>
-        <td>${p.status}</td>
-        <td>${p.agent}</td>
+        <td>${p.PropertyID}</td>
+        <td>${p.Title}</td>
+        <td>${p.Property_Type}</td>
+        <td>₱${Number(p.Price).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        <td>${p.Location}</td>
+        <td>${p.New_Status ?? "N/A"}</td>
+        <td>${p.agent_name ?? "Unassigned"}</td>
         <td class="actions">
-          <button class="action-btn" onclick="viewProperty(${i})"><i data-lucide='eye'></i></button>
-          <button class="action-btn" onclick="editProperty(${i})"><i data-lucide='edit-2'></i></button>
-          <button class="action-btn danger" onclick="openDeleteModal(${i})"><i data-lucide='trash-2'></i></button>
-        </td>`;
+          <button class="action-btn" onclick="viewProperty(${p.PropertyID})">
+            <i data-lucide='eye'></i>
+          </button>
+          <button class="action-btn" onclick="editProperty(${p.PropertyID})">
+            <i data-lucide='edit-2'></i>
+          </button>
+          <button class="action-btn danger" onclick="openDeleteModal(${p.PropertyID})">
+            <i data-lucide='trash-2'></i>
+          </button>
+        </td>
+      `;
       tableBody.appendChild(row);
     });
     lucide.createIcons();
   }
 
-  window.viewProperty = function(i) {
-    const p = properties[i];
-    document.getElementById("viewID").textContent = p.id;
-    document.getElementById("viewTitle").textContent = p.title;
-    document.getElementById("viewType").textContent = p.type;
-    document.getElementById("viewPrice").textContent = p.price;
-    document.getElementById("viewLocation").textContent = p.location;
-    document.getElementById("viewStatus").textContent = p.status;
-    document.getElementById("viewAgent").textContent = p.agent;
+    
 
-    const gallery = document.getElementById("viewImageGallery");
-    gallery.innerHTML = "";
-    if (p.images.length === 0)
-      gallery.innerHTML = "<p style='color:var(--muted);'>No images available.</p>";
-    else
-      p.images.forEach(src => {
-        const img = document.createElement("img");
-        img.src = src;
-        gallery.appendChild(img);
-      });
+  // 🟢 View Property Modal
+  window.viewProperty = function (id) {
+    const p = properties.find(prop => prop.PropertyID == id);
+    if (!p) return;
+
+    document.getElementById("viewID").textContent = p.PropertyID;
+    document.getElementById("viewTitle").textContent = p.Title;
+    document.getElementById("viewType").textContent = p.Property_Type;
+    document.getElementById("viewPrice").textContent = "₱" + Number(p.Price).toLocaleString();
+    document.getElementById("viewLocation").textContent = p.Location;
+    document.getElementById("viewStatus").textContent = p.New_Status ?? "N/A";
+    document.getElementById("viewAgent").textContent = p.agent_name ?? "Unassigned";
 
     viewModal.classList.add("active");
   };
@@ -262,50 +297,7 @@
     document.getElementById(id).classList.remove("active");
   }
 
-  document.getElementById("btnAddProperty").onclick = () => {
-    addModal.classList.add("active");
-    imageFiles = [];
-    multiPreview.innerHTML = "";
-  };
-
-  newImages.addEventListener("change", function() {
-    [...this.files].forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        imageFiles.push(e.target.result);
-        const div = document.createElement("div");
-        div.innerHTML = `<img src="${e.target.result}"><button class="remove-img">&times;</button>`;
-        div.querySelector(".remove-img").onclick = () => {
-          imageFiles = imageFiles.filter(img => img !== e.target.result);
-          div.remove();
-        };
-        multiPreview.appendChild(div);
-      };
-      reader.readAsDataURL(file);
-    });
-  });
-
-  document.getElementById("saveProperty").onclick = () => {
-    const title = document.getElementById("newTitle").value.trim();
-    const type = document.getElementById("newType").value;
-    const priceVal = document.getElementById("newPrice").value.trim();
-    const location = document.getElementById("newLocation").value.trim();
-    const status = document.getElementById("newStatus").value;
-    const agent = document.getElementById("newAgent").value;
-
-    if (!title || !type || !priceVal || !location)
-      return alert("Please fill all fields.");
-
-    const id = "PROP" + String(properties.length + 1).padStart(3, "0");
-    const price = "₱" + priceVal;
-    properties.push({ id, title, type, price, location, status, agent, images: [...imageFiles] });
-
-    addModal.classList.remove("active");
-    renderTable();
-  };
-
-  document.getElementById("cancelAdd").onclick = () => addModal.classList.remove("active");
-
+  // 🟢 Filters
   const searchInput = document.getElementById("searchInput");
   const filterStatus = document.getElementById("filterStatus");
   const filterType = document.getElementById("filterType");
@@ -322,9 +314,9 @@
         .join(" ")
         .toLowerCase()
         .includes(searchText);
-      const matchesStatus = !statusVal || p.status === statusVal;
-      const matchesType = !typeVal || p.type === typeVal;
-      const matchesAgent = !agentVal || p.agent === agentVal;
+      const matchesStatus = !statusVal || (p.New_Status && p.New_Status === statusVal);
+      const matchesType = !typeVal || (p.Property_Type && p.Property_Type === typeVal);
+      const matchesAgent = !agentVal || (p.agent_name && p.agent_name === agentVal);
       return matchesSearch && matchesStatus && matchesType && matchesAgent;
     });
 
@@ -336,8 +328,10 @@
   filterType.addEventListener("change", applyFilters);
   filterAgent.addEventListener("change", applyFilters);
 
+  // 🟢 Initialize
   renderTable();
 </script>
+
 
 </body>
 </html>

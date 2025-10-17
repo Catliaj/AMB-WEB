@@ -49,10 +49,37 @@ class PropertyModel extends Model
 
     
 
-     public function getTotalProperties()
+    public function getTotalProperties()
     {
         return $this->builder()->countAllResults();
     }
+
+    public function getPropertiesByAgent($agentID)
+    {
+        return $this->where('agent_assigned', $agentID)->findAll();
+    }
+
+    public function getAllProperties()
+    {
+        return $this->findAll();
+    }
+
+    public function getPropertiesWithStatus()
+    {
+        return $this->select('
+                property.*, 
+                propertyStatusHistory.New_Status AS New_Status,
+                CONCAT(users.FirstName, " ", users.LastName) AS agent_name
+            ')
+            ->join('propertyStatusHistory', 'propertyStatusHistory.PropertyID = property.PropertyID', 'left')
+            ->join('users', 'users.UserID = property.agent_assigned', 'left')
+            ->findAll();
+    }
+
+
+
+
+
 
 
 

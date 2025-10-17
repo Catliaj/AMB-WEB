@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Manage Users | Admin Dashboard</title>
-  <script src="https://unpkg.com/lucide@latest"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="<?= base_url('assets/styles/admin-style.css')?>">
 
   <style>
@@ -194,7 +195,7 @@
     <header style="display:flex;justify-content:space-between;align-items:center;">
       <h1><i data-lucide="users"></i> Manage Users</h1>
       <button class="btn primary" id="addUserBtn" style="padding:8px 14px;border:none;border-radius:8px;background:#2563eb;color:white;cursor:pointer;">
-        <i data-lucide="user-plus"></i> Add User
+        <i data-lucide="user-plus"></i> Add Agent
       </button>
     </header>
 
@@ -216,7 +217,30 @@
               <th>UserID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody>
+            <?php foreach ($users as $user): ?>
+              <tr>
+
+                <td><?= esc($user['UserID']) ?></td>
+                <td><?= esc($user['FirstName'] . ' ' . $user['LastName']) ?></td>
+                <td><?= esc($user['Email']) ?></td>
+                <td><?= esc($user['Role']) ?></td>
+
+                <td>
+                  <span class="toggle <?= $user['status'] === 'Online' ? 'active' : '' ?>">
+                    <?= esc($user['status']) ?>
+                  </span>
+                </td>
+
+                <td class="actions">
+                  <button class="icon-btn" title="Edit"><i data-lucide="edit-3"></i></button>
+                  <button class="icon-btn danger" title="Delete"><i data-lucide="trash-2"></i></button>
+                  <button class="icon-btn" title="View"><i data-lucide="eye"></i></button>
+                </td>
+
+              </tr>
+          <?php endforeach; ?>
+          </tbody>
         </table>
       </div>
 
@@ -243,125 +267,135 @@
     </div>
   </div>
 
-  <script>
-    lucide.createIcons();
+  <script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
 
-    const modal = document.getElementById('userModal');
-    const addBtn = document.getElementById('addUserBtn');
-    const closeModal = document.getElementById('closeModal');
-    const saveUser = document.getElementById('saveUser');
-    const userTable = document.querySelector('#userTable tbody');
-    const userDetails = document.getElementById('userDetails');
-    const searchInput = document.getElementById('searchInput');
-    const roleFilter = document.getElementById('roleFilter');
+  const modal = document.getElementById('userModal');
+  const addBtn = document.getElementById('addUserBtn');
+  const closeModal = document.getElementById('closeModal');
+  const saveUser = document.getElementById('saveUser');
+  const userTable = document.querySelector('#userTable tbody');
+  const userDetails = document.getElementById('userDetails');
+  const searchInput = document.getElementById('searchInput');
+  const roleFilter = document.getElementById('roleFilter');
+  const users = <?= json_encode($users) ?>;
+  let editingIndex = null;
 
-    let editingIndex = null;
-    let users = [
-      { id: '#001', name: 'John Doe', email: 'john@example.com', role: 'Client', status: 'Online' },
-      { id: '#002', name: 'Jane Smith', email: 'jane@company.com', role: 'Agent', status: 'Offline' },
-      { id: '#003', name: 'Alex Johnson', email: 'alex@admin.com', role: 'Admin', status: 'Online' },
-    ];
+  function renderTable(search = '', role = '') {
+    const tbody = document.querySelector('#userTable tbody');
+    tbody.innerHTML = '';
 
-    function renderTable(filterText = '', filterRole = '') {
-      userTable.innerHTML = '';
-      users
-        .filter(u => Object.values(u).join(' ').toLowerCase().includes(filterText.toLowerCase()))
-        .filter(u => !filterRole || u.role === filterRole)
-        .forEach((u, i) => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${u.id}</td>
-            <td>${u.name}</td>
-            <td>${u.email}</td>
-            <td>${u.role}</td>
-            <td><span class="toggle ${u.status === 'Online' ? 'active' : ''}" data-index="${i}">${u.status}</span></td>
-            <td class="actions">
-              <button class="icon-btn" data-edit="${i}" title="Edit"><i data-lucide="edit-3"></i></button>
-              <button class="icon-btn danger" data-del="${i}" title="Delete"><i data-lucide="trash-2"></i></button>
-              <button class="icon-btn" data-view="${i}" title="View"><i data-lucide="eye"></i></button>
-            </td>`;
-          userTable.appendChild(tr);
-        });
-      lucide.createIcons();
-    }
-
-    renderTable();
-
-    addBtn.onclick = () => {
-      modal.style.display = 'flex';
-      editingIndex = null;
-      document.getElementById('firstName').value = '';
-      document.getElementById('lastName').value = '';
-      document.getElementById('email').value = '';
-      document.getElementById('role').value = 'Client';
-    };
-
-    closeModal.onclick = () => modal.style.display = 'none';
-    window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
-
-    saveUser.onclick = () => {
-      const f = document.getElementById('firstName').value.trim();
-      const l = document.getElementById('lastName').value.trim();
-      const e = document.getElementById('email').value.trim();
-      const r = document.getElementById('role').value;
-      if (!f || !l || !e) return alert('Please complete all fields.');
-
-      if (editingIndex !== null) {
-        users[editingIndex] = { ...users[editingIndex], name: `${f} ${l}`, email: e, role: r };
-      } else {
-        const id = '#' + String(users.length + 1).padStart(3, '0');
-        users.unshift({ id, name: `${f} ${l}`, email: e, role: r, status: 'Offline' });
-        alert(`${f} ${l} has been added successfully!`);
-      }
-
-      modal.style.display = 'none';
-      renderTable(searchInput.value, roleFilter.value);
-    };
-
-    userTable.addEventListener('click', e => {
-      const btn = e.target.closest('button');
-      const toggle = e.target.closest('.toggle');
-      btn.disable = true;
-      if (!btn && !toggle) return;
-
-      if (toggle) {
-        const i = toggle.dataset.index;
-        users[i].status = users[i].status === 'Online' ? 'Offline' : 'Online';
-        renderTable(searchInput.value, roleFilter.value);
-      }
-
-      if (btn?.dataset.del !== undefined) {
-        if (confirm('Delete this user?')) {
-          users.splice(btn.dataset.del, 1);
-          renderTable(searchInput.value, roleFilter.value);
-        }
-      }
-
-      if (btn?.dataset.edit !== undefined) {
-        editingIndex = btn.dataset.edit;
-        const u = users[editingIndex];
-        const [f, l] = u.name.split(' ');
-        document.getElementById('firstName').value = f;
-        document.getElementById('lastName').value = l || '';
-        document.getElementById('email').value = u.email;
-        document.getElementById('role').value = u.role;
-        modal.style.display = 'flex';
-      }
-
-      if (btn?.dataset.view !== undefined) {
-        const u = users[btn.dataset.view];
-        userDetails.innerHTML = `
-          <div class="profile-pic"><img src="https://via.placeholder.com/100" alt="Profile"></div>
-          <h3>${u.name}</h3>
-          <p style="color:var(--muted);">${u.role} • ${u.email}</p>
-          <p>Status: <strong>${u.status}</strong></p>`;
-      }
-
-
+    search = search.toLowerCase();
+    const filtered = users.filter(u => {
+      const fullName = (u.FirstName + ' ' + u.LastName).toLowerCase();
+      const matchesSearch = fullName.includes(search) || u.Email.toLowerCase().includes(search);
+      const matchesRole = !role || u.Role === role;
+      return matchesSearch && matchesRole;
     });
 
-    searchInput.addEventListener('input', () => renderTable(searchInput.value, roleFilter.value));
-    roleFilter.addEventListener('change', () => renderTable(searchInput.value, roleFilter.value));
-  </script>
+    filtered.forEach((u, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${u.UserID}</td>
+        <td>${u.FirstName} ${u.LastName}</td>
+        <td>${u.Email}</td>
+        <td>${u.Role}</td>
+        <td><span class="toggle ${u.status === 'Online' ? 'active' : ''}" data-index="${i}">${u.status}</span></td>
+        <td class="actions">
+          <button class="icon-btn" data-edit="${i}" title="Edit"><i data-lucide="edit-3"></i></button>
+          <button class="icon-btn danger" data-del="${i}" title="Delete"><i data-lucide="trash-2"></i></button>
+          <button class="icon-btn" data-view="${i}" title="View"><i data-lucide="eye"></i></button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+
+    lucide.createIcons();
+  }
+
+  addBtn.onclick = () => {
+    modal.style.display = 'flex';
+    editingIndex = null;
+    document.getElementById('firstName').value = '';
+    document.getElementById('lastName').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('role').value = 'Agent';
+  };
+
+  closeModal.onclick = () => modal.style.display = 'none';
+  window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+  saveUser.onclick = () => {
+    const f = document.getElementById('firstName').value.trim();
+    const l = document.getElementById('lastName').value.trim();
+    const e = document.getElementById('email').value.trim();
+    const r = document.getElementById('role').value;
+    if (!f || !l || !e) return alert('Please complete all fields.');
+
+    if (editingIndex !== null) {
+      users[editingIndex].FirstName = f;
+      users[editingIndex].LastName = l;
+      users[editingIndex].Email = e;
+      users[editingIndex].Role = r;
+    } else {
+      const newUser = {
+        UserID: users.length + 1,
+        FirstName: f,
+        LastName: l,
+        Email: e,
+        Role: r,
+        status: 'Offline'
+      };
+      users.unshift(newUser);
+      alert(`${f} ${l} has been added successfully!`);
+    }
+
+    modal.style.display = 'none';
+    renderTable(searchInput.value, roleFilter.value);
+  };
+
+  userTable.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    const toggle = e.target.closest('.toggle');
+    if (!btn && !toggle) return;
+
+    if (toggle) {
+      const i = toggle.dataset.index;
+      users[i].status = users[i].status === 'Online' ? 'Offline' : 'Online';
+      renderTable(searchInput.value, roleFilter.value);
+    }
+
+    if (btn?.dataset.del !== undefined) {
+      if (confirm('Delete this user?')) {
+        users.splice(btn.dataset.del, 1);
+        renderTable(searchInput.value, roleFilter.value);
+      }
+    }
+
+    if (btn?.dataset.edit !== undefined) {
+      editingIndex = btn.dataset.edit;
+      const u = users[editingIndex];
+      document.getElementById('firstName').value = u.FirstName;
+      document.getElementById('lastName').value = u.LastName;
+      document.getElementById('email').value = u.Email;
+      document.getElementById('role').value = u.Role;
+      modal.style.display = 'flex';
+    }
+
+    if (btn?.dataset.view !== undefined) {
+      const u = users[btn.dataset.view];
+      userDetails.innerHTML = `
+        <div class="profile-pic"><img src="https://via.placeholder.com/100" alt="Profile"></div>
+        <h3>${u.FirstName} ${u.LastName}</h3>
+        <p style="color:var(--muted);">${u.Role} • ${u.Email}</p>
+        <p>Status: <strong>${u.status}</strong></p>`;
+    }
+  });
+
+  renderTable();
+  searchInput.addEventListener('input', () => renderTable(searchInput.value, roleFilter.value));
+  roleFilter.addEventListener('change', () => renderTable(searchInput.value, roleFilter.value));
+</script>
+
 </body>
 </html>
