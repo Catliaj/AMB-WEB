@@ -32,6 +32,7 @@ $routes->setAutoRoute(true);
  * Route Definitions
  * --------------------------------------------------------------------
  */
+
 $routes->get('/', 'Home::index');
 $routes->post('/users/login', 'UserController::login');
 $routes->get('/users/clientHomepage', 'UserController::clientHomepage');
