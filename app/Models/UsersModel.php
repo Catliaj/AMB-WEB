@@ -95,6 +95,11 @@ class UsersModel extends Model
         return null;
     }
 
+    public function getAllAgents()
+    {
+        return $this->where('Role', 'Agent')->findAll();
+    }
+
 
 
     

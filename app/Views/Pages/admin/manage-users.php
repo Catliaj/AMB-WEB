@@ -41,16 +41,17 @@
     .icon-btn:hover {
       background: var(--hover-overlay);
       transform: scale(1.05);
+
     }
 
-    .icon-btn.danger {
-      color: #f87171;
-    }
+    .icon-btn i svg {
+  width: 28px !important;       /* Force icon size */
+  height: 28px !important;
+  stroke-width: 2.2 !important; /* Thicker stroke for clarity */
+}
+    
 
-    .icon-btn svg {
-      width: 20px;
-      height: 20px;
-    }
+  
 
     .modal {
       position: fixed;
@@ -173,7 +174,7 @@
 
 <body>
     <aside class="sidebar">
-    <img src="amb_logo.png" alt="AMB Logo">
+     <img src="<?= base_url('assets/img/amb_logo.png')?>" alt="AMB Logo">
     <nav class="nav">
       <a href="/admin/adminHomepage" ><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="/admin/manageUsers" class="active"><i data-lucide="users"></i> Manage Users</a>
@@ -396,6 +397,18 @@
   searchInput.addEventListener('input', () => renderTable(searchInput.value, roleFilter.value));
   roleFilter.addEventListener('change', () => renderTable(searchInput.value, roleFilter.value));
 </script>
+
+
+  <script>
+    lucide.createIcons({ 
+  attrs: { 
+    width: 22, 
+    height: 22, 
+    strokeWidth: 2 
+  } 
+});
+
+  </script>
 
 </body>
 </html>

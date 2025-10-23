@@ -164,11 +164,11 @@ class UserController extends BaseController
             // Redirect by role
             switch ($user['Role']) {
                 case 'Agent':
-                    return redirect()->to('/users/agentHomepage');
+                    return redirect()->to('/users/agentHomepage')->with('success', 'Login successful!');
                 case 'Admin':
-                    return redirect()->to('/admin/adminHomepage');
+                    return redirect()->to('/admin/adminHomepage')->with('success', 'Login successful!');
                 default:
-                    return redirect()->to('/users/clientHomepage');
+                    return redirect()->to('/users/clientHomepage')->with('success', 'Login successful!');
             }
         }
 

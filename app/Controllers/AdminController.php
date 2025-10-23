@@ -8,57 +8,9 @@ use App\Models\UsersModel;
 
 class AdminController extends BaseController
 {
-    public function index()
-    {
-        //
+   
 
-    }
-
-    public function createAgent()
-    {
-        //
-    }
-
-    public function storeAgent()
-    {
-        //
-    }
-
-    public function showUsers($id = null)
-    {
-        //
-    }
-
-    public function editUsers($id = null)
-    {
-        //
-    }
-
-    public function updateUsers($id = null)
-    {
-        //
-    }
-
-    public function deleteUsers($id = null)
-    {
-        //
-    }
-
-    public function manageAgents()
-    {
-        //
-    }
-
-    public function viewReports()
-    {
-        //
-    }
-
-    public function logout(): ResponseInterface
-    {
-        session()->destroy();
-        return redirect()->to('/');
-    }
+   
 
     public function adminDashboard()
     {
@@ -169,7 +121,9 @@ class AdminController extends BaseController
     public function manageProperties()
     {
         $Property = new \App\Models\PropertyModel();
+        $usersModel = new \App\Models\UsersModel();
         $data['properties'] = $Property->getPropertiesWithStatus();
+        $data['agentss'] = $usersModel->getAllAgents();
         $db = \Config\Database::connect();
         $data['agents'] = $db->table('users')
                          ->select('UserID, CONCAT(FirstName, " ", LastName) AS full_name')
@@ -190,7 +144,8 @@ class AdminController extends BaseController
                 'currentUserId' => session()->get('UserID'),
                 'otherUser' => null,
                 'properties' => $data['properties'],
-                'agents' => $data['agents']
+                'agents' => $data['agents'],
+                'agentss' => $data['agentss']
                 
             ]);
     }
@@ -257,7 +212,126 @@ class AdminController extends BaseController
     }
 
 
+   public function storePropertys()
+    {
+        $propertyModel = new \App\Models\PropertyModel();
+        $propertyImagesModel = new \App\Models\PropertyImageModel();
+
+        $data = [
+            'UserID' => session()->get('UserID'),
+            'Title' => $this->request->getPost('Title'),
+            'Description' => $this->request->getPost('Description'),
+            'Property_Type' => $this->request->getPost('Property_Type'),
+            'Price' => $this->request->getPost('Price'),
+            'Location' => $this->request->getPost('Location'),
+            'Size' => $this->request->getPost('Size'),
+            'Bedrooms' => $this->request->getPost('Bedrooms'),
+            'Bathrooms' => $this->request->getPost('Bathrooms'),
+            'Parking_Spaces' => $this->request->getPost('Parking_Spaces'),
+            'agent_assigned' => $this->request->getPost('agent_assigned'),
+            'Corporation' => $this->request->getPost('Corporation')
+        ];
+
+        $propertyID = $propertyModel->createWithStatusAndAgent($data);
+
+        if ($propertyID) {
+            $images = $this->request->getFiles();
+
+            if ($images && isset($images['images'])) {
+                foreach ($images['images'] as $img) {
+                    if ($img->isValid() && !$img->hasMoved()) {
+                       
+                        $newName = $img->getRandomName();
+                        $uploadPath = FCPATH . 'uploads/properties/';
+
+                        
+                        if (!is_dir($uploadPath)) {
+                            mkdir($uploadPath, 0777, true);
+                        }
+
+                        $img->move($uploadPath, $newName);
+
+                       
+                        $propertyImagesModel->insert([
+                            'PropertyID' => $propertyID,
+                            'image' => $newName
+                        ]);
+                    }
+                }
+            }
+        }
+        
+
+        if ($propertyID) {
+            return redirect()->to('/admin/ManageProperties')->with('success', 'Property added successfully!');
+        } else {
+            return redirect()->back()->with('error', 'Failed to add property.');
+        }
+    }
+
+
+    public function getProperty($id)
+    {
+        $propertyModel = new \App\Models\PropertyModel();
+        $propertyImagesModel = new \App\Models\PropertyImageModel();
+        $userModel = new \App\Models\UsersModel();
+        $statusModel = new \App\Models\PropertyStatusHistoryModel();
+
+        $property = $propertyModel->find($id);
+        if (!$property) return $this->response->setJSON(['error' => 'Property not found']);
+
+        
+        $status = $statusModel->where('PropertyID', $id)->orderBy('Date', 'DESC')->first();
+        $property['New_Status'] = $status['New_Status'] ?? 'Available';
+
+   
+        $agent = $userModel->find($property['agent_assigned']);
+        $property['AgentName'] = $agent ? $agent['FirstName'] . ' ' . $agent['LastName'] : 'Unassigned';
+
+       
+        $images = $propertyImagesModel->where('PropertyID', $id)->findAll();
+        $property['images'] = array_map(function($img) {
+            return base_url('/uploads/properties/' . $img['Image']); 
+        }, $images);
+
+        return $this->response->setJSON($property);
+    }
+
+
+    public function deleteProperty($id)
+    {
+        $propertyModel = new \App\Models\PropertyModel();
+        $imageModel = new \App\Models\PropertyImageModel();
 
     
+        $property = $propertyModel->find($id);
+        if (!$property) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Property not found']);
+        }
+
+    
+        $images = $imageModel->where('PropertyID', $id)->findAll();
+
+    
+        foreach ($images as $img) {
+            $filePath = FCPATH . '/uploads/properties/' . $img['Image'];
+            if (file_exists($filePath)) {
+                unlink($filePath); 
+            }
+        }
+
+    
+        $imageModel->where('PropertyID', $id)->delete();
+
+    
+        $propertyModel->delete($id);
+
+        return $this->response->setJSON(['status' => 'success', 'message' => 'Property deleted successfully']);
+    }
+
+
+
+
+
 
 }

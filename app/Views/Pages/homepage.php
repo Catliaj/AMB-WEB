@@ -15,12 +15,12 @@
 <body>
         <div class="video-background">
             <div class="video-foreground">
-              <!--   <iframe 
+              <iframe 
                src="https://www.youtube.com/embed/jPkBJY1KI_Q?autoplay=1&mute=1&loop=1&playlist=jPkBJY1KI_Q&controls=0&showinfo=0&modestbranding=1"
                 frameborder="0"
                 allow="autoplay; fullscreen"
                 allowfullscreen>
-                </iframe> --->
+                </iframe> 
             </div>
         </div>
 
@@ -496,18 +496,24 @@ document.getElementById('employmentStatus').addEventListener('change', function(
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <!-- ✅ jQuery CDN -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 $(document).ready(function () {
 
-    // Step 1: Sign Up → Send OTP
+    // Step 1: Request OTP
     $('#signupForm').on('submit', function (e) {
         e.preventDefault();
 
         const email = $('#signupEmail').val().trim();
 
         if (email === '') {
-            alert('Please enter your email.');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Email',
+                text: 'Please enter your email before proceeding.',
+            });
             return;
         }
 
@@ -516,55 +522,100 @@ $(document).ready(function () {
             type: 'POST',
             data: { Email: email },
             dataType: 'json',
+            beforeSend: function() {
+                Swal.fire({
+                    title: 'Sending OTP...',
+                    text: 'Please wait.',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+            },
             success: function (response) {
+                Swal.close();
                 if (response.status === 'success') {
-                    alert(response.message);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'OTP Sent!',
+                        text: response.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
 
-                    // Pass email to OTP modal
                     $('#otpEmail').val(email);
-
-                    // Hide signup modal and show OTP modal
                     $('#signupModal').modal('hide');
                     $('#otpModal').modal('show');
-
-                    // Save all signup form data (except OTP) in sessionStorage
                     sessionStorage.setItem('signupData', JSON.stringify($('#signupForm').serializeArray()));
-
                 } else {
-                    alert(response.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed!',
+                        text: response.message,
+                    });
                 }
             },
-            error: function () {
-                alert('Something went wrong while sending OTP.');
+            error: function (xhr) {
+                Swal.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON?.message || 'Something went wrong while sending OTP.',
+                });
             }
         });
     });
 
 
-    // Step 2: Verify OTP → Complete Registration
+    // Step 2: Verify OTP
     $('#otpForm').on('submit', function (e) {
         e.preventDefault();
 
-        const otpData = $(this).serializeArray(); // contains otp_code + email
+        const otpData = $(this).serializeArray();
         const signupData = JSON.parse(sessionStorage.getItem('signupData') || '[]');
         const fullData = [...signupData, ...otpData];
 
         $.ajax({
-            url: '<?= base_url('/users/signup') ?>', // ✅ Correct route (matches your $routes)
+            url: '<?= base_url('/users/signup') ?>',
             type: 'POST',
             data: fullData,
             dataType: 'json',
+            beforeSend: function() {
+                Swal.fire({
+                    title: 'Verifying...',
+                    text: 'Please wait while we check your OTP.',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+            },
             success: function (response) {
+                Swal.close();
                 if (response.status === 'success') {
-                    alert(response.message);
-                    $('#otpModal').modal('hide');
-                    sessionStorage.removeItem('signupData');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+
+                    setTimeout(() => {
+                        $('#otpModal').modal('hide');
+                        sessionStorage.removeItem('signupData');
+                    }, 2000);
                 } else {
-                    alert(response.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid OTP',
+                        text: response.message || 'Please check and try again.',
+                    });
                 }
             },
-            error: function () {
-                alert('Error verifying OTP. Please try again.');
+            error: function (xhr) {
+                Swal.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    text: xhr.responseJSON?.message || 'Something went wrong. Please try again later.',
+                });
             }
         });
     });
@@ -572,11 +623,55 @@ $(document).ready(function () {
 });
 </script>
 
+<script src="<?= base_url('bootstrap5/js/bootstrap.min.js')?>"> </script>
 
 
 
 
-    <script src="<?= base_url('bootstrap5/js/bootstrap.min.js')?>"> </script>
+<script>
+  const loginForm = document.querySelector('form[action="<?= base_url('users/login') ?>"]');
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault(); // stop form from submitting immediately
+
+      Swal.fire({
+        title: 'Logging in...',
+        text: 'Please wait while we check your credentials.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // ⏱ Add a short delay so the alert is visible before the redirect
+      setTimeout(() => {
+        loginForm.submit();
+      }, 2000); // 2000ms = 2 seconds delay
+    });
+  }
+
+  // ✅ Display success or error alerts after redirect
+  <?php if (session()->getFlashdata('success')): ?>
+    Swal.fire({
+      icon: 'success',
+      title: 'Welcome!',
+      text: '<?= session()->getFlashdata('success') ?>',
+      showConfirmButton: false,
+      timer: 2000
+    });
+  <?php elseif (session()->getFlashdata('error')): ?>
+    Swal.fire({
+      icon: 'error',
+      title: 'Oops...',
+      text: '<?= session()->getFlashdata('error') ?>'
+    });
+  <?php endif; ?>
+</script>
+
+
+
+
 
 
 </body>

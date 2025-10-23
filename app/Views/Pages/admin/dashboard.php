@@ -30,7 +30,7 @@
 
 
   <aside class="sidebar">
-    <img src="amb_logo.png" alt="AMB Logo">
+    <img src="<?= base_url('assets/img/amb_logo.png')?>" alt="AMB Logo">
     <nav class="nav">
       <a href="/admin/adminHomepage" class="active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
