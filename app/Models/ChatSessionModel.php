@@ -46,5 +46,6 @@ class ChatSessionModel extends Model
     protected $afterDelete    = [];
 
 
+
     
 }
