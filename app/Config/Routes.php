@@ -45,10 +45,14 @@ $routes->get('/admin/manageUsers', 'AdminController::manageUsers');
 $routes->get('/admin/userBookings', 'AdminController::userBooking');
 $routes->get('/admin/viewChats', 'AdminController::viewChats');
 $routes->get('/admin/logout', 'AdminController::logoutAdmin');
-$routes->get('/admin/logout', 'AdminController::getUsers');
+$routes->get('/admin/getusers', 'AdminController::getUsers');
+
+// Admin Property Management Routes
+$routes->get('/admin/getProperty/(:num)', 'AdminController::getProperty/$1');
+$routes->delete('admin/property/delete-property/(:num)', 'AdminController::deleteProperty/$1');
+$routes->post('admin/property/store-property', 'AdminController::storePropertys');
 
 
-//CRUD Admin
 
 
 

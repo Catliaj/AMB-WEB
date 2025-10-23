@@ -6,14 +6,14 @@ use CodeIgniter\Model;
 
 class PropertyImageModel extends Model
 {
-    protected $table            = 'property_images';
-    protected $primaryKey       = 'imageID';
+    protected $table            = 'propertyimage';
+    protected $primaryKey       = 'propertyImageID';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'PropertyID', 'image'
+        'PropertyID', 'Image'
     ];
 
     protected bool $allowEmptyInserts = false;

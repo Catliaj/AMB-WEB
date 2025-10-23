@@ -76,6 +76,47 @@ class PropertyModel extends Model
             ->findAll();
     }
 
+    public function createWithStatusAndAgent($data)
+    {
+        $this->db->transStart();
+
+        // 🟢 Lookup Agent UserID by name (if only name was provided)
+        if (!empty($data['agent_assigned']) && !is_numeric($data['agent_assigned'])) {
+            $userModel = new \App\Models\UsersModel();
+            $agent = $userModel->where('Role', 'Agent')
+                            ->groupStart()
+                            ->like('FirstName', $data['agent_assigned'])
+                            ->orLike('LastName', $data['agent_assigned'])
+                            ->groupEnd()
+                            ->first();
+            if ($agent) {
+                $data['agent_assigned'] = $agent['UserID']; // set actual UserID
+            } else {
+                $data['agent_assigned'] = null; // no matching agent
+            }
+        }
+
+        // 🟢 Insert into property
+        $this->insert($data);
+        $propertyID = $this->getInsertID();
+
+        // 🟢 Insert initial status into propertyStatusHistory
+        $statusModel = new \App\Models\PropertyStatusHistoryModel();
+        $statusModel->insert([
+            'PropertyID' => $propertyID,
+            'Old_Status' => 'Available',
+            'New_Status' => 'Available',
+            'Date'       => date('Y-m-d H:i:s')
+        ]);
+
+        $this->db->transComplete();
+        return $this->db->transStatus() ? $propertyID : false;
+    }
+
+
+    
+
+
 
 
 
