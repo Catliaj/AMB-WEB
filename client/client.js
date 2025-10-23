@@ -179,19 +179,41 @@ function setActiveNav() {
 
 // Favorites
 function toggleFavorite(propertyId) {
-    if (favorites.has(propertyId)) favorites.delete(propertyId);
-    else favorites.add(propertyId);
+    if (favorites.has(propertyId)) {
+        favorites.delete(propertyId);
+    } else {
+        favorites.add(propertyId);
+    }
 
     // On the browse page we re-render grid to update hearts
     if (document.getElementById('propertiesContainer')) {
         renderPropertiesGrid();
     } else {
-        // Update any favorite buttons visible on other pages
-        // naive approach: toggle class on elements that include "toggleFavorite" onclick
-        document.querySelectorAll('.property-favorite').forEach(btn => {
-            // no-op; easier to just refresh page visuals if needed
-        });
+        // Update favorite buttons on homepage/other pages
+        updateAllFavoriteButtons();
     }
+}
+
+// Add this new function right after toggleFavorite
+function updateAllFavoriteButtons() {
+    document.querySelectorAll('.property-favorite').forEach(btn => {
+        // Extract property ID from the onclick attribute
+        const onclickAttr = btn.getAttribute('onclick');
+        const match = onclickAttr.match(/toggleFavorite\((\d+)\)/);
+        
+        if (match) {
+            const propertyId = parseInt(match[1]);
+            const icon = btn.querySelector('i');
+            
+            if (favorites.has(propertyId)) {
+                btn.classList.add('active');
+                icon.className = 'bi bi-heart-fill fs-5';
+            } else {
+                btn.classList.remove('active');
+                icon.className = 'bi bi-heart fs-5';
+            }
+        }
+    });
 }
 
 // Browse rendering functions
@@ -293,7 +315,7 @@ function renderBookingCard(booking) {
     if (booking.status === 'confirmed') {
         actions = `
             <button class="btn btn-primary btn-sm me-2">View Details</button>
-            <button class="btn btn-outline-secondary btn-sm">Cancel Booking</button>
+            <button class="btn btn-danger btn-sm">Cancel Booking</button>
         `;
     } else if (booking.status === 'completed') {
         actions = `<button class="btn btn-sm" style="background-color: var(--accent); color: white; border: none;">Leave Review</button>`;
