@@ -7,13 +7,13 @@ use CodeIgniter\Model;
 class UsersModel extends Model
 {
     protected $table            = 'users';
-    protected $primaryKey       = 'userID';
+    protected $primaryKey       = 'UserID';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'FirstName', 'MiddleName', 'LastName', 'Birthdate', 'phoneNumber', 'Email', 'Password', 'Role'
+        'FirstName', 'MiddleName', 'LastName', 'Birthdate', 'phoneNumber', 'Email', 'Password', 'Role', 'status', 'created_at', 'updated_at'
     ];
     
 
@@ -46,4 +46,62 @@ class UsersModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+
+    //assigned Agent Name to Property
+    public function getFullname($userID)
+    {
+        return $this->select('FirstName', 'MiddleName', 'LastName')
+                     ->where('UserID', $userID);
+    }
+
+   public function getTotalUsers()
+    {
+        return $this->builder()->countAllResults();
+    }
+
+    public function setOfflineToOnline($userID)
+    {
+        return $this->set('status', 'Online')
+                    ->where('UserID', $userID)
+                    ->update();
+    }
+
+    public function setOnlineToOffline($userID)
+    {
+        return $this->set('status', 'Offline')
+                    ->where('UserID', $userID)
+                    ->update();
+    }
+
+    public function getUsersList()
+    {
+        return $this->select('*')
+                    ->findAll();
+    }
+
+    public function getNameByID($userID)
+    {
+        if (!$userID) return null;
+
+        $user = $this->select('FirstName, LastName')
+                    ->where('UserID', $userID)
+                    ->first();
+
+        if ($user) {
+            return $user['FirstName'] . ' ' . $user['LastName'];
+        }
+
+        return null;
+    }
+
+    public function getAllAgents()
+    {
+        return $this->where('Role', 'Agent')->findAll();
+    }
+
+
+
+    
+
 }

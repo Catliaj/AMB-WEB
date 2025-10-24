@@ -15,12 +15,12 @@
 <body>
         <div class="video-background">
             <div class="video-foreground">
-                <iframe 
-                src="https://www.youtube.com/embed/jPkBJY1KI_Q?autoplay=1&mute=1&loop=1&playlist=jPkBJY1KI_Q&controls=0&showinfo=0&modestbranding=1"
+              <iframe 
+               src="https://www.youtube.com/embed/jPkBJY1KI_Q?autoplay=1&mute=1&loop=1&playlist=jPkBJY1KI_Q&controls=0&showinfo=0&modestbranding=1"
                 frameborder="0"
                 allow="autoplay; fullscreen"
                 allowfullscreen>
-                </iframe>
+                </iframe> 
             </div>
         </div>
 
@@ -138,9 +138,6 @@
                 </div>
             </div>
         </div>
-
-
-
 
         <!-- Get data from the database-->
 
@@ -294,32 +291,39 @@
 
 
         <!-- Login Modal -->
-        <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+        <div class="login_backpanel modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
 
-                <div class="modal-content">
+                <div class="login_page modal-content">
 
-                    <div class="modal-header">
+                    <div class="modal-header text-center">
                         <h5 class="modal-title">Login</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn_close btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
 
                     <div class="modal-body">
+                            <img src="<?= base_url('assets/img/AMB_logo.png') ?>" alt="Account Logo" class="Account_Logo">
+
                         <form action="<?= base_url('users/login') ?>" method="post">
+                        <div class="mb-3 text-center">
+                            <h3 class="Welcome">WELCOME!</h3>
+                            <h6 class="msg">Welcome back! Log in to explore new property listings.</h6>
+                        </div>
                         <div class="mb-3">
-                            <label for="username" class="form-label">Email:</label>
-                            <input type="text" name="inputEmail" class="form-control" required>
+                            <input type="text" name="inputEmail" class="email_input form-control" placeholder="Email">
                         </div>
 
                         <div class="mb-3">
-                            <label for="password" class="form-label">Password:</label>
-                            <input type="password" name="inputPassword" class="form-control" required>
+                            <input type="password" name="inputPassword" class="form-control" placeholder="Password" required>
+                            <a href="">Forgot Password</a>
                         </div>
                         <button type="submit" class="btn btn-primary">Login</button>
+                        
+
                         </form>
 
                         <div class="text-center mt-3">
-                            <a href="/Users/CreateUsers">Create an account</a>
+                            <p>Don't have an account yet?<a href="/Users/CreateUsers"> Join Us</a></p>
                         </div>
                     </div>
                 </div>
@@ -327,74 +331,348 @@
         </div>
 
 
-           <!--Sign Up-->
-          <div class="modal fade" id="signupModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
+<!-- ✅ Signup Modal -->
+<div class="modal fade" id="signupModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
 
-                <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Sign Up</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-                    <div class="modal-header">
-                        <h5 class="modal-title">Login</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        <form action="<?= base_url('users/signup') ?>" method="post">
-                        <div class="mb-3">
-                            <label for="firstname" class="form-label">Firstname:</label>
-                            <input type="text" name="inputFirstName" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="middlename" class="form-label">Middlename:</label>
-                            <input type="text" name="inputMiddleName" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="lastname" class="form-label">Lastname:</label>
-                            <input type="text" name="inputLastName" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="lastname" class="form-label">Birthdate:</label>
-                            <input type="date" name="inputBirthdate" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="phoneNumber" class="form-label">Phone Number:</label>
-                            <input type="tel" name="inputPhoneNumber" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Email</label>
-                            <input type="text" name="inputEmail" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" name="inputPassword" class="form-control" required>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Sign up</button>
-                        </form>
-
-                        <div class="text-center mt-3">
-                            <a href="/Users/CreateUsers">Create an account</a>
-                        </div>
-                    </div>
-                </div>
+      <div class="modal-body">
+        <form id="signupForm">
+          <!-- First Row: First Name, Middle Name, Last Name -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-4">
+              <label class="form-label">First Name</label>
+              <input type="text" name="FirstName" class="form-control" placeholder="ex:Juan" required>
             </div>
-        </div>
+            <div class="col-md-4">
+              <label class="form-label">Middle Name</label>
+              <input type="text" name="MiddleName" class="form-control" placeholder="ex:Castillo" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Last Name</label>
+              <input type="text" name="LastName" class="form-control" placeholder="ex:Dela Cruz" required>
+            </div>
+          </div>
+
+          <!-- Second Row: Birthday, Phone Number -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Birthday</label>
+              <input type="date" name="Birthdate" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" name="phoneNumber" class="form-control" placeholder="ex:09*********" required>
+            </div>
+          </div>
+
+          <!-- Third Row: Email, Password -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" name="Email" id="signupEmail" class="form-control" placeholder="ex:juan@gmail.com" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Password</label>
+              <input type="password" name="Password" class="form-control" required>
+            </div>
+          </div>
+
+          <!-- Employment Status Dropdown -->
+          <div class="mb-3">
+            <label class="form-label">Employment Status</label>
+            <select name="employmentStatus" id="employmentStatus" class="form-select" required>
+              <option value="" selected disabled>Select Employment Status</option>
+              <option value="locally_employed">Locally Employed</option>
+              <option value="ofw">OFW (Overseas Filipino Worker)</option>
+            </select>
+          </div>
+
+          <!-- If Employed Locally -->
+          <div id="locallyEmployedFields" style="display: none;">
+            <div class="row g-2 mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Government ID</label>
+                <input type="file" name="governmentID" class="form-control" accept="image/*,.pdf">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">TIN ID</label>
+                <input type="file" name="tinID" class="form-control" accept="image/*,.pdf">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Selfie with ID</label>
+                <input type="file" name="selfieWithID" class="form-control" accept="image/*">
+              </div>
+            </div>
+          </div>
+
+          <!-- If Employed Overseas (OFW) -->
+          <div id="ofwFields" style="display: none;">
+            <div class="row g-2 mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Job Contract</label>
+                <input type="file" name="jobContract" class="form-control" accept="image/*,.pdf">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Passport</label>
+                <input type="file" name="passport" class="form-control" accept="image/*,.pdf">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Official Identity Document</label>
+                <input type="file" name="officialID" class="form-control" accept="image/*,.pdf">
+                <small class="form-text text-muted">Driver's license or any ID with signature and photo</small>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('employmentStatus').addEventListener('change', function() {
+  const localFields = document.getElementById('locallyEmployedFields');
+  const ofwFields = document.getElementById('ofwFields');
+  
+  // Hide both sections first
+  localFields.style.display = 'none';
+  ofwFields.style.display = 'none';
+  
+  // Remove required attribute from all file inputs
+  localFields.querySelectorAll('input').forEach(input => input.removeAttribute('required'));
+  ofwFields.querySelectorAll('input').forEach(input => input.removeAttribute('required'));
+  
+  // Show relevant section and set required
+  if (this.value === 'locally_employed') {
+    localFields.style.display = 'block';
+    localFields.querySelectorAll('input').forEach(input => input.setAttribute('required', 'required'));
+  } else if (this.value === 'ofw') {
+    ofwFields.style.display = 'block';
+    ofwFields.querySelectorAll('input').forEach(input => input.setAttribute('required', 'required'));
+  }
+});
+</script>
+
+<!-- ✅ OTP Modal -->
+<div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Email Verification</h5>
+      </div>
+
+      <div class="modal-body">
+        <form id="otpForm">
+          <input type="hidden" name="Email" id="otpEmail">
+          <div class="mb-3">
+            <label for="otp_code" class="form-label">Enter OTP</label>
+            <input type="number" name="otp_code" class="form-control" placeholder="6-digit code" required>
+          </div>
+          <button type="submit" class="btn btn-success w-100">Verify OTP</button>
+        </form>
+      </div>
+
+
+      
+    </div>
+  </div>
+</div>
 
 
 
 
-<!-- Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- ✅ jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function () {
+
+    // Step 1: Request OTP
+    $('#signupForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const email = $('#signupEmail').val().trim();
+
+        if (email === '') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Email',
+                text: 'Please enter your email before proceeding.',
+            });
+            return;
+        }
+
+        $.ajax({
+            url: '<?= base_url('users/request-otp') ?>',
+            type: 'POST',
+            data: { Email: email },
+            dataType: 'json',
+            beforeSend: function() {
+                Swal.fire({
+                    title: 'Sending OTP...',
+                    text: 'Please wait.',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+            },
+            success: function (response) {
+                Swal.close();
+                if (response.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'OTP Sent!',
+                        text: response.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    $('#otpEmail').val(email);
+                    $('#signupModal').modal('hide');
+                    $('#otpModal').modal('show');
+                    sessionStorage.setItem('signupData', JSON.stringify($('#signupForm').serializeArray()));
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed!',
+                        text: response.message,
+                    });
+                }
+            },
+            error: function (xhr) {
+                Swal.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON?.message || 'Something went wrong while sending OTP.',
+                });
+            }
+        });
+    });
+
+
+    // Step 2: Verify OTP
+    $('#otpForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const otpData = $(this).serializeArray();
+        const signupData = JSON.parse(sessionStorage.getItem('signupData') || '[]');
+        const fullData = [...signupData, ...otpData];
+
+        $.ajax({
+            url: '<?= base_url('/users/signup') ?>',
+            type: 'POST',
+            data: fullData,
+            dataType: 'json',
+            beforeSend: function() {
+                Swal.fire({
+                    title: 'Verifying...',
+                    text: 'Please wait while we check your OTP.',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+            },
+            success: function (response) {
+                Swal.close();
+                if (response.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+
+                    setTimeout(() => {
+                        $('#otpModal').modal('hide');
+                        sessionStorage.removeItem('signupData');
+                    }, 2000);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid OTP',
+                        text: response.message || 'Please check and try again.',
+                    });
+                }
+            },
+            error: function (xhr) {
+                Swal.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    text: xhr.responseJSON?.message || 'Something went wrong. Please try again later.',
+                });
+            }
+        });
+    });
+
+});
+</script>
+
+<script src="<?= base_url('bootstrap5/js/bootstrap.min.js')?>"> </script>
 
 
 
 
-    <script src="<?= base_url('bootstrap5/js/bootstrap.min.js')?>"> </script>
+<script>
+  const loginForm = document.querySelector('form[action="<?= base_url('users/login') ?>"]');
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault(); // stop form from submitting immediately
+
+      Swal.fire({
+        title: 'Logging in...',
+        text: 'Please wait while we check your credentials.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // ⏱ Add a short delay so the alert is visible before the redirect
+      setTimeout(() => {
+        loginForm.submit();
+      }, 2000); // 2000ms = 2 seconds delay
+    });
+  }
+
+  // ✅ Display success or error alerts after redirect
+  <?php if (session()->getFlashdata('success')): ?>
+    Swal.fire({
+      icon: 'success',
+      title: 'Welcome!',
+      text: '<?= session()->getFlashdata('success') ?>',
+      showConfirmButton: false,
+      timer: 2000
+    });
+  <?php elseif (session()->getFlashdata('error')): ?>
+    Swal.fire({
+      icon: 'error',
+      title: 'Oops...',
+      text: '<?= session()->getFlashdata('error') ?>'
+    });
+  <?php endif; ?>
+</script>
+
+
+
+
+
+
 </body>
 </html>

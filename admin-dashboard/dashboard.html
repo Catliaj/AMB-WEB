@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #141414;
+    --panel: #1c1c1c;
+    --card: #1f1f1f;
+    --text: #e4e4e4;
+    --muted: #9ca3af;
+    --accent1: #5a5cff;
+    --accent2: #bb56ff;
+    --accent3: #ff5ca8;
+    --shadow: 0 0 12px rgba(0,0,0,0.25);
+    font-family: "Montserrat", sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    height: 100vh;
+  }
+
+  .sidebar {
+    width: 230px;
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+    box-shadow: inset -1px 0 0 #2a2a2a;
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar img { width: 120px; margin-bottom: 30px; }
+
+  .nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    padding: 0 22px;
+  }
+
+  .nav a {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    transition: all 0.25s ease;
+    font-size: 14px;
+  }
+
+  .nav a svg { width: 16px; height: 16px; stroke-width: 2; color: var(--muted); }
+  .nav a:hover svg, .nav a.active svg { color: var(--text); }
+
+  .nav a:hover, .nav a.active {
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    color: #fff;
+  }
+
+  .profile-box {
+    margin-top: auto;
+    width: 100%;
+    padding: 14px 22px;
+    border-top: 1px solid #2a2a2a;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .profile-avatar {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700;
+  }
+
+  .profile-info { display: flex; flex-direction: column; font-size: 12px; line-height: 1.3; }
+  .profile-info strong { font-size: 13px; color: var(--text); }
+
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    padding: 28px 36px 12px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    margin-bottom: 20px;
+  }
+
+  .left-header { display: flex; align-items: center; gap: 12px; }
+  header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .controls { display: flex; gap: 8px; }
+
+  .btn {
+    background: var(--card);
+    border: 1px solid #2a2a2a;
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .btn svg { width: 14px; height: 14px; stroke-width: 2; }
+  .btn:hover { border-color: var(--accent2); }
+  .btn.primary {
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    border: 0;
+    color: white;
+  }
+
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    background: var(--card);
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .card h2 { font-size: 12px; color: var(--muted); }
+  .card .value { font-size: 20px; font-weight: 600; color: var(--text); }
+
+  .main-row {
+    display: grid;
+    grid-template-columns: 1.8fr 0.9fr;
+    gap: 20px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    align-items: stretch;
+  }
+
+  .charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .chart-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .chart-container {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    min-height: 0;
+  }
+
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    align-items: stretch;
+  }
+
+  .quick-card {
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .quick-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+  }
+
+  .quick-card h3 {
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .quick-card .content {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  .quick-card .stat-item,
+  .quick-card .activity-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 8px 10px;
+    transition: background 0.2s ease;
+  }
+
+  .quick-card .stat-item:hover,
+  .quick-card .activity-item:hover {
+    background: rgba(255,255,255,0.07);
+  }
+
+  .quick-card .stat-item i,
+  .quick-card .activity-item i {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+    color: var(--accent2);
+  }
+
+  .quick-card .activity-time {
+    color: var(--muted);
+    font-size: 12px;
+    margin-left: auto;
+  }
+
+  .quick-card .view-logs {
+    margin-top: 10px;
+    text-align: right;
+  }
+
+  .quick-card .view-logs .btn {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+  @media (max-width: 1000px) {
+    .main-row { grid-template-columns: 1fr; }
+    .charts { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 700px) {
+    .sidebar { transform: translateX(-100%); position: fixed; height: 100%; z-index: 1000; }
+    .sidebar.show { transform: translateX(0); }
+    body { flex-direction: column; }
+  }
+
+  .popup {
+    position: absolute;
+    top: 45px;
+    right: 0;
+    background: var(--card);
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+    font-size: 13px;
+    display: none;
+    min-width: 200px;
+    z-index: 10;
+  }
+
+  .popup.active { display: block; }
+  .popup h4 { margin-bottom: 6px; font-weight: 600; }
+  .popup p { color: var(--muted); line-height: 1.4; }
+</style>
+
+</head>
+
+<body>
+  <aside class="sidebar">
+    <img src="amb_logo.png" alt="AMB Logo">
+    <nav class="nav">
+      <a href="dashboard.html" class="active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a href="manage-users.html"><i data-lucide="users"></i> Manage Users</a>
+      <a href="manage-properties.html"><i data-lucide="home"></i> Manage Properties</a>
+      <a href="user-bookings.html"><i data-lucide="calendar"></i> User Bookings</a>
+      <a href="view-chats.html"><i data-lucide="message-circle"></i> View Chats</a>
+      <a href="generate-reports.html"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
+    </nav>
+    <div class="profile-box">
+      <div class="profile-avatar">A</div>
+      <div class="profile-info">
+        <strong>Admin</strong>
+        <span>admin@company.com</span>
+      </div>
+    </div>
+  </aside>
+
+  <section class="main">
+    <header>
+      <div class="left-header">
+        <button id="toggleSidebar" class="btn"><i data-lucide="menu"></i></button>
+        <h1><i data-lucide="activity"></i> Admin Dashboard</h1>
+      </div>
+      <div class="controls">
+        <div class="control-group">
+          <button class="btn" id="notifBtn"><i data-lucide="bell"></i></button>
+          <div class="popup" id="notifPopup">
+            <h4>Notifications</h4>
+            <p>🔔 2 new bookings today<br>👤 1 new user registered</p>
+          </div>
+        </div>
+        <div class="control-group">
+          <button class="btn" id="settingsBtn"><i data-lucide="settings"></i></button>
+          <div class="popup" id="settingsPopup">
+            <h4>Settings</h4>
+            <p>Change password<br>Dark mode toggle (coming soon)</p>
+          </div>
+        </div>
+        <div class="control-group">
+          <button class="btn" id="profileBtn"><i data-lucide="user"></i></button>
+          <div class="popup" id="profilePopup">
+            <h4>Profile</h4>
+            <p>Admin Name<br>admin@company.com</p>
+          </div>
+        </div>
+        <button class="btn primary" id="logoutBtn"><i data-lucide="log-out"></i> Logout</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="cards">
+        <div class="card"><h2>Total Users</h2><div class="value" id="totalUsers">0</div></div>
+        <div class="card"><h2>Total Properties</h2><div class="value" id="totalProperties">0</div></div>
+        <div class="card"><h2>Total Bookings</h2><div class="value" id="totalBookings">0</div></div>
+        <div class="card"><h2>Active Chats</h2><div class="value" id="activeChats">0</div></div>
+      </div>
+
+      <div class="main-row">
+        <div class="charts">
+          <div class="chart-card">
+            <h3><i data-lucide="pie-chart"></i> Property Distribution</h3>
+            <div class="chart-container"><canvas id="propertyChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3><i data-lucide="line-chart"></i> Booking Trend</h3>
+            <div class="chart-container"><canvas id="bookingChart"></canvas></div>
+          </div>
+        </div>
+
+<aside class="right-panel">
+  <div class="quick-card">
+    <h3><i data-lucide="bar-chart-2"></i> Quick Stats</h3>
+    <div class="content">
+      <div class="stat-item"><i data-lucide="user-plus"></i> New signups (24h): <strong>12</strong></div>
+      <div class="stat-item"><i data-lucide="calendar-clock"></i> Pending bookings: <strong>8</strong></div>
+      <div class="stat-item"><i data-lucide="alert-triangle"></i> Low stock properties: <strong style="color:var(--accent3)">1</strong></div>
+      <div class="stat-item"><i data-lucide="users"></i> Agent assignments: <strong>4</strong></div>
+    </div>
+  </div>
+
+  <div class="quick-card">
+    <h3><i data-lucide="clock"></i> Recent Activities</h3>
+    <div class="content">
+      <div class="activity-item">
+        <i data-lucide="user-check"></i> Agent John assigned to property #234
+        <span class="activity-time">10:32</span>
+      </div>
+      <div class="activity-item">
+        <i data-lucide="calendar-x"></i> Booking #892 pending approval
+        <span class="activity-time">09:10</span>
+      </div>
+      <div class="activity-item">
+        <i data-lucide="user-plus"></i> New user registration (client)
+        <span class="activity-time">08:01</span>
+      </div>
+      <div class="view-logs">
+        <button class="btn"><i data-lucide="list"></i> View Logs</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+      </div>
+    </div>
+  </section>
+
+  <script>
+    lucide.createIcons();
+
+    document.getElementById("toggleSidebar").addEventListener("click", () => {
+      document.querySelector(".sidebar").classList.toggle("show");
+    });
+
+    function animateValue(id, start, end, duration) {
+      const obj = document.getElementById(id);
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        obj.textContent = Math.floor(progress * (end - start) + start);
+        if (progress < 1) window.requestAnimationFrame(step);
+      };
+      window.requestAnimationFrame(step);
+    }
+    animateValue("totalUsers", 0, 125, 1500);
+    animateValue("totalProperties", 0, 342, 1500);
+    animateValue("totalBookings", 0, 98, 1500);
+    animateValue("activeChats", 0, 14, 1500);
+
+    const propertyCtx = document.getElementById("propertyChart").getContext("2d");
+    const bookingCtx = document.getElementById("bookingChart").getContext("2d");
+
+    new Chart(propertyCtx, {
+      type: "doughnut",
+      data: {
+        labels: ["Available", "Reserved", "Sold"],
+        datasets: [{
+          data: [180, 90, 72],
+          backgroundColor: ["#5a5cff", "#bb56ff", "#ff5ca8"],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: "#ccc", font: { size: 12 } },
+            position: "bottom"
+          }
+        }
+      }
+    });
+
+    new Chart(bookingCtx, {
+      type: "line",
+      data: {
+        labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+        datasets: [{
+          label: "Bookings",
+          data: [8,12,9,15,18,22,20,24,28,32,30,35],
+          tension: 0.3,
+          borderWidth: 2,
+          borderColor: "#5a5cff",
+          backgroundColor: "rgba(90,92,255,0.1)",
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: "#999" }, grid: { color: "#333" } },
+          y: { ticks: { color: "#999" }, grid: { color: "#333" } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    const popups = { notifBtn: "notifPopup", settingsBtn: "settingsPopup", profileBtn: "profilePopup" };
+    for (const [btnId, popupId] of Object.entries(popups)) {
+      const btn = document.getElementById(btnId);
+      const popup = document.getElementById(popupId);
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        for (const p of Object.values(popups))
+          document.getElementById(p).classList.remove("active");
+        popup.classList.toggle("active");
+      });
+    }
+    document.addEventListener("click", () => {
+      for (const p of Object.values(popups))
+        document.getElementById(p).classList.remove("active");
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      alert("Logging out...");
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>
