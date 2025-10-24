@@ -112,12 +112,12 @@ const bookingsData = [
 ];
 
 document.addEventListener("scroll", () => {
-  const navbar = document.getElementById("mainNav");
-  if (window.scrollY > 50) {
-    navbar.classList.add("scrolled");
-  } else {
-    navbar.classList.remove("scrolled");
-  }
+    const navbar = document.getElementById("mainNav");
+    if (window.scrollY > 50) {
+        navbar.classList.add("scrolled");
+    } else {
+        navbar.classList.remove("scrolled");
+    }
 });
 
 // State
@@ -200,11 +200,11 @@ function updateAllFavoriteButtons() {
         // Extract property ID from the onclick attribute
         const onclickAttr = btn.getAttribute('onclick');
         const match = onclickAttr.match(/toggleFavorite\((\d+)\)/);
-        
+
         if (match) {
             const propertyId = parseInt(match[1]);
             const icon = btn.querySelector('i');
-            
+
             if (favorites.has(propertyId)) {
                 btn.classList.add('active');
                 icon.className = 'bi bi-heart-fill fs-5';
@@ -216,12 +216,91 @@ function updateAllFavoriteButtons() {
     });
 }
 
+// Opens modal and stores the index
+function openPropertyDetails(propertyId) {
+  const property = allProperties.find(p => p.id === propertyId);
+  if (!property) return;
+
+  currentModalIndex = allProperties.indexOf(property);
+  updatePropertyModal(property);
+
+  const modalEl = document.getElementById('propertyDetailsModal');
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+}
+
+// Updates modal content
+function updatePropertyModal(property) {
+  if (!property) return;
+
+  const img = document.getElementById('modalPropertyImage');
+  const title = document.getElementById('modalPropertyTitle');
+  const locationEl = document.getElementById('modalPropertyLocation');
+  const priceEl = document.getElementById('modalPropertyPrice');
+  const bedsEl = document.getElementById('modalPropertyBeds');
+  const bathsEl = document.getElementById('modalPropertyBaths');
+  const sqftEl = document.getElementById('modalPropertySqft');
+  const typeEl = document.getElementById('modalPropertyType');
+
+  img.src = property.image;
+  title.textContent = property.title;
+  locationEl.textContent = property.location;
+  priceEl.textContent = property.price;
+  bedsEl.textContent = property.beds;
+  bathsEl.textContent = property.baths;
+  sqftEl.textContent = property.sqft;
+  typeEl.textContent = property.type;
+
+  // Heart / favorite state
+  const favBtn = document.getElementById('modalFavoriteBtn');
+  const icon = favBtn.querySelector('i');
+  if (favorites.has(property.id)) {
+    favBtn.classList.add('active');
+    icon.className = 'bi bi-heart-fill fs-5';
+  } else {
+    favBtn.classList.remove('active');
+    icon.className = 'bi bi-heart fs-5';
+  }
+
+  // Subtle slide animation
+  const modalContent = document.querySelector('.property-modal-content');
+  modalContent.classList.remove('fade-slide');
+  void modalContent.offsetWidth; // trigger reflow
+  modalContent.classList.add('fade-slide');
+}
+
+// Favorite toggle inside modal
+function toggleFavoriteFromModal(event) {
+  event.stopPropagation();
+  const property = allProperties[currentModalIndex];
+  toggleFavorite(property.id);
+  updatePropertyModal(property);
+}
+
+// Navigation between properties
+function navigateProperty(direction) {
+  currentModalIndex =
+    (currentModalIndex + direction + allProperties.length) % allProperties.length;
+  updatePropertyModal(allProperties[currentModalIndex]);
+}
+
+// Swipe support
+let startX = 0;
+const modal = document.getElementById('propertyDetailsModal');
+if (modal) {
+  modal.addEventListener('touchstart', e => (startX = e.touches[0].clientX));
+  modal.addEventListener('touchend', e => {
+    const diff = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) navigateProperty(diff > 0 ? 1 : -1);
+  });
+}
+
 // Browse rendering functions
 function renderPropertyCard(property) {
     const isFavorite = favorites.has(property.id);
     return `
         <div class="col-md-6 col-lg-4">
-            <div class="property-card" onclick="alert('Property details coming soon!')">
+            <div class="property-card" onclick="openPropertyDetails(${property.id})">
                 <div class="property-image">
                     <img src="${property.image}" alt="${property.title}" loading="lazy">
                     <button class="property-favorite ${isFavorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite(${property.id})">
@@ -251,7 +330,9 @@ function renderPropertyCard(property) {
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="property-price">${property.price}</span>
-                        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); alert('View details coming soon!')">View Details</button>
+                        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openPropertyDetails(${property.id})">
+                            View Details
+                        </button>
                     </div>
                 </div>
             </div>
@@ -314,7 +395,7 @@ function renderBookingCard(booking) {
     let actions = '';
     if (booking.status === 'confirmed') {
         actions = `
-            <button class="btn btn-primary btn-sm me-2">View Details</button>
+            <button class="btn btn-primary btn-sm me-2" onclick="openBookingDetails(${booking.id})">View Details</button>
             <button class="btn btn-danger btn-sm">Cancel Booking</button>
         `;
     } else if (booking.status === 'completed') {
@@ -363,6 +444,44 @@ function renderBookingCard(booking) {
             </div>
         </div>
     `;
+}
+
+// Booking Details Modal
+function openBookingDetails(bookingId) {
+    const booking = bookingsData.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    // Find the corresponding property
+    const property = allProperties.find(p => p.title === booking.propertyName);
+    
+    // Populate modal with booking info
+    document.getElementById('bookingModalImage').src = booking.propertyImage;
+    document.getElementById('bookingModalTitle').textContent = booking.propertyName;
+    document.getElementById('bookingModalLocation').textContent = booking.location;
+    document.getElementById('bookingModalDate').textContent = booking.bookingDate;
+    document.getElementById('bookingModalTime').textContent = booking.viewingTime;
+    document.getElementById('bookingModalId').textContent = booking.bookingId;
+    
+    // Add property details if available
+    if (property) {
+        document.getElementById('bookingModalBeds').textContent = property.beds;
+        document.getElementById('bookingModalBaths').textContent = property.baths;
+        document.getElementById('bookingModalSqft').textContent = property.sqft;
+        document.getElementById('bookingModalPrice').textContent = property.price;
+    }
+    
+    // Set status badge
+    const statusBadge = document.getElementById('bookingModalStatus');
+    statusBadge.textContent = booking.status.charAt(0).toUpperCase() + booking.status.slice(1);
+    statusBadge.className = 'badge';
+    if (booking.status === 'confirmed') statusBadge.classList.add('badge-confirmed');
+    else if (booking.status === 'completed') statusBadge.classList.add('badge-completed');
+    else if (booking.status === 'cancelled') statusBadge.classList.add('badge-cancelled');
+
+    // Show modal
+    const modalEl = document.getElementById('bookingDetailsModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
 }
 
 function renderBookingsList() {
