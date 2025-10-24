@@ -17,47 +17,49 @@
 <body>
     <div class="site-wrapper">
         <!-- Navigation -->
+
         <body class="home">
             <nav class="navbar navbar-expand-lg navbar-light sticky-top custom-nav" id="mainNav">
                 <div class="container-fluid">
+                    <!-- Logo -->
                     <a class="navbar-brand d-flex align-items-center" href="homepage.html">
                         <img src="images/amb_logo.png" alt="AMB Logo" height="40" class="me-2">
                         <span class="logo-text">PROPERTY</span>
                     </a>
 
-                    <!-- Hamburger Button (for mobile) -->
-                    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
+                    <!-- Hamburger Button -->
+                    <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
                         data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
                         aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
 
+                    <!-- Collapsible Content -->
                     <div class="collapse navbar-collapse" id="navbarNav">
-                        <ul class="navbar-nav mx-auto align-items-md-center main-links">
+                        <!-- Center nav links (desktop), vertical in mobile -->
+                        <ul class="navbar-nav mx-lg-auto text-center text-lg-start main-links">
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" href="homepage.html">
-                                    Home
-                                </a>
+                                <a class="nav-link nav-link-custom" href="homepage.html">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" href="browse.html">
-                                    Browse Properties
-                                </a>
+                                <a class="nav-link nav-link-custom" href="browse.html">Browse Properties</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" href="bookings.html">
-                                    My Bookings
-                                </a>
+                                <a class="nav-link nav-link-custom" href="bookings.html">My Bookings</a>
+                            </li>
+                            <li class="nav-item d-lg-none">
+                                <a class="nav-link nav-link-custom" href="profile.html">Profile</a>
                             </li>
                         </ul>
 
-                        <ul class="navbar-nav align-items-md-center">
+                        <!-- Right-aligned (desktop only) -->
+                        <ul class="navbar-nav align-items-center d-none d-lg-flex">
                             <li class="nav-item">
                                 <a class="nav-link nav-link-custom" href="profile.html">
-                                    <i class="bi bi-person me-4"></i>
+                                    <i class="bi bi-person me-2"></i>
                                 </a>
                             </li>
-                            <li class="nav-item ms-md-2 d-none d-md-block">
+                            <li class="nav-item ms-2">
                                 <button class="btn btn-link p-2" id="themeToggle" onclick="toggleTheme()">
                                     <i class="bi bi-sun-fill fs-5" id="themeIcon"></i>
                                 </button>
@@ -67,6 +69,7 @@
                 </div>
             </nav>
         </body>
+
 
 
         <!-- Main Content -->
