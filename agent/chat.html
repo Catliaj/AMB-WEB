@@ -3,225 +3,151 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chat - Admin Dashboard</title>
+  <title>Chat - Agent Dashboard</title>
+
+  <!-- Bootstrap + Icons + Animations -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-
-  <style>
-    body {
-      background: #f5f8fa;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    .chat-container {
-      display: flex;
-      height: 90vh;
-      margin-top: 20px;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-      background: white;
-    }
-
-    /* Left Sidebar */
-    .chat-sidebar {
-      width: 30%;
-      background-color: #ffffff;
-      border-right: 1px solid #eaeaea;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .chat-search {
-      padding: 15px;
-      border-bottom: 1px solid #eaeaea;
-    }
-
-    .chat-search input {
-      border-radius: 50px;
-      border: 1px solid #ccc;
-      padding: 8px 15px;
-      width: 100%;
-    }
-
-    .chat-list {
-      overflow-y: auto;
-      padding: 10px;
-      flex: 1;
-    }
-
-    .chat-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px;
-      border-radius: 10px;
-      transition: 0.2s;
-      cursor: pointer;
-    }
-
-    .chat-item:hover {
-      background-color: #f1f5ff;
-    }
-
-    .chat-item img {
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .chat-item strong {
-      font-size: 0.95rem;
-    }
-
-    /* Right Chat Area */
-    .chat-main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: #f9fbfd;
-    }
-
-    .chat-header {
-      padding: 15px 20px;
-      border-bottom: 1px solid #eaeaea;
-      background-color: #fff;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .message {
-      max-width: 70%;
-      padding: 10px 15px;
-      border-radius: 15px;
-      word-wrap: break-word;
-    }
-
-    .message.agent {
-      background-color: #007bff;
-      color: #fff;
-      align-self: flex-end;
-      border-bottom-right-radius: 3px;
-    }
-
-    .message.client {
-      background-color: #e4e6eb;
-      color: #000;
-      align-self: flex-start;
-      border-bottom-left-radius: 3px;
-    }
-
-    .chat-input {
-      padding: 10px 20px;
-      background-color: #fff;
-      border-top: 1px solid #eaeaea;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .chat-input input {
-      flex: 1;
-      border-radius: 50px;
-      border: 1px solid #ccc;
-      padding: 8px 15px;
-      outline: none;
-    }
-
-    .chat-input button {
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <link rel="stylesheet" href="agenStyle.css">
 </head>
-<body>
-  <div class="container-fluid mt-3">
-    <h4 class="fw-bold">💬 Chat</h4>
-    <div class="chat-container">
 
-      <!-- Left: Client List -->
-      <div class="chat-sidebar">
-        <div class="chat-search">
-          <input type="text" id="searchInput" placeholder="Search clients..." />
+<body>
+  <!-- ✅ Unified Navbar (same as main dashboard) -->
+  <nav class="navbar navbar-light fixed-top shadow-sm bg-white border-bottom">
+    <div class="container-fluid d-flex justify-content-between align-items-center px-4">
+      <h3 class="mb-0 text-secondary fw-semibold">Agent Dashboard</h3>
+      <ul class="nav nav-tabs border-0 flex-nowrap">
+        <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="clients.html">Clients</a></li>
+        <li class="nav-item"><a class="nav-link" href="bookings.html">Bookings</a></li>
+        <li class="nav-item"><a class="nav-link" href="properties.html">Properties</a></li>
+      </ul>
+      <button class="btn btn-outline-primary btn-sm">View Profile</button>
+    </div>
+  </nav>
+
+  <!-- ✅ Chat Container -->
+  <div class="container-fluid mt-5 pt-4">
+    <h4 class="fw-bold text-secondary mb-3">💬 Chat</h4>
+
+    <div class="chat-container shadow-sm rounded-4 overflow-hidden bg-white animate__animated animate__fadeInUp d-flex">
+      <!-- Sidebar -->
+      <div class="chat-sidebar border-end" id="sidebar">
+        <div class="chat-search p-3 border-bottom d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center w-100">
+            <input type="text" id="searchInput" class="form-control rounded-pill me-2" placeholder="Search clients...">
+            <button id="toggleSidebar" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-pin"></i>
+            </button>
+          </div>
         </div>
-        <div class="chat-list" id="chatList">
-          <div class="chat-item" data-name="Helena">
-            <img src="https://via.placeholder.com/45" alt="">
+
+        <div class="chat-list p-2 overflow-auto" style="max-height: 75vh;">
+          <div class="chat-item d-flex align-items-center gap-3 p-2 rounded hover-bg" data-name="Helena">
+            <img src="https://via.placeholder.com/45" class="rounded-circle shadow-sm" alt="">
             <div>
               <strong>Helena</strong><br>
-              <small>Last message: Hi!</small>
+              <small class="text-muted">Last message: Hi!</small>
             </div>
           </div>
-          <div class="chat-item" data-name="Daniel Jay Park">
-            <img src="https://via.placeholder.com/45" alt="">
+
+          <div class="chat-item d-flex align-items-center gap-3 p-2 rounded hover-bg" data-name="Daniel Jay Park">
+            <img src="https://via.placeholder.com/45" class="rounded-circle shadow-sm" alt="">
             <div>
               <strong>Daniel Jay Park</strong><br>
-              <small>Last message: Sure!</small>
+              <small class="text-muted">Last message: Sure!</small>
             </div>
           </div>
-          <div class="chat-item" data-name="Mark Rojas">
-            <img src="https://via.placeholder.com/45" alt="">
+
+          <div class="chat-item d-flex align-items-center gap-3 p-2 rounded hover-bg" data-name="Mark Rojas">
+            <img src="https://via.placeholder.com/45" class="rounded-circle shadow-sm" alt="">
             <div>
               <strong>Mark Rojas</strong><br>
-              <small>Last message: Thanks!</small>
+              <small class="text-muted">Last message: Thanks!</small>
             </div>
           </div>
-          <div class="chat-item" data-name="Sophia Dela Cruz">
-            <img src="https://via.placeholder.com/45" alt="">
+
+          <div class="chat-item d-flex align-items-center gap-3 p-2 rounded hover-bg" data-name="Sophia Dela Cruz">
+            <img src="https://via.placeholder.com/45" class="rounded-circle shadow-sm" alt="">
             <div>
               <strong>Sophia Dela Cruz</strong><br>
-              <small>Last message: See you!</small>
+              <small class="text-muted">Last message: See you!</small>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Right: Chat Area -->
-      <div class="chat-main">
-        <div class="chat-header" id="chatHeader">
-          Select a client
+      <!-- Hover zone to reopen sidebar -->
+      <div id="hoverZone"></div>
+
+      <!-- Main Chat Area -->
+      <div class="chat-main d-flex flex-column flex-grow-1 bg-light" id="chatMain">
+        <div class="chat-header bg-white p-3 border-bottom fw-semibold d-flex justify-content-between align-items-center">
+          <span id="chatHeader">Select a client</span>
         </div>
 
-        <div class="chat-messages" id="chatMessages">
+        <div class="chat-messages flex-grow-1 p-4 overflow-auto d-flex flex-column gap-2" id="chatMessages" style="min-height: 60vh;">
           <p class="text-muted text-center">No conversation selected.</p>
         </div>
 
-        <div class="chat-input">
-          <input type="text" id="messageInput" placeholder="Type a message..." disabled>
-          <button class="btn btn-primary" disabled><i class="bi bi-send-fill"></i></button>
+        <div class="chat-input bg-white border-top p-3 d-flex align-items-center gap-2">
+          <input type="text" id="messageInput" class="form-control rounded-pill" placeholder="Type a message..." disabled>
+          <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" disabled>
+            <i class="bi bi-send-fill"></i>
+          </button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- ✅ Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
   <script>
     const chatItems = document.querySelectorAll('.chat-item');
     const chatHeader = document.getElementById('chatHeader');
     const chatMessages = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.querySelector('.chat-input button');
+    const toggleSidebar = document.getElementById('toggleSidebar');
+    const sidebar = document.getElementById('sidebar');
+    const chatMain = document.getElementById('chatMain');
+    const hoverZone = document.getElementById('hoverZone');
 
-    // Dummy messages
+    // Collapsible toggle state
+    let collapsibleEnabled = false;
+
+    // ✅ Toggle collapsible mode (Pin/Unpin)
+    toggleSidebar.addEventListener('click', () => {
+      collapsibleEnabled = !collapsibleEnabled;
+
+      if (collapsibleEnabled) {
+        toggleSidebar.innerHTML = `<i class="bi bi-pin-angle"></i>`;
+        sidebar.classList.add('collapsed');
+        chatMain.classList.add('expanded');
+      } else {
+        toggleSidebar.innerHTML = `<i class="bi bi-pin"></i>`;
+        sidebar.classList.remove('collapsed');
+        chatMain.classList.remove('expanded');
+      }
+    });
+
+    // ✅ Hover to reopen sidebar only if collapsible mode is ON
+    hoverZone.addEventListener('mouseenter', () => {
+      if (collapsibleEnabled) {
+        sidebar.classList.remove('collapsed');
+        chatMain.classList.remove('expanded');
+      }
+    });
+
+    sidebar.addEventListener('mouseleave', () => {
+      if (collapsibleEnabled && !sidebar.matches(':hover')) {
+        sidebar.classList.add('collapsed');
+        chatMain.classList.add('expanded');
+      }
+    });
+
+    // ✅ Dummy conversations
     const conversations = {
       "Helena": [
         { from: "client", text: "Hello, I’d like to inquire about my booking." },
@@ -241,7 +167,7 @@
       ]
     };
 
-    // Select chat
+    // ✅ Select chat
     chatItems.forEach(item => {
       item.addEventListener('click', () => {
         const name = item.getAttribute('data-name');
@@ -250,17 +176,27 @@
 
         conversations[name].forEach(msg => {
           const div = document.createElement('div');
-          div.className = `message ${msg.from}`;
+          div.className = `message ${msg.from} animate__animated animate__fadeInUp p-2 rounded-3`;
+          div.style.maxWidth = "75%";
+          div.style.wordWrap = "break-word";
+
+          if (msg.from === "agent") {
+            div.classList.add("bg-primary", "text-white", "align-self-end");
+          } else {
+            div.classList.add("bg-white", "border", "align-self-start");
+          }
+
           div.textContent = msg.text;
           chatMessages.appendChild(div);
         });
 
         messageInput.disabled = false;
         sendButton.disabled = false;
+        messageInput.focus();
       });
     });
 
-    // Search clients
+    // ✅ Search clients
     document.getElementById('searchInput').addEventListener('keyup', function() {
       const filter = this.value.toLowerCase();
       chatItems.forEach(item => {
@@ -269,16 +205,25 @@
       });
     });
 
-    // Send message
-    sendButton.addEventListener('click', () => {
+    // ✅ Send message
+    function sendMessage() {
       const text = messageInput.value.trim();
       if (text) {
         const msg = document.createElement('div');
-        msg.className = "message agent";
+        msg.className = "message agent bg-primary text-white p-2 rounded-3 animate__animated animate__fadeInUp align-self-end";
+        msg.style.maxWidth = "75%";
         msg.textContent = text;
         chatMessages.appendChild(msg);
         messageInput.value = "";
         chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
       }
     });
   </script>
