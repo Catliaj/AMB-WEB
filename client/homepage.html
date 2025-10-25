@@ -17,6 +17,7 @@
 <body>
     <div class="site-wrapper">
         <!-- Navigation -->
+
         <body class="home">
             <nav class="navbar navbar-expand-lg navbar-light sticky-top custom-nav" id="mainNav">
                 <div class="container-fluid">
@@ -185,7 +186,7 @@
                     <div class="row g-4">
                         <!-- We'll display a few featured cards statically or let JS handle favorites; keep cards simple -->
                         <div class="col-md-6 col-lg-4">
-                            <div class="property-card" onclick="alert('Property details coming soon!')">
+                            <div class="property-card" onclick="openPropertyDetails(1)" style="cursor: pointer;">
                                 <div class="property-image">
                                     <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
                                         alt="Modern Family House" loading="lazy">
@@ -218,8 +219,9 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="property-price">$2,500,000</span>
                                         <button class="btn btn-primary btn-sm"
-                                            onclick="event.stopPropagation(); alert('View details coming soon!')">View
+                                            onclick="event.stopPropagation(); openPropertyDetails(1)">View
                                             Details</button>
+
                                     </div>
                                 </div>
                             </div>
@@ -227,7 +229,7 @@
 
                         <!-- Add two more featured cards (static) -->
                         <div class="col-md-6 col-lg-4">
-                            <div class="property-card" onclick="alert('Property details coming soon!')">
+                            <div class="property-card" onclick="openPropertyDetails(2)" style="cursor: pointer;">
                                 <div class="property-image">
                                     <img src="https://images.unsplash.com/photo-1715985160020-d8cd6fdc8ba9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
                                         alt="Luxury Penthouse" loading="lazy">
@@ -260,7 +262,7 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="property-price">$12,000/mo</span>
                                         <button class="btn btn-primary btn-sm"
-                                            onclick="event.stopPropagation(); alert('View details coming soon!')">View
+                                            onclick="event.stopPropagation(); openPropertyDetails(2)">View
                                             Details</button>
                                     </div>
                                 </div>
@@ -268,7 +270,7 @@
                         </div>
 
                         <div class="col-md-6 col-lg-4">
-                            <div class="property-card" onclick="alert('Property details coming soon!')">
+                            <div class="property-card" onclick="openPropertyDetails(3)" style="cursor: pointer;">
                                 <div class="property-image">
                                     <img src="https://images.unsplash.com/photo-1591268193431-c86baf208255?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
                                         alt="Garden Villa Estate" loading="lazy">
@@ -301,7 +303,7 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="property-price">$4,200,000</span>
                                         <button class="btn btn-primary btn-sm"
-                                            onclick="event.stopPropagation(); alert('View details coming soon!')">View
+                                            onclick="event.stopPropagation(); openPropertyDetails(3)">View
                                             Details</button>
                                     </div>
                                 </div>
@@ -311,6 +313,59 @@
                 </div>
             </section>
         </main>
+
+        <!-- Property Details Modal -->
+        <div class="modal fade" id="propertyDetailsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content property-modal-content">
+                    <div class="modal-body p-0 position-relative">
+
+                        <!-- Image Area with Overlayed Details -->
+                        <div class="property-modal-image-wrapper position-relative">
+                            <img id="modalPropertyImage" class="property-details-image" alt="Property Image">
+
+                            <!-- Heart & Badge -->
+                            <button class="property-favorite" id="modalFavoriteBtn"
+                                onclick="toggleFavoriteFromModal(event)">
+                                <i class="bi bi-heart fs-5"></i>
+                            </button>
+                            <span class="property-type-badge" id="modalPropertyType"></span>
+
+                            <!-- Navigation Arrows -->
+                            <button class="modal-nav prev" onclick="navigateProperty(-1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="modal-nav next" onclick="navigateProperty(1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+
+                            <!-- Overlay Details -->
+                            <div class="property-modal-details-overlay">
+                                <h5 id="modalPropertyTitle"></h5>
+                                <div class="location">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <span id="modalPropertyLocation"></span>
+                                </div>
+                                <div class="house-stats">
+                                    <div><i class="bi bi-house-door"></i><span id="modalPropertyBeds"></span></div>
+                                    <div><i class="bi bi-droplet"></i><span id="modalPropertyBaths"></span></div>
+                                    <div><i class="bi bi-arrows-fullscreen"></i><span id="modalPropertySqft"></span>
+                                    </div>
+                                </div>
+                                <div class="price-book">
+                                    <span class="price" id="modalPropertyPrice"></span>
+                                    <button class="btn btn-primary" id="modalBookBtn">
+                                        <i class="bi bi-calendar-check me-2"></i>Book Property
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
         <!-- Floating Chat -->
         <div class="chat-window" id="chatWindow">
