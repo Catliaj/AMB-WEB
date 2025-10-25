@@ -39,8 +39,23 @@ class MessageSeeder extends Seeder
                 'messageContent' => 'Sure! The property is located in a prime area with great amenities nearby.',
                 'timestamp' => '2024-09-01 10:20:00',
             ],
+
+             [
+                'messageID' => 5,
+                'chatSessionID' => 2,
+                'senderRole' => 'Client',
+                'messageContent' => 'Hello, I am interested in property ID 1.',
+                'timestamp' => '2024-09-01 10:05:00',
+            ],
+            [
+                'messageID' => 6,
+                'chatSessionID' => 3,
+                'senderRole' => 'Client',
+                'messageContent' => 'Hello, I am interested in property ID 1.',
+                'timestamp' => '2024-09-01 10:05:00',
+            ],
         ];
-        // Using Query Builder
+        
         $this->db->table('messages')->insertBatch($data);
     }
 }

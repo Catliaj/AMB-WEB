@@ -21,6 +21,32 @@
   </script>
 </head>
 
+<style>
+  .modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+.modal-content {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 12px;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow);
+}
+.modal-content h2 { font-size: 16px; margin-bottom: 8px; }
+.modal-content input, .modal-content select { width: 100%; padding: 6px 10px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+</style>
+
 <body class="dashboard-page" style="background:var(--bg);">
   <div id="loadingOverlay" class="loading-overlay" role="status" aria-hidden="false">
     <div class="loader" aria-hidden="true">

@@ -48,6 +48,32 @@ class UserSeeder extends Seeder
                 'created_at'  => date('Y-m-d H:i:s'),
                 'updated_at'  => date('Y-m-d H:i:s'),
             ],
+             [
+                'FirstName'   => 'marga',
+                'MiddleName'  => 'Test',
+                'LastName'    => 'User',
+                'Birthdate'   => '2000-07-20',
+                'phoneNumber' => '09345678911',
+                'Email'       => 'marga@gmail.com',
+                'Password'    => password_hash('client123', PASSWORD_BCRYPT),
+                'Role'        => 'Client',
+                'status'      => 'Offline',
+                'created_at'  => date('Y-m-d H:i:s'),
+                'updated_at'  => date('Y-m-d H:i:s'),
+             ],
+             [
+                'FirstName'   => 'AJ',
+                'MiddleName'  => 'Support',
+                'LastName'    => 'User',
+                'Birthdate'   => '1995-03-15',
+                'phoneNumber' => '09234561110',
+                'Email'       => 'aj@gmail.com',
+                'Password'    => password_hash('agent123', PASSWORD_BCRYPT),
+                'Role'        => 'Agent',
+                'status'      => 'Offline',
+                'created_at'  => date('Y-m-d H:i:s'),
+                'updated_at'  => date('Y-m-d H:i:s'),
+            ],
         ];
 
         // Insert all users

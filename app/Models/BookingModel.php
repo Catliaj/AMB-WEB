@@ -68,15 +68,17 @@ class BookingModel extends Model
 
     public function getBookingWithStatus()
     {
-
-        return $this->select(
-            'booking.*, property.title AS title, CONCAT(users.firstname, " ", users.lastname) AS client'
-            )
+        return $this->select('
+                booking.*,
+                property.Title AS PropertyTitle,
+                CONCAT(users.FirstName, " ", users.LastName) AS ClientName
+            ')
             ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
             ->join('users', 'users.UserID = booking.UserID', 'left')
-            ->orderBy('booking.bookingDate', 'DESC')
+            ->orderBy('booking.BookingDate', 'DESC')
             ->findAll();
     }
+
 
 
 

@@ -74,8 +74,31 @@
             </tr>
           </thead>
           <tbody>
-            
-
+              <?php if (!empty($booking)): ?>
+        <?php foreach ($booking as $b): ?>
+          <tr>
+            <td><?= esc($b['bookingID']) ?></td>
+            <td><?= esc($b['PropertyTitle']) ?></td>
+            <td><?= esc($b['ClientName']) ?></td>
+            <td><?= esc(date('M d, Y', strtotime($b['BookingDate']))) ?></td>
+            <td>
+              <?php if ($b['Status'] === 'Approved'): ?>
+                <span class="badge bg-success">Approved</span>
+              <?php elseif ($b['Status'] === 'Rejected'): ?>
+                <span class="badge bg-danger">Rejected</span>
+              <?php else: ?>
+                <span class="badge bg-warning text-dark">Pending</span>
+              <?php endif; ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+      <?php else: ?>
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">
+            No bookings found.
+          </td>
+        </tr>
+      <?php endif; ?>
           </tbody>
         </table>
       </div>
@@ -87,15 +110,11 @@
 
     // bookings will be populated from server; fallback to sample if fetch fails
     let bookings = [
-      { id: "BOOK001", client: "John Santos", property: "Modern Studio Apartment", date: "2025-10-03", status: "Pending" },
-      { id: "BOOK002", client: "Maria Cruz", property: "Elegant Condo Unit", date: "2025-09-27", status: "Approved" },
-      { id: "BOOK003", client: "Carlos Dela Peña", property: "2BR Family House", date: "2025-10-05", status: "Rejected" },
     ];
 
-    // Try to load bookings from backend JSON endpoint. The backend should return an array
-    // of objects with fields: id, client (full name), property, date (YYYY-MM-DD), status
+
     (function loadBookings(){
-      fetch('/admin/bookings/json')
+      fetch('/admin/userBookings')
         .then(res => {
           if (!res.ok) throw new Error('Network response was not ok');
           return res.json();
@@ -123,28 +142,6 @@
     const searchInput = document.getElementById('searchInput');
     const filterStatus = document.getElementById('filterStatus');
 
-    function renderBookings() {
-      tableBody.innerHTML = '';
-      const query = searchInput.value.toLowerCase();
-      const filter = filterStatus.value;
-
-      bookings.filter(b =>
-        (!filter || b.status === filter) &&
-        (b.client.toLowerCase().includes(query) || b.property.toLowerCase().includes(query))
-      ).forEach((b, i) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${b.id}</td>
-          <td>${b.client}</td>
-          <td>${b.property}</td>
-          <td>${b.date}</td>
-          <td>${b.status}</td>
-          
-        `;
-        tableBody.appendChild(row);
-      });
-      lucide.createIcons();
-    }
 
     searchInput.addEventListener('input', renderBookings);
     filterStatus.addEventListener('change', renderBookings);
@@ -213,6 +210,6 @@
       }
     });
   </script>
-  <script defer src="theme-toggle.js"></script>
+  <script defer src="<?=base_url("assets/js/theme-toggle.js")?>"></script>
 </body>
 </html>

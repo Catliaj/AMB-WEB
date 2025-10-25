@@ -147,6 +147,8 @@ class AdminController extends BaseController
         $userModel = new \App\Models\UsersModel();
         $data['users'] = $userModel->getUsersList();
 
+
+
         return view('Pages/admin/manage-users', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
@@ -167,22 +169,19 @@ class AdminController extends BaseController
 
     public function userBooking()
     {
-
         $bookingModel = new \App\Models\BookingModel();
-        $data['booking'] = $bookingModel->getBookingWithStatus();
 
+        $data = [
+            'UserID'        => session()->get('UserID'),
+            'email'         => session()->get('inputEmail'),
+            'fullname'      => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
+            'currentUserId' => session()->get('UserID'),
+            'booking'       => $bookingModel->getBookingWithStatus(),
+        ];
 
-        return view('Pages/admin/user-bookings', [
-                'UserID' => session()->get('UserID'),
-                'email' => session()->get('inputEmail'),
-                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
-                get('LastName')),
-                'currentUserId' => session()->get('UserID'),
-                'otherUser' => null,
-                'booking' => $data['booking']
-               
-            ]);
+        return view('Pages/admin/user-bookings', $data);
     }
+
 
     public function viewChats()
     {
@@ -251,7 +250,7 @@ class AdminController extends BaseController
                        
                         $propertyImagesModel->insert([
                             'PropertyID' => $propertyID,
-                            'image' => $newName
+                            'Image' => $newName
                         ]);
                     }
                 }
@@ -281,7 +280,6 @@ class AdminController extends BaseController
         $status = $statusModel->where('PropertyID', $id)->orderBy('Date', 'DESC')->first();
         $property['New_Status'] = $status['New_Status'] ?? 'Available';
 
-   
         $agent = $userModel->find($property['agent_assigned']);
         $property['AgentName'] = $agent ? $agent['FirstName'] . ' ' . $agent['LastName'] : 'Unassigned';
 
@@ -321,5 +319,33 @@ class AdminController extends BaseController
         $propertyModel->delete($id);
 
         return $this->response->setJSON(['status' => 'success', 'message' => 'Property deleted successfully']);
+    }
+
+
+    public function storeAgent()
+    {
+        $userModel = new \App\Models\UsersModel();
+
+        $data = [
+            'FirstName' => $this->request->getPost('FirstName'),
+            'MiddleName' => $this->request->getPost('MiddleName'),
+            'LastName' => $this->request->getPost('LastName'),
+            'Birthdate' => $this->request->getPost('Birthdate'),
+            'phoneNumber' => $this->request->getPost('PhoneNumber'),
+            'Email' => $this->request->getPost('Email'),
+            'password' => password_hash($this->request->getPost('password'), PASSWORD_BCRYPT),
+            'role' => 'Agent',
+            'status' => 'Offline',
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ];
+
+        $userId = $userModel->insert($data);
+
+        if ($userId) {
+            return redirect()->to('/admin/manageUsers')->with('success', 'Agent added successfully!');
+        } else {
+            return redirect()->back()->with('error', 'Failed to add agent.');
+        }
     }
 }
