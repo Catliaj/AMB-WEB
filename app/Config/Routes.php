@@ -35,8 +35,32 @@ $routes->setAutoRoute(true);
 
 $routes->get('/', 'Home::index');
 $routes->post('/users/login', 'UserController::login');
+
+
+// Client Routes
 $routes->get('/users/clientHomepage', 'UserController::clientHomepage');
+$routes->get('/users/clientprofile', 'UserController::ClientProfile');
+$routes->get('/users/clientbookings', 'UserController::ClientBookings');
+$routes->get('/users/clientbrowse', 'UserController::ClientBrowse');
+$routes->get('/users/logout', 'UserController::logoutClient');
+$routes->get('/users/chat', 'UserController::cleintChat');
+
+
+
+
+//Agent Routes
 $routes->get('/users/agentHomepage', 'AgentController::agentDashboard');
+$routes->get('/users/agentprofile', 'AgentController::agentProfile');
+$routes->get('/users/agentproperties', 'AgentController::agentProperties');
+$routes->get('/users/agentclients', 'AgentController::agentClients');
+$routes->get('/users/agentchat', 'AgentController::agentChat');
+$routes->get('/users/agentbookings', 'AgentController::agentBookings');
+$routes->get('/users/logoutagent', 'AgentController::logoutAgent');
+
+//chat Routes
+$routes->get('/chat/messages/(:num)', 'ChatController::getMessages/$1');
+$routes->post('/chat/send', 'ChatController::sendMessage');
+
 
 // Admin Routes
 $routes->get('/admin/adminHomepage', 'AdminController::adminDashboard');

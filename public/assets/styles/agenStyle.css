@@ -258,3 +258,22 @@ body {
     .btn-view:hover {
       background-color: #0b5ed7;
     }
+.chat-sidebar {
+  width: 280px;
+  transition: all 0.3s ease;
+}
+.chat-sidebar.collapsed {
+  width: 0;
+  overflow: hidden;
+}
+.chat-main.expanded {
+  flex-grow: 1;
+}
+#hoverZone {
+  width: 8px;
+  background: transparent;
+}
+.hover-bg:hover {
+  background-color: #f8f9fa;
+  cursor: pointer;
+}

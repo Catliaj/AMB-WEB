@@ -3,43 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agent Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Manage Clients</title>
+
+  <!-- Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="<?= base_url("bootstrap5/css/bootstrap.min.css")?>" rel="stylesheet">
+  <link rel="stylesheet" href="<?= base_url("assets/styles/agenStyle.css")?>">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 </head>
+
 <body>
+  <!-- ✅ Unified Navbar -->
   <nav class="navbar navbar-light fixed-top shadow-sm bg-white border-bottom">
     <div class="container-fluid d-flex justify-content-between align-items-center px-4">
-      <div class="d-flex align-items-center">
-        <h3 class="mb-0 text-secondary fw-semibold me-4">Agent</h3>
-      </div>
+      <h3 class="mb-0 text-secondary fw-semibold">Agent Dashboard</h3>
 
-      <ul class="nav nav-tabs">
-        <li class="nav-item"><a class="nav-link" href="dashboard.html">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link active" href="clients.html">Clients</a></li>
-        <li class="nav-item"><a class="nav-link" href="bookings.html">Bookings</a></li>
-        <li class="nav-item"><a class="nav-link" href="properties.html">Properties</a></li>
+      <ul class="nav nav-tabs border-0 flex-nowrap">
+        <li class="nav-item"><a class="nav-link" href="/users/agentHomepage">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/users/agentclients">Clients</a></li>
+        <li class="nav-item"><a class="nav-link" href="/users/agentbookings">Bookings</a></li>
+        <li class="nav-item"><a class="nav-link" href="/users/agentprofile">Properties</a></li>
       </ul>
 
-      <div class="d-flex align-items-center gap-3">
-        <button class="btn btn-primary btn-sm">View Profile</button>
-      </div>
+      <button class="btn btn-outline-primary btn-sm">View Profile</button>
     </div>
   </nav>
-          <br><br>
 
-  <!-- Animated Page Content -->
-  <div class="frame-content mt-5 p-4 animate__animated animate__fadeInUp">
-    <div class="card p-4 border-0 shadow-sm">
-      <h4>Manage Clients</h4>
-      <p class="text-muted">Add, edit, or remove clients.</p>
-      <button class="btn btn-success">Add Client</button>
+  <!-- ✅ Page Content -->
+  <div class="container mt-5 pt-5">
+    <div class="card p-4 border-0 shadow-sm animate__animated animate__fadeInUp">
+      <h4 class="fw-semibold mb-3">My Assigned Clients</h4>
+      <p class="text-muted mb-4">View your assigned clients and access their chat or details.</p>
+
+      <!-- ✅ Clients Table -->
+      <div class="table-responsive">
+        <table class="table align-middle text-center">
+          <thead class="table-light">
+            <tr>
+              <th>Client Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Property Interested</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="clientsTable"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- Animation CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <!-- ✅ View Details Modal -->
+  <div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="clientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-sm">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-semibold" id="clientModalLabel">Client Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <p><strong>Name:</strong> <span id="clientName"></span></p>
+          <p><strong>Email:</strong> <span id="clientEmail"></span></p>
+          <p><strong>Phone:</strong> <span id="clientPhone"></span></p>
+          <p><strong>Property Interested:</strong> <span id="clientProperty"></span></p>
+          <p><strong>Status:</strong> <span id="clientStatus"></span></p>
+        </div>
+
+        <div class="modal-footer">
+          <a href="/users/agentchat" class="btn btn-primary btn-sm">
+            <i class="bi bi-chat-dots"></i> View Chat
+          </a>
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
+
+  <script>
+    // ✅ Fake client data
+    const clients = [
+      {
+        name: "John Smith",
+        email: "johnsmith@example.com",
+        phone: "0917-555-1234",
+        property: "Modern Apartment in City Center",
+        status: "Active"
+      },
+      {
+        name: "Mary Jane",
+        email: "maryjane@example.com",
+        phone: "0918-777-5678",
+        property: "Cozy Suburban House",
+        status: "In Negotiation"
+      },
+      {
+        name: "Carlos Dela Cruz",
+        email: "carlosdc@example.com",
+        phone: "0920-222-9999",
+        property: "Luxury Condo with Ocean View",
+        status: "Closed Deal"
+      }
+    ];
+
+    const tableBody = document.getElementById("clientsTable");
+
+    // ✅ Render fake data into the table
+    clients.forEach((client, i) => {
+      const row = document.createElement("tr");
+      row.classList.add("animate__animated", "animate__fadeInUp");
+      row.style.animationDelay = `${i * 0.1}s`;
+
+      row.innerHTML = `
+        <td>${client.name}</td>
+        <td>${client.email}</td>
+        <td>${client.phone}</td>
+        <td>${client.property}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary me-1" onclick="viewClient(${i})">
+            <i class="bi bi-eye"></i> View
+          </button>
+          <a href="/users/agentchat" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-chat-dots"></i> Chat
+          </a>
+        </td>
+      `;
+      tableBody.appendChild(row);
+    });
+
+    // ✅ Show client info in modal
+    function viewClient(index) {
+      const c = clients[index];
+      document.getElementById("clientName").textContent = c.name;
+      document.getElementById("clientEmail").textContent = c.email;
+      document.getElementById("clientPhone").textContent = c.phone;
+      document.getElementById("clientProperty").textContent = c.property;
+      document.getElementById("clientStatus").textContent = c.status;
+
+      new bootstrap.Modal(document.getElementById("clientModal")).show();
+    }
+  </script>
 </body>
 </html>

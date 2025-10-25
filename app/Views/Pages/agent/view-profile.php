@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>View Profile</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?= base_url('assets/styles/agentStyle.css')?>">
+  <link href="<?= base_url("bootstrap5/css/bootstrap.min.css")?>" rel="stylesheet">
+  <link rel="stylesheet" href="<?= base_url("assets/styles/agenStyle.css")?>">
 </head>
 <body style="background: linear-gradient(to right, #e8f5e9, #e3f2fd); min-height: 100vh;">
 
@@ -36,13 +36,13 @@
         </div>
 
         <div class="d-flex justify-content-between">
-          <a href="index.html" class="btn btn-outline-secondary">Back to Dashboard</a>
+          <a href="/" class="btn btn-outline-secondary">Back to Dashboard</a>
           <button type="submit" class="btn btn-success">Save Changes</button>
         </div>
       </form>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+   <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
 </body>
 </html>

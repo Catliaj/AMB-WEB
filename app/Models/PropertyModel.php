@@ -46,9 +46,6 @@ class PropertyModel extends Model
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
 
-
-    
-
     public function getTotalProperties()
     {
         return $this->builder()->countAllResults();
@@ -80,7 +77,6 @@ class PropertyModel extends Model
     {
         $this->db->transStart();
 
-        // 🟢 Lookup Agent UserID by name (if only name was provided)
         if (!empty($data['agent_assigned']) && !is_numeric($data['agent_assigned'])) {
             $userModel = new \App\Models\UsersModel();
             $agent = $userModel->where('Role', 'Agent')
@@ -90,17 +86,14 @@ class PropertyModel extends Model
                             ->groupEnd()
                             ->first();
             if ($agent) {
-                $data['agent_assigned'] = $agent['UserID']; // set actual UserID
+                $data['agent_assigned'] = $agent['UserID']; 
             } else {
-                $data['agent_assigned'] = null; // no matching agent
+                $data['agent_assigned'] = null;
             }
         }
 
-        // 🟢 Insert into property
         $this->insert($data);
         $propertyID = $this->getInsertID();
-
-        // 🟢 Insert initial status into propertyStatusHistory
         $statusModel = new \App\Models\PropertyStatusHistoryModel();
         $statusModel->insert([
             'PropertyID' => $propertyID,
@@ -112,17 +105,4 @@ class PropertyModel extends Model
         $this->db->transComplete();
         return $this->db->transStatus() ? $propertyID : false;
     }
-
-
-    
-
-
-
-
-
-
-
-
-
-
 }

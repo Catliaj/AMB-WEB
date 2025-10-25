@@ -47,5 +47,50 @@ class ChatSessionModel extends Model
 
 
 
-    
+    public function getSessionsByUserId($userId)
+    {
+        return $this->where('UserID', $userId)->findAll();
+    }
+
+
+    public function getSessionsByAgentId($agentId)
+    {
+        return $this->where('AgentID', $agentId)->findAll();
+    }
+
+    // --- RETRIEVE MESSAGES FROM SESSION --- //
+    public function getMessages($chatSessionID)
+    {
+        $messageModel = new \App\Models\MessageModel();
+        return $messageModel
+            ->where('chatSessionID', $chatSessionID)
+            ->orderBy('created_at', 'ASC') // sort oldest → newest
+            ->findAll();
+    }
+
+    // --- RETRIEVE ALL MESSAGES FOR A USER --- //
+    public function getAllMessagesByUser($userId)
+    {
+        $messageModel = new \App\Models\MessageModel();
+
+        return $messageModel
+            ->select('messages.*, chatSession.UserID, chatSession.AgentID')
+            ->join('chatSession', 'chatSession.chatSessionID = messages.chatSessionID')
+            ->where('chatSession.UserID', $userId)
+            ->orderBy('messages.created_at', 'ASC')
+            ->findAll();
+    }
+
+    // --- RETRIEVE ALL MESSAGES FOR AN AGENT --- //
+    public function getAllMessagesByAgent($agentId)
+    {
+        $messageModel = new \App\Models\MessageModel();
+
+        return $messageModel
+            ->select('messages.*, chatSession.UserID, chatSession.AgentID')
+            ->join('chatSession', 'chatSession.chatSessionID = messages.chatSessionID')
+            ->where('chatSession.AgentID', $agentId)
+            ->orderBy('messages.created_at', 'ASC')
+            ->findAll();
+    }    
 }

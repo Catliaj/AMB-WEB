@@ -8,10 +8,6 @@ use App\Models\UsersModel;
 
 class AdminController extends BaseController
 {
-   
-
-   
-
     public function adminDashboard()
     {
         if (!session()->get('isLoggedIn') || session()->get('role') !== 'Admin') {
@@ -131,11 +127,6 @@ class AdminController extends BaseController
                          ->get()
                          ->getResultArray();
 
-
-
-
-
-
         return view('Pages/admin/manage-properties', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
@@ -176,13 +167,19 @@ class AdminController extends BaseController
 
     public function userBooking()
     {
+
+        $bookingModel = new \App\Models\BookingModel();
+        $data['booking'] = $bookingModel->getBookingWithStatus();
+
+
         return view('Pages/admin/user-bookings', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
                 'fullname' => trim(session()->get('FirstName') . ' ' . session()->
                 get('LastName')),
                 'currentUserId' => session()->get('UserID'),
-                'otherUser' => null
+                'otherUser' => null,
+                'booking' => $data['booking']
                
             ]);
     }
@@ -319,19 +316,10 @@ class AdminController extends BaseController
                 unlink($filePath); 
             }
         }
-
-    
+        
         $imageModel->where('PropertyID', $id)->delete();
-
-    
         $propertyModel->delete($id);
 
         return $this->response->setJSON(['status' => 'success', 'message' => 'Property deleted successfully']);
     }
-
-
-
-
-
-
 }
