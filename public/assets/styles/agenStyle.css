@@ -277,3 +277,44 @@ body {
   background-color: #f8f9fa;
   cursor: pointer;
 }
+.client-list-scroll {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Optional: style the list items */
+.client-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.client-item:hover {
+  background-color: #f9f9f9;
+}
+
+/* Adjust width and spacing for better balance */
+.client-list {
+  min-height: 80vh;
+}
+
+.client-details {
+  min-height: 80vh;
+}
+
+/* Client photos */
+.client-photo {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+}
+
+.client-detail-photo {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+}
