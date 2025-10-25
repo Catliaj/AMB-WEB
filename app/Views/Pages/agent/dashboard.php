@@ -17,29 +17,66 @@
         <li class="nav-item"><a class="nav-link active" href="/users/agentHomepage">Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="/users/agentclients">Clients</a></li>
         <li class="nav-item"><a class="nav-link" href="/users/agentbookings">Bookings</a></li>
-        <li class="nav-item"><a class="nav-link" href="/users/agentprofile">Properties</a></li>
+        <li class="nav-item"><a class="nav-link" href="/users/agentproperties">Properties</a></li>
+        <li class="nav-item"><a class="nav-link" href="/users/agentchat">Chat</a></li>
       </ul>
       <button class="btn btn-outline-primary btn-sm">View Profile</button>
     </div>
   </nav>
 <br>
+
   <div class="container-fluid mt-5 pt-4">
     <div class="row g-3">
-      <div class="col-md-6">
-        <div class="card p-4 shadow-sm animate__animated animate__fadeIn">
-          <h6 class="text-muted mb-2">Total Sales</h6>
-          <div class="fs-4 fw-bold text-dark">₱0.00</div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="card p-4 shadow-sm animate__animated animate__fadeIn animate__delay-1s">
-          <h6 class="text-muted mb-2">Total Clients</h6>
-          <div class="fs-4 fw-bold text-primary">3</div>
+
+      <!-- Overall Views -->
+      <div class="col-md-3 col-lg-3">
+        <div class="card p-3 shadow-sm animate__animated animate__fadeIn h-100">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Overall Views</h6>
+              <div class="fs-5 fw-bold text-success">1,245</div>
+            </div>
+            <div class="bg-light rounded-circle p-2">
+              <i class="bi bi-eye-fill text-success fs-4"></i>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="col-md-8">
-        <div class="card p-4 shadow-sm animate__animated animate__fadeInUp">
+      <!-- Total Clients (smaller layout) -->
+      <div class="col-md-3 col-lg-3">
+        <div class="card p-3 shadow-sm animate__animated animate__fadeIn animate__delay-1s h-100">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-muted mb-1">Total Clients</h6>
+              <div class="fs-5 fw-bold text-primary">3</div>
+            </div>
+            <div class="bg-light rounded-circle p-2">
+              <i class="bi bi-people-fill text-primary fs-4"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Most Viewed Property -->
+      <div class="col-md-6 col-lg-6">
+        <div class="card p-4 shadow-sm animate__animated animate__fadeIn animate__delay-2s h-100">
+          <h6 class="text-muted mb-3">Most Viewed Property</h6>
+          <div class="d-flex align-items-center gap-4">
+            <img src="https://images.unsplash.com/photo-1572120360610-d971b9d7767c?w=160&h=120&fit=crop"
+                 alt="Property" class="rounded shadow-sm" width="160" height="100">
+            <div>
+              <p class="mb-1 fw-bold text-dark fs-6">Sunnyvale Two-Story Home</p>
+              <p class="text-muted small mb-2">Taguig City • 2 Bedrooms • 1 Garage</p>
+              <p class="text-success mb-0 fw-semibold"><i class="bi bi-eye-fill"></i> 356 views</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Property Views Chart (wide) -->
+      <div class="col-md-9">
+        <div class="card p-4 shadow-sm animate__animated animate__fadeInUp h-100">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="text-muted">Property Views</h6>
           </div>
@@ -47,7 +84,8 @@
         </div>
       </div>
 
-      <div class="col-md-4">
+      <!-- Clients List -->
+      <div class="col-md-3">
         <div class="card p-3 shadow-sm h-100 animate__animated animate__fadeInRight">
           <h6 class="fw-bold mb-3">Clients</h6>
           <div id="clientList"></div>
@@ -56,7 +94,7 @@
     </div>
   </div>
 
-   <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script>
     // --- Chart ---
@@ -80,6 +118,7 @@
       }
     });
 
+    // --- Clients list (Agent Rafael’s clients) ---
     const clients = [
       { name: "Anna Garcia", email: "anna.client@fakeph.net", img: "https://randomuser.me/api/portraits/women/10.jpg" },
       { name: "Ben Cruz", email: "ben.client@fakeph.net", img: "https://randomuser.me/api/portraits/men/15.jpg" },

@@ -3,31 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Bookings</title>
-
-  <!-- Bootstrap & Icons -->
-  
+  <title>Agent Bookings</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
-  <!-- Animate.css & Custom Style -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <link href="<?= base_url("bootstrap5/css/bootstrap.min.css")?>" rel="stylesheet">
-   <link rel="stylesheet" href="<?= base_url("assets/styles/agenStyle.css")?>"
+  <link rel="stylesheet" href="<?= base_url("assets/styles/agenStyle.css")?>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 </head>
 <body>
-
-  <!-- ✅ Unified Navbar (same as dashboard) -->
   <nav class="navbar navbar-light fixed-top shadow-sm bg-white border-bottom">
     <div class="container-fluid d-flex justify-content-between align-items-center px-4">
-      <h3 class="mb-0 text-secondary fw-semibold">Agent Dashboard</h3>
+      <h3 class="mb-0 text-secondary fw-semibold">Agent Bookings</h3>
       <ul class="nav nav-tabs border-0 flex-nowrap">
         <li class="nav-item"><a class="nav-link" href="/users/agentHomepage">Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="/users/agentclients">Clients</a></li>
         <li class="nav-item"><a class="nav-link active" href="/users/agentbookings">Bookings</a></li>
         <li class="nav-item"><a class="nav-link" href="/users/agentproperties">Properties</a></li>
+        <li class="nav-item"><a class="nav-link" href="/users/agentchat">Chat</a></li>
       </ul>
-      
-      <button class="btn btn-outline-primary btn-sm"> <a href="/users/agentprofile"></a></button>
+      <button class="btn btn-outline-primary btn-sm">View Profile</button>
     </div>
   </nav>
 <br>
