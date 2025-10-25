@@ -6,7 +6,9 @@
   <title>Manage Users | Admin Dashboard</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <link rel="stylesheet" href="<?= base_url('assets/styles/admin-style.css')?>">
 
   <style>
@@ -53,42 +55,7 @@
 
   
 
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
 
-    .modal-content {
-      width: 380px;
-      background: var(--card);
-      padding: 20px;
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .modal-content input, 
-    .modal-content select {
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid var(--divider);
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 10px;
-    }
 
     .filters {
       margin: 20px 0;
@@ -252,42 +219,98 @@
     </div>
   </section>
 
-  <div class="modal" id="userModal">
-    <div class="modal-content">
-      <h2><i data-lucide="user-plus"></i> Add/Edit User</h2>
-      <input id="firstName" type="text" placeholder="First Name">
-      <input id="lastName" type="text" placeholder="Last Name">
-      <input id="email" type="email" placeholder="Email">
-      <select id="role">
-        <option>Admin</option><option>Agent</option><option>Client</option>
-      </select>
-      <div class="modal-actions">
-        <button class="btn" id="closeModal" style="padding:8px 12px;border:none;border-radius:6px;background:#ccc;cursor:pointer;">Cancel</button>
-        <button class="btn primary" id="saveUser" style="padding:8px 12px;border:none;border-radius:6px;background:#2563eb;color:white;cursor:pointer;">Save</button>
+
+<div class="modal fade" id="addAgentModal" tabindex="-1" aria-labelledby="addAgentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-3 bg-dark">
+      
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="addAgentModalLabel">
+          <i data-lucide="user-plus"></i> Add New Agent
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+
+      <form action="<?= base_url('/admin/store-agent') ?>" method="post">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="FirstName" class="form-label">First Name</label>
+            <input type="text" class="form-control" name="FirstName" id="FirstName" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="LastName" class="form-label">Middle Name</label>
+            <input type="text" class="form-control" name="MiddleName" id="LastName" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="LastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control" name="LastName" id="LastName" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="LastName" class="form-label">Birthdate</label>
+            <input type="date" class="form-control" name="Birthdate" id="Birthdate" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="LastName" class="form-label">Phone Number</label>
+            <input type="number" class="form-control" name="PhoneNumber" id="PhoneNumber" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="Email" class="form-label">Email</label>
+            <input type="email" class="form-control" name="Email" id="Email" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="Password" class="form-label">Password</label>
+            <input type="password" class="form-control" name="Password" id="Password" required>
+          </div>
+
+          <input type="hidden" name="Role" value="Agent">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Agent</button>
+        </div>
+      </form>
+
     </div>
   </div>
+</div>
+
 
   <script src="https://unpkg.com/lucide@latest"></script>
-<script>
-  lucide.createIcons();
+<!-- Bootstrap JS (make sure this is included before your script) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 
-  const modal = document.getElementById('userModal');
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  lucide.createIcons({ 
+    attrs: { width: 22, height: 22, strokeWidth: 2 } 
+  });
+
+  // Get elements
   const addBtn = document.getElementById('addUserBtn');
-  const closeModal = document.getElementById('closeModal');
-  const saveUser = document.getElementById('saveUser');
   const userTable = document.querySelector('#userTable tbody');
   const userDetails = document.getElementById('userDetails');
   const searchInput = document.getElementById('searchInput');
   const roleFilter = document.getElementById('roleFilter');
+
+  // Initialize Bootstrap modal
+  const addAgentModal = new bootstrap.Modal(document.getElementById('addAgentModal'));
+
   const users = <?= json_encode($users) ?>;
   let editingIndex = null;
 
+  // Function to render user table
   function renderTable(search = '', role = '') {
-    const tbody = document.querySelector('#userTable tbody');
-    tbody.innerHTML = '';
-
+    userTable.innerHTML = '';
     search = search.toLowerCase();
+
     const filtered = users.filter(u => {
       const fullName = (u.FirstName + ' ' + u.LastName).toLowerCase();
       const matchesSearch = fullName.includes(search) || u.Email.toLowerCase().includes(search);
@@ -302,70 +325,42 @@
         <td>${u.FirstName} ${u.LastName}</td>
         <td>${u.Email}</td>
         <td>${u.Role}</td>
-        <td><span class="toggle ${u.status === 'Online' ? 'active' : ''}" data-index="${i}">${u.status}</span></td>
+        <td>
+          <span class="toggle ${u.status === 'Online' ? 'active' : ''}" data-index="${i}">
+            ${u.status}
+          </span>
+        </td>
         <td class="actions">
           <button class="icon-btn" data-edit="${i}" title="Edit"><i data-lucide="edit-3"></i></button>
           <button class="icon-btn danger" data-del="${i}" title="Delete"><i data-lucide="trash-2"></i></button>
           <button class="icon-btn" data-view="${i}" title="View"><i data-lucide="eye"></i></button>
-        </td>`;
-      tbody.appendChild(tr);
+        </td>
+      `;
+      userTable.appendChild(tr);
     });
 
     lucide.createIcons();
   }
 
+  // Add Agent button (opens Bootstrap modal)
   addBtn.onclick = () => {
-    modal.style.display = 'flex';
-    editingIndex = null;
-    document.getElementById('firstName').value = '';
-    document.getElementById('lastName').value = '';
-    document.getElementById('email').value = '';
-    document.getElementById('role').value = 'Agent';
+    addAgentModal.show();
   };
 
-  closeModal.onclick = () => modal.style.display = 'none';
-  window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
-
-  saveUser.onclick = () => {
-    const f = document.getElementById('firstName').value.trim();
-    const l = document.getElementById('lastName').value.trim();
-    const e = document.getElementById('email').value.trim();
-    const r = document.getElementById('role').value;
-    if (!f || !l || !e) return alert('Please complete all fields.');
-
-    if (editingIndex !== null) {
-      users[editingIndex].FirstName = f;
-      users[editingIndex].LastName = l;
-      users[editingIndex].Email = e;
-      users[editingIndex].Role = r;
-    } else {
-      const newUser = {
-        UserID: users.length + 1,
-        FirstName: f,
-        LastName: l,
-        Email: e,
-        Role: r,
-        status: 'Offline'
-      };
-      users.unshift(newUser);
-      alert(`${f} ${l} has been added successfully!`);
-    }
-
-    modal.style.display = 'none';
-    renderTable(searchInput.value, roleFilter.value);
-  };
-
+  // Table interactions
   userTable.addEventListener('click', e => {
     const btn = e.target.closest('button');
     const toggle = e.target.closest('.toggle');
     if (!btn && !toggle) return;
 
+    // Toggle online/offline
     if (toggle) {
       const i = toggle.dataset.index;
       users[i].status = users[i].status === 'Online' ? 'Offline' : 'Online';
       renderTable(searchInput.value, roleFilter.value);
     }
 
+    // Delete user
     if (btn?.dataset.del !== undefined) {
       if (confirm('Delete this user?')) {
         users.splice(btn.dataset.del, 1);
@@ -373,42 +368,40 @@
       }
     }
 
+    // Edit user (for now opens modal prefilled — optional to connect to PHP later)
     if (btn?.dataset.edit !== undefined) {
       editingIndex = btn.dataset.edit;
       const u = users[editingIndex];
-      document.getElementById('firstName').value = u.FirstName;
-      document.getElementById('lastName').value = u.LastName;
-      document.getElementById('email').value = u.Email;
-      document.getElementById('role').value = u.Role;
-      modal.style.display = 'flex';
+      document.getElementById('FirstName').value = u.FirstName;
+      document.getElementById('LastName').value = u.LastName;
+      document.getElementById('Email').value = u.Email;
+      document.getElementById('Role').value = u.Role;
+      addAgentModal.show();
     }
 
+    // View user details
     if (btn?.dataset.view !== undefined) {
       const u = users[btn.dataset.view];
       userDetails.innerHTML = `
-        <div class="profile-pic"><img src="https://via.placeholder.com/100" alt="Profile"></div>
+        <div class="profile-pic">
+          <img src="https://via.placeholder.com/100" alt="Profile">
+        </div>
         <h3>${u.FirstName} ${u.LastName}</h3>
         <p style="color:var(--muted);">${u.Role} • ${u.Email}</p>
         <p>Status: <strong>${u.status}</strong></p>`;
     }
   });
 
-  renderTable();
+  // Filter search and roles
   searchInput.addEventListener('input', () => renderTable(searchInput.value, roleFilter.value));
   roleFilter.addEventListener('change', () => renderTable(searchInput.value, roleFilter.value));
+
+  renderTable();
+});
 </script>
 
 
-  <script>
-    lucide.createIcons({ 
-  attrs: { 
-    width: 22, 
-    height: 22, 
-    strokeWidth: 2 
-  } 
-});
 
-  </script>
 
 </body>
 </html>

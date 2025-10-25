@@ -57,6 +57,7 @@ $routes->get('/users/agentchat', 'AgentController::agentChat');
 $routes->get('/users/agentbookings', 'AgentController::agentBookings');
 $routes->get('/users/logoutagent', 'AgentController::logoutAgent');
 
+
 //chat Routes
 $routes->get('/chat/messages/(:num)', 'ChatController::getMessages/$1');
 $routes->post('/chat/send', 'ChatController::sendMessage');
@@ -76,6 +77,9 @@ $routes->get('/admin/getusers', 'AdminController::getUsers');
 $routes->get('/admin/getProperty/(:num)', 'AdminController::getProperty/$1');
 $routes->delete('admin/property/delete-property/(:num)', 'AdminController::deleteProperty/$1');
 $routes->post('admin/property/store-property', 'AdminController::storePropertys');
+
+// Admin User Management Routes
+$routes->post('/admin/store-agent', 'AdminController::storeAgent');
 
 
 

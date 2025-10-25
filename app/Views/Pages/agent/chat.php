@@ -10,7 +10,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <link href="<?= base_url("bootstrap5/css/bootstrap.min.css")?>" rel="stylesheet">
-   <link rel="stylesheet" href="<?= base_url("assets/styles/agenStyle.css")?>"
+   <link rel="stylesheet" href="<?= base_url("assets/styles/agenStyle.css")?>">
 </head>
 
 <body>
@@ -82,7 +82,7 @@
     </div>
   </div>
 
-  <!-- ✅ Scripts -->
+
 <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
 <script>
 const chatItems = document.querySelectorAll('.chat-item');
@@ -92,9 +92,9 @@ const messageInput = document.getElementById('messageInput');
 const sendButton = document.querySelector('.chat-input button');
 
 let currentSessionId = null;
-const currentRole = '<?= session()->get('role'); ?>'; // 'User' or 'Agent'
+const currentRole = '<?= session()->get('role'); ?>'; 
 
-// Load messages dynamically when clicking chat item
+
 chatItems.forEach(item => {
   item.addEventListener('click', () => {
     currentSessionId = item.dataset.sessionId;
@@ -102,9 +102,12 @@ chatItems.forEach(item => {
     chatHeader.textContent = name;
     chatMessages.innerHTML = '<p class="text-muted text-center">Loading...</p>';
 
-    fetch(`/chat/messages/${currentSessionId}`)
-      .then(res => res.json())
-      .then(messages => {
+   
+    $.ajax({
+      url: `/chat/messages/${currentSessionId}`,
+      method: 'GET',
+      dataType: 'json',
+      success: function(messages) {
         chatMessages.innerHTML = '';
 
         if (!messages || messages.length === 0) {
@@ -127,16 +130,16 @@ chatItems.forEach(item => {
           chatMessages.appendChild(div);
         });
 
-        // Auto scroll to bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
-      });
+      }
+    });
 
     messageInput.disabled = false;
     sendButton.disabled = false;
   });
 });
 
-// Send message when clicking send button or pressing Enter
+
 sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', e => {
   if (e.key === 'Enter' && !e.shiftKey) {
@@ -149,30 +152,65 @@ function sendMessage() {
   const text = messageInput.value.trim();
   if (!text || !currentSessionId) return;
 
-  fetch('/chat/send', {
+
+  $.ajax({
+    url: '/chat/send',
     method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: new URLSearchParams({
+    data: {
       chatSessionID: currentSessionId,
       messageText: text
-    })
-  })
-  .then(res => res.json())
-  .then(res => {
-    if (res.status === 'success') {
-      // Create new message bubble instantly
-      const msg = document.createElement('div');
-      msg.className = 'message bg-primary text-white p-2 rounded-3 my-1 align-self-end';
-      msg.style.maxWidth = '75%';
-      msg.textContent = text;
+    },
+    dataType: 'json',
+    success: function(res) {
+      if (res.status === 'success') {
+        const msg = document.createElement('div');
+        msg.className = 'message bg-primary text-white p-2 rounded-3 my-1 align-self-end';
+        msg.style.maxWidth = '75%';
+        msg.textContent = text;
 
-      chatMessages.appendChild(msg);
-      messageInput.value = '';
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+        chatMessages.appendChild(msg);
+        messageInput.value = '';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
     }
   });
 }
+
+
+setInterval(() => {
+  if (currentSessionId) {
+    $.ajax({
+      url: `/chat/messages/${currentSessionId}`,
+      method: 'GET',
+      dataType: 'json',
+      success: function(messages) {
+        chatMessages.innerHTML = '';
+
+        messages.forEach(msg => {
+          const div = document.createElement('div');
+          div.className = 'message p-2 rounded-3 my-1';
+          div.style.maxWidth = '75%';
+          div.textContent = msg.messageContent;
+
+          if (msg.senderRole === currentRole) {
+            div.classList.add('bg-primary', 'text-white', 'align-self-end');
+          } else {
+            div.classList.add('bg-white', 'border', 'align-self-start');
+          }
+
+          chatMessages.appendChild(div);
+        });
+
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    });
+  }
+}, 3000);
 </script>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 
 
 </body>

@@ -96,7 +96,7 @@ class UserController extends BaseController
             'Email'       => $email,
             'Password'    => password_hash($this->request->getPost('Password'), PASSWORD_BCRYPT),
             'Role'        => 'Client',
-            'status'      => 'Active',
+            'status'      => 'Online',
             'created_at'  => date('Y-m-d H:i:s'),
             'updated_at'  => date('Y-m-d H:i:s'),
         ];
