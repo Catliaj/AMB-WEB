@@ -73,7 +73,10 @@
               <th>Status</th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody>
+            
+
+          </tbody>
         </table>
       </div>
     </div>
@@ -82,11 +85,39 @@
   <script>
     lucide.createIcons();
 
-    const bookings = [
+    // bookings will be populated from server; fallback to sample if fetch fails
+    let bookings = [
       { id: "BOOK001", client: "John Santos", property: "Modern Studio Apartment", date: "2025-10-03", status: "Pending" },
       { id: "BOOK002", client: "Maria Cruz", property: "Elegant Condo Unit", date: "2025-09-27", status: "Approved" },
       { id: "BOOK003", client: "Carlos Dela Peña", property: "2BR Family House", date: "2025-10-05", status: "Rejected" },
     ];
+
+    // Try to load bookings from backend JSON endpoint. The backend should return an array
+    // of objects with fields: id, client (full name), property, date (YYYY-MM-DD), status
+    (function loadBookings(){
+      fetch('/admin/bookings/json')
+        .then(res => {
+          if (!res.ok) throw new Error('Network response was not ok');
+          return res.json();
+        })
+        .then(data => {
+          if (Array.isArray(data) && data.length) {
+            // Map backend fields to expected front-end shape if necessary
+            bookings = data.map(b => ({
+              id: b.BookingID ?? b.bookingID ?? b.id,
+              client: b.clients ?? (b.clientName ?? (b.client ?? `${b.FirstName || ''} ${b.LastName || ''}`).trim()),
+              property: b.title ?? b.PropertyTitle ?? b.property ?? b.Property ?? '—',
+              date: b.BookingDate ?? b.bookingDate ?? b.date,
+              status: b.Status ?? b.status
+            }));
+          }
+        })
+        .catch(err => {
+          // Keep the sample bookings if fetch fails; log for debugging
+          console.warn('Could not load bookings from server, using sample data:', err);
+        })
+        .finally(() => renderBookings());
+    })();
 
     const tableBody = document.querySelector('#bookingTable tbody');
     const searchInput = document.getElementById('searchInput');

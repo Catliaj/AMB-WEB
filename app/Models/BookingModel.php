@@ -64,4 +64,20 @@ class BookingModel extends Model
                     ->orderBy('MONTH(bookingDate)', 'ASC')
                     ->findAll();
     }
+
+
+    public function getBookingWithStatus()
+    {
+
+        return $this->select(
+            'booking.*, property.title AS title, CONCAT(users.firstname, " ", users.lastname) AS client'
+            )
+            ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
+            ->join('users', 'users.UserID = booking.UserID', 'left')
+            ->orderBy('booking.bookingDate', 'DESC')
+            ->findAll();
+    }
+
+
+
 }

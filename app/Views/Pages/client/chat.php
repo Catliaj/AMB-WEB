@@ -10,7 +10,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <link href="<?= base_url("bootstrap5/css/bootstrap.min.css")?>" rel="stylesheet">
-   <link rel="stylesheet" href="<?= base_url("assets/styles/agenStyle.css")?>"
+  <link rel="stylesheet" href="<?= base_url("assets/css/agenStyle.css")?>">
 </head>
 
 <body>

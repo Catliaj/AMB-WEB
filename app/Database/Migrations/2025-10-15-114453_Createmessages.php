@@ -25,7 +25,7 @@ class Createmessages extends Migration
 
             'senderRole' => [
                 'type'           => 'ENUM',
-                'constraint'     => ['User', 'Agent'],
+                'constraint'     => ['Client', 'Agent'],
                 'null'           => false,
             ],
 

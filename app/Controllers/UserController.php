@@ -8,6 +8,7 @@ use App\Models\ChatSessionModel;
 use App\Models\MessageModel;
 use App\Models\PropertyModel;
 use App\Models\UserTokenModel;
+use CodeIgniter\HTTP\ResponseInterface;
 
 
 class UserController extends BaseController
@@ -187,25 +188,99 @@ class UserController extends BaseController
      */
     public function clientHomepage()
     {
-        if (!session()->get('isLoggedIn') || session()->get('role') !== 'Client') {
-            return redirect()->to('/');
+        return view('Pages/client/homepage', [
+                'UserID' => session()->get('UserID'),
+                'email' => session()->get('inputEmail'),
+                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
+                get('LastName')),
+                'currentUserId' => session()->get('UserID'),
+                'otherUser' => null
+            ]);
+    }
+
+    public function ClientBrowse()
+    {
+         return view('Pages/client/browse', [
+                'UserID' => session()->get('UserID'),
+                'email' => session()->get('inputEmail'),
+                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
+                get('LastName')),
+                'currentUserId' => session()->get('UserID'),
+                'otherUser' => null
+            ]);
+    }
+
+    public function ClientBookings()
+    {
+       return view('Pages/client/bookings', [
+                'UserID' => session()->get('UserID'),
+                'email' => session()->get('inputEmail'),
+                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
+                get('LastName')),
+                'currentUserId' => session()->get('UserID'),
+                'otherUser' => null
+            ]);
+    }
+
+    public function ClientProfile()
+    {
+        return view('Pages/client/profile', [
+                'UserID' => session()->get('UserID'),
+                'email' => session()->get('inputEmail'),
+                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
+                get('LastName')),
+                'currentUserId' => session()->get('UserID'),
+                'otherUser' => null
+            ]);
+    }
+
+      public function cleintChat()
+    {
+        $session = session();
+        $clientID = $session->get('UserID');
+
+        $chatSessionModel = new \App\Models\ChatSessionModel();
+        $messageModel = new \App\Models\MessageModel();
+        $userModel = new \App\Models\UsersModel();
+
+        // Get all chat sessions for this agent
+        $sessions = $chatSessionModel->getSessionsByUserId($clientID);
+
+        // Prepare user info for sidebar
+        $clients = [];
+        foreach ($sessions as $s) {
+            $user = $userModel->find($s['UserID']);
+            if ($user) {
+                $clients[] = [
+                    'chatSessionID' => $s['chatSessionID'],
+                    'fullname' => trim($user['FirstName'] . ' ' . $user['LastName']),
+                    'lastMessage' => $messageModel
+                        ->where('chatSessionID', $s['chatSessionID'])
+                        ->orderBy('timestamp', 'DESC')
+                        ->first()['messageText'] ?? 'No messages yet'
+                ];
+            }
         }
 
-        $userId = session()->get('UserID');
-
-
-
-        return view('Pages/client/homepage', [
-            'UserID' => $userId,
-            'email' => session()->get('inputEmail'),
-            'fullname' => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
-
-            'messages' => [],
-            'sessionId' => null,
-            'currentUserId' => $userId,
-            'otherUser' => null,
-
+        return view('Pages/client/chat', [
+            'UserID' => $clientID,
+            'fullname' => trim($session->get('FirstName') . ' ' . $session->get('LastName')),
+            'clients' => $clients,
         ]);
+    }
+
+
+   
+
+    public function logoutClient(): ResponseInterface
+    {
+
+        $userModel = new \App\Models\UsersModel();
+        $userID = session()->get('UserID');
+
+        $userModel->setOnlineToOffline($userID);
+        session()->destroy();
+        return redirect()->to('/');
     }
 
  
