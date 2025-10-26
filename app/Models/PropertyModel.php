@@ -105,4 +105,21 @@ class PropertyModel extends Model
         $this->db->transComplete();
         return $this->db->transStatus() ? $propertyID : false;
     }
+
+
+    public function getPropertiesByAgents($agentID)
+    {
+        return $this->select('
+                property.*, 
+                propertyImage.Image,
+                propertyStatusHistory.New_Status AS New_Status
+            ')
+            ->join('propertyStatusHistory', 'propertyStatusHistory.PropertyID = property.PropertyID', 'left')
+            ->join('propertyImage', 'propertyImage.PropertyID = property.PropertyID', 'left')
+            ->join('users', 'users.UserID = property.agent_assigned', 'left')
+            ->where('property.agent_assigned', $agentID)
+            ->groupBy('property.PropertyID') 
+            ->findAll();
+    }
+
 }

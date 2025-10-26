@@ -23,55 +23,67 @@
         <li class="nav-item"><a class="nav-link" href="/users/agentclients">Clients</a></li>
         <li class="nav-item"><a class="nav-link" href="/users/agentbookings">Bookings</a></li>
         <li class="nav-item"><a class="nav-link" href="/users/agentproperties">Properties</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/users/agentchat">Chat</a></li>
       </ul>
       
-      <button class="btn btn-outline-primary btn-sm"> <a href="/users/agentprofile"></a></button>
+     <a href="/users/agentprofile"> <button class="btn btn-outline-primary btn-sm"> Profile</button></a>
     </div>
   </nav>
 
   <!-- ✅ Chat Container -->
-  <div class="container-fluid mt-5 pt-4">
-    <h4 class="fw-bold text-secondary mb-3">💬 Chat</h4>
+  <div class="container-fluid mt-5 pt-5">
+   
 
     <div class="chat-container shadow-sm rounded-4 overflow-hidden bg-white animate__animated animate__fadeInUp d-flex">
       <!-- Sidebar -->
-      <div class="chat-sidebar border-end" id="sidebar">
-        <div class="chat-search p-3 border-bottom d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center w-100">
-            <input type="text" id="searchInput" class="form-control rounded-pill me-2" placeholder="Search clients...">
-            <button id="toggleSidebar" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-pin"></i>
-            </button>
-          </div>
+      <div class="chat-sidebar border-end d-flex flex-column" id="sidebar" style="width: 300px; height: 80vh; overflow: hidden;">
+  
+      <!-- Fixed Search Bar -->
+      <div class="chat-search p-3 border-bottom d-flex justify-content-between align-items-center bg-white" style="flex-shrink: 0;">
+        <div class="d-flex align-items-center w-100">
+          <input type="text" id="searchInput" class="form-control rounded-pill me-2" placeholder="Search clients...">
+          <button id="toggleSidebar" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-pin"></i>
+          </button>
         </div>
-
-          <?php foreach ($clients as $client): ?>
-            <div class="chat-item d-flex align-items-center gap-3 p-2 rounded hover-bg"
-                data-session-id="<?= $client['chatSessionID'] ?>"
-                data-name="<?= esc($client['fullname']) ?>">
-              <img src="https://via.placeholder.com/45" class="rounded-circle shadow-sm" alt="">
-              <div>
-                <strong><?= esc($client['fullname']) ?></strong><br>
-                <small class="text-muted"><?= esc($client['lastMessage']) ?></small>
-              </div>
-            </div>
-          <?php endforeach; ?>
-
       </div>
+
+      <!-- Scrollable Client List -->
+      <div class="chat-client-list flex-grow-1 overflow-auto p-2" style="min-height: 0;">
+        <?php foreach ($clients as $client): ?>
+          <div class="chat-item d-flex align-items-center gap-3 p-2 rounded hover-bg"
+              data-session-id="<?= $client['chatSessionID'] ?>"
+              data-name="<?= esc($client['fullname']) ?>">
+            <img src="https://via.placeholder.com/45" class="rounded-circle shadow-sm" alt="">
+            <div class="text-truncate" style="max-width: 200px;">
+              <strong><?= esc($client['fullname']) ?></strong><br>
+              <small class="text-muted"><?= esc($client['lastMessage']) ?></small>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+
+    </div>
+
 
       <!-- Hover zone to reopen sidebar -->
       <div id="hoverZone"></div>
 
       <!-- Main Chat Area -->
-      <div class="chat-main d-flex flex-column flex-grow-1 bg-light" id="chatMain">
+      <div class="chat-main d-flex flex-column flex-grow-1 bg-light" id="chatMain" style="height: 80vh; overflow: hidden;">
+        <!-- Header -->
         <div class="chat-header bg-white p-3 border-bottom fw-semibold d-flex justify-content-between align-items-center">
           <span id="chatHeader">Select a client</span>
         </div>
 
-        <div class="chat-messages flex-grow-1 p-4 overflow-auto d-flex flex-column gap-2" id="chatMessages" style="min-height: 60vh;">
+        <!-- Scrollable Messages -->
+        <div class="chat-messages flex-grow-1 p-4 overflow-auto d-flex flex-column gap-2" 
+            id="chatMessages" 
+            style="min-height: 0; max-height: calc(100vh - 160px); overflow-y: auto;">
           <p class="text-muted text-center">No conversation selected.</p>
         </div>
 
+        <!-- Input Area -->
         <div class="chat-input bg-white border-top p-3 d-flex align-items-center gap-2">
           <input type="text" id="messageInput" class="form-control rounded-pill" placeholder="Type a message..." disabled>
           <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" disabled>
@@ -79,6 +91,7 @@
           </button>
         </div>
       </div>
+
     </div>
   </div>
 

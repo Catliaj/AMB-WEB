@@ -79,6 +79,20 @@ class BookingModel extends Model
             ->findAll();
     }
 
+    public function getBookingByAssignAgent($agentID)
+    {
+        return $this->select('
+                booking.*,
+                property.Title AS PropertyTitle,
+                CONCAT(users.FirstName, " ", users.LastName) AS ClientName
+            ')
+            ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
+            ->join('users', 'users.UserID = booking.UserID', 'left')
+            ->orderBy('booking.BookingDate', 'DESC')
+            ->where('property.agent_assigned', $agentID)
+            ->findAll();
+    }
+
 
 
 

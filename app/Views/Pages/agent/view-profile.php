@@ -36,7 +36,7 @@
         </div>
 
         <div class="d-flex justify-content-between">
-          <a href="/" class="btn btn-outline-secondary">Back to Dashboard</a>
+          <a href="/users/agentHomepage" class="btn btn-outline-secondary">Back to Dashboard</a>
           <button type="submit" class="btn btn-success">Save Changes</button>
         </div>
       </form>
