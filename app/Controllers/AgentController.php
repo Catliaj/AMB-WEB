@@ -41,17 +41,46 @@ class AgentController extends BaseController
             ]);
     }
 
-    public function agentProperties()
-    {
-        return view('Pages/agent/properties', [
-                'UserID' => session()->get('UserID'),
-                'email' => session()->get('inputEmail'),
-                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
-                get('LastName')),
-                'currentUserId' => session()->get('UserID'),
-                'otherUser' => null
-            ]);
+ public function agentProperties()
+{
+    $agentID = session()->get('UserID');
+    $propertyModel = new \App\Models\PropertyModel();
+    $propertyImagesModel = new \App\Models\PropertyImageModel();
+
+    $properties = $propertyModel->getPropertiesByAgents($agentID);
+
+    // Attach all images for each property
+    foreach ($properties as &$property) {
+        $images = $propertyImagesModel
+            ->where('PropertyID', $property['PropertyID'])
+            ->findAll();
+
+        $property['Images'] = [];
+
+        foreach ($images as $img) {
+            $property['Images'][] = base_url('uploads/properties/' . ($img['Image'] ?: 'no-image.jpg'));
+        }
+
+        // fallback if no image exists
+        if (empty($property['Images'])) {
+            $property['Images'][] = base_url('uploads/properties/no-image.jpg');
+        }
     }
+
+    // If AJAX call
+    if ($this->request->isAJAX()) {
+        return $this->response->setJSON($properties);
+    }
+
+    return view('Pages/agent/properties', [
+        'UserID' => session()->get('UserID'),
+        'email' => session()->get('inputEmail'),
+        'fullname' => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
+    ]);
+}
+
+
+
 
     public function agentClients()
     {
@@ -123,6 +152,20 @@ class AgentController extends BaseController
         session()->destroy();
         return redirect()->to('/');
     }
+
+    public function updateStatus()
+    {
+        $propertyID = $this->request->getPost('propertyID');
+        $status = $this->request->getPost('status');
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('propertyStatusHistory');
+        $builder->where('PropertyID', $propertyID);
+        $builder->update(['New_Status' => $status]);
+
+        return $this->response->setJSON(['status' => 'success']);
+    }
+
 
 
 

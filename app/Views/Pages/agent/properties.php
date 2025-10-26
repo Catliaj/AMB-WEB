@@ -16,8 +16,8 @@
       <ul class="nav nav-tabs border-0 flex-nowrap">
         <li class="nav-item"><a class="nav-link" href="/users/agentHomepage">Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="/users/agentclients">Clients</a></li>
-        <li class="nav-item"><a class="nav-link active" href="/users/agentbookings">Bookings</a></li>
-        <li class="nav-item"><a class="nav-link" href="/users/agentproperties">Properties</a></li>
+        <li class="nav-item"><a class="nav-link" href="/users/agentbookings">Bookings</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/users/agentproperties">Properties</a></li>
         <li class="nav-item"><a class="nav-link" href="/users/agentchat">Chat</a></li>
       </ul>
       <button class="btn btn-outline-primary btn-sm">View Profile</button>
@@ -27,6 +27,7 @@
   <div class="container-fluid mt-5 pt-4">
     <div class="d-flex justify-content-between align-items-center mb-3"></div>
       <h4 class="fw-bold text-secondary">Assigned Properties</h4><br>
+      
       <div>
         <button class="btn btn-success btn-sm" onclick="filterHouses('all')">Filter By</button>
         <select id="filterSelect" class="form-select d-inline-block ms-2" style="width: auto;" onchange="filterHouses(this.value)">
@@ -83,88 +84,122 @@
   </div>
 
   <script>
-    const houses = [
-      { id: 1, name: 'HOUSE 1', location: 'Location', floor: '40 sq m', lot: '40 sq m', bed: 1, status: 'Available', img: 'https://via.placeholder.com/400x250' },
-      { id: 2, name: 'HOUSE 2', location: 'Location', floor: '40 sq m', lot: '40 sq m', bed: 1, status: 'Available', img: 'https://via.placeholder.com/400x250' },
-      { id: 3, name: 'HOUSE 3', location: 'Location', floor: '40 sq m', lot: '40 sq m', bed: 1, status: 'Occupied', img: 'https://via.placeholder.com/400x250' },
-      { id: 4, name: 'HOUSE 4', location: 'Location', floor: '40 sq m', lot: '40 sq m', bed: 1, status: 'Available', img: 'https://via.placeholder.com/400x250' },
-      { id: 5, name: 'HOUSE 5', location: 'Location', floor: '40 sq m', lot: '40 sq m', bed: 1, status: 'Occupied', img: 'https://via.placeholder.com/400x250' },
-      { id: 6, name: 'HOUSE 6', location: 'Location', floor: '40 sq m', lot: '40 sq m', bed: 1, status: 'Available', img: 'https://via.placeholder.com/400x250' },
-      { id: 7, name: 'HOUSE 7', location: 'Location', floor: '40 sq m', lot: '40 sq m', bed: 1, status: 'Available', img: 'https://via.placeholder.com/400x250' },
-      { id: 8, name: 'HOUSE 8', location: 'Location', floor: '40 sq m', lot: '40 sq m', bed: 1, status: 'Occupied', img: 'https://via.placeholder.com/400x250' }
-    ];
+document.addEventListener("DOMContentLoaded", function () {
+  const container = document.getElementById('propertyContainer');
+  const filterSelect = document.getElementById('filterSelect');
+  let houses = [];
+  let currentEditId = null;
+  let currentModal = null;
 
-    const container = document.getElementById('propertyContainer');
-    let currentEditId = null;
-    let currentModal = null;
-
-    function renderHouses(list) {
-      container.innerHTML = '';
-      list.forEach((h, i) => {
-        const delay = i * 0.1;
-        const card = `
-          <div class="col-md-3 col-sm-6">
-            <div class="card p-4 shadow-sm animate__animated animate__fadeInUp" style="animation-delay: ${delay}s;">
-              <img src="${h.img}" alt="${h.name}" class="rounded mb-3" style="width:100%; height:180px; object-fit:cover;">
-              <h6 class="fw-bold text-dark mb-1">${h.name}</h6>
-              <p class="mb-1 text-muted small">Location: ${h.location}</p>
-              <p class="mb-1 text-muted small">Availability: <span class="${h.status === 'Occupied' ? 'text-danger' : 'text-success'}">${h.status}</span></p>
-              <p class="mb-1 text-muted small">Floor: ${h.floor}</p>
-              <p class="mb-1 text-muted small">Lot Area: ${h.lot}</p>
-              <p class="mb-2 text-muted small">Bedrooms: ${h.bed}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal(${h.id})">
-                  <i class="bi bi-pencil-square"></i> Edit
-                </button>
-                <button class="btn btn-sm btn-primary">View</button>
-              </div>
-            </div>
-          </div>`;
-        container.insertAdjacentHTML('beforeend', card);
-      });
-    }
-
-    function filterHouses(filter) {
-      if (filter === 'all') renderHouses(houses);
-      else renderHouses(houses.filter(h => h.status === filter));
-    }
-
-    function openEditModal(id) {
-      currentEditId = id;
-      const house = houses.find(h => h.id === id);
-      document.getElementById('editHouseName').textContent = house.name;
-      document.getElementById('availabilitySelect').value = house.status;
-      document.getElementById('currentImagePreview').src = house.img;
-      document.getElementById('newImageInput').value = '';
-      currentModal = new bootstrap.Modal(document.getElementById('editModal'));
-      currentModal.show();
-    }
-
-    function saveHouseChanges() {
-      const newStatus = document.getElementById('availabilitySelect').value;
-      const newImageInput = document.getElementById('newImageInput');
-      const house = houses.find(h => h.id === currentEditId);
-      house.status = newStatus;
-      if (newImageInput.files && newImageInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          house.img = e.target.result;
-          renderHousesAfterSave();
-        };
-        reader.readAsDataURL(newImageInput.files[0]);
-      } else {
-        renderHousesAfterSave();
+ 
+  function loadHouses() {
+    $.ajax({
+      url: "/users/agentproperties",
+      type: "GET",
+      dataType: "json",
+      success: function (data) {
+        houses = data;
+        renderHouses(houses);
+      },
+      error: function (err) {
+        console.error("Error loading houses:", err);
+        container.innerHTML = '<p class="text-danger text-center">Failed to load properties.</p>';
       }
-    }
+    });
+  }
 
-    function renderHousesAfterSave() {
-      currentModal.hide();
-      const filter = document.getElementById('filterSelect').value;
-      filterHouses(filter);
-    }
+  function renderHouses(list) {
+  container.innerHTML = '';
 
-    renderHouses(houses);
-  </script>
+  list.forEach((h, i) => {
+    const delay = i * 0.1;
+    const carouselId = `carousel${h.PropertyID}`;
+
+    const carouselItems = (h.Images || []).map((img, index) => `
+      <div class="carousel-item ${index === 0 ? 'active' : ''}">
+        <img src="${img}" class="d-block w-100 rounded" style="height:180px; object-fit:cover;">
+      </div>
+    `).join('');
+
+    const card = `
+      <div class="col-md-3 col-sm-6">
+        <div class="card p-4 shadow-sm animate__animated animate__fadeInUp" style="animation-delay:${delay}s;">
+          <div id="${carouselId}" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              ${carouselItems}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next">
+              <span class="carousel-control-next-icon"></span>
+            </button>
+          </div>
+          <h6 class="fw-bold text-dark mt-3 mb-1">${h.Title}</h6>
+          <p class="mb-1 text-muted small">Availability: <span class="${h.New_Status === 'Occupied' ? 'text-danger' : 'text-success'}">${h.New_Status}</span></p>
+          <p class="mb-1 text-muted small">Location: ${h.Location || 'Unknown'}</p>
+          <div class="d-flex justify-content-between align-items-center">
+            <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal(${h.PropertyID})">
+              <i class="bi bi-pencil-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-primary">View</button>
+          </div>
+        </div>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', card);
+  });
+}
+  
+
+  // Filter
+  window.filterHouses = function (filter) {
+    if (filter === 'all') renderHouses(houses);
+    else renderHouses(houses.filter(h => h.New_Status === filter));
+  };
+
+  // Edit Modal (same logic you had)
+  window.openEditModal = function (id) {
+    currentEditId = id;
+    const house = houses.find(h => h.PropertyID == id);
+    document.getElementById('editHouseName').textContent = house.PropertyName;
+    document.getElementById('availabilitySelect').value = house.New_Status || 'Available';
+    document.getElementById('currentImagePreview').src = house.PropertyImage 
+      ? `data:image/jpeg;base64,${house.PropertyImage}` 
+      : 'https://via.placeholder.com/400x250';
+    document.getElementById('newImageInput').value = '';
+    currentModal = new bootstrap.Modal(document.getElementById('editModal'));
+    currentModal.show();
+  };
+
+  // Save (update) property status
+  window.saveHouseChanges = function () {
+    const newStatus = document.getElementById('availabilitySelect').value;
+    $.ajax({
+      url: "/property/updateStatus",
+      type: "POST",
+      data: {
+        propertyID: currentEditId,
+        status: newStatus
+      },
+      success: function () {
+        const house = houses.find(h => h.PropertyID == currentEditId);
+        if (house) house.New_Status = newStatus;
+        currentModal.hide();
+        filterHouses(filterSelect.value);
+      }
+    });
+  };
+
+  // Initial load
+  loadHouses();
+});
+</script>
+
+<!-- jQuery CDN -->
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
+
 
   <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
 </body>

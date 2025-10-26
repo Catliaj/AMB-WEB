@@ -249,7 +249,7 @@ class UserController extends BaseController
         // Prepare user info for sidebar
         $clients = [];
         foreach ($sessions as $s) {
-            $user = $userModel->find($s['UserID']);
+            $user = $userModel->find($s['AgentID']);
             if ($user) {
                 $clients[] = [
                     'chatSessionID' => $s['chatSessionID'],

@@ -24,7 +24,7 @@
         <li class="nav-item"><a class="nav-link" href="/users/agentproperties">Properties</a></li>
         <li class="nav-item"><a class="nav-link" href="/users/agentchat">Chat</a></li>
       </ul>
-      <button class="btn btn-outline-primary btn-sm">View Profile</button>
+      <a href="/users/agentprofile"> <button class="btn btn-outline-primary btn-sm"> Profile</button></a>
     </div>
   </nav>
 

@@ -51,11 +51,16 @@ $routes->get('/users/chat', 'UserController::cleintChat');
 //Agent Routes
 $routes->get('/users/agentHomepage', 'AgentController::agentDashboard');
 $routes->get('/users/agentprofile', 'AgentController::agentProfile');
-$routes->get('/users/agentproperties', 'AgentController::agentProperties');
+
 $routes->get('/users/agentclients', 'AgentController::agentClients');
 $routes->get('/users/agentchat', 'AgentController::agentChat');
 $routes->get('/users/agentbookings', 'AgentController::agentBookings');
 $routes->get('/users/logoutagent', 'AgentController::logoutAgent');
+
+//Agent Property Management Routes
+$routes->get('/users/agentproperties', 'AgentController::agentProperties');
+$routes->post('property/updateStatus', 'AgentController::updateStatus');
+
 
 
 //chat Routes
