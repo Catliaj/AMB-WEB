@@ -549,6 +549,44 @@ function handleChatKeyPress(event) {
     if (event.key === 'Enter') sendMessage();
 }
 
+// Hero search functionality
+function handleHeroSearch() {
+    const searchInput = document.getElementById('heroSearchInput');
+    const searchQuery = searchInput ? searchInput.value.trim() : '';
+    
+    if (searchQuery) {
+        // Store the search query in sessionStorage
+        sessionStorage.setItem('searchQuery', searchQuery);
+        // Navigate to browse page
+        window.location.href = 'browse.html';
+    } else {
+        // If empty, just go to browse page
+        window.location.href = 'browse.html';
+    }
+}
+
+// Handle Enter key press in hero search
+function handleHeroSearchKeyPress(event) {
+    if (event.key === 'Enter') {
+        handleHeroSearch();
+    }
+}
+
+// Apply search from homepage when browse page loads
+function applyStoredSearch() {
+    const storedQuery = sessionStorage.getItem('searchQuery');
+    if (storedQuery) {
+        const searchEl = document.getElementById('searchFilter');
+        if (searchEl) {
+            searchEl.value = storedQuery;
+            // Clear the stored query
+            sessionStorage.removeItem('searchQuery');
+            // Apply filters to show results
+            applyFilters();
+        }
+    }
+}
+
 // Initialization on DOM loaded
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
@@ -559,6 +597,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('propertiesContainer')) {
         filteredProperties = [...allProperties];
         renderPropertiesGrid();
+        // Apply stored search query if exists
+        applyStoredSearch();
     }
 
     // If we are on the bookings page, render bookings
