@@ -14,9 +14,9 @@
     <link rel="stylesheet" href="<?= base_url("assets/styles/clientstyle.css")?>">
 </head>
 
-<body>
+
     <!-- Navigation -->
-    <body class="site-wrapper">
+<body class="site-wrapper">
         <nav class="navbar navbar-expand-lg navbar-light sticky-top custom-nav" id="mainNav">
                 <div class="container-fluid">
                     <!-- Logo -->
@@ -48,6 +48,9 @@
                             <li class="nav-item d-lg-none">
                                 <a class="nav-link nav-link-custom" href="/users/clientprofile">Profile</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom" href="/users/chat">Chats</a>
+                            </li>
                         </ul>
 
                         <!-- Right-aligned (desktop only) -->
@@ -68,7 +71,7 @@
             </nav>
     </body>
 
-    <main id="mainContent" class="page-bg-muted py-4">
+      <main id="mainContent" class="page-bg-muted py-4">
         <div class="container">
 
             <div class="filters-card mb-4">
@@ -121,6 +124,61 @@
         </div>
     </main>
 
+    <!-- Property Details Modal -->
+        <div class="modal fade" id="propertyDetailsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content property-modal-content">
+                    <div class="modal-body p-0 position-relative">
+
+                        <!-- Image Area with Overlayed Details -->
+                        <div class="property-modal-image-wrapper position-relative">
+                            <img id="modalPropertyImage" class="property-details-image" alt="Property Image">
+
+                            <!-- Heart & Badge -->
+                            <button class="property-favorite" id="modalFavoriteBtn"
+                                onclick="toggleFavoriteFromModal(event)">
+                                <i class="bi bi-heart fs-5"></i>
+                            </button>
+                            <span class="property-type-badge" id="modalPropertyType"></span>
+
+                            <!-- Navigation Arrows -->
+                            <button class="modal-nav prev" onclick="navigateProperty(-1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="modal-nav next" onclick="navigateProperty(1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+
+                            <!-- Overlay Details -->
+                            <div class="property-modal-details-overlay">
+                                <h5 id="modalPropertyTitle"></h5>
+                                <div class="location">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <span id="modalPropertyLocation"></span>
+                                </div>
+                                <div class="house-stats">
+                                    <div><i class="bi bi-house-door"></i><span id="modalPropertyBeds"></span></div>
+                                    <div><i class="bi bi-droplet"></i><span id="modalPropertyBaths"></span></div>
+                                    <div><i class="bi bi-arrows-fullscreen"></i><span id="modalPropertySqft"></span>
+                                    </div>
+                                </div>
+                                <div class="price-book">
+                                    <span class="price" id="modalPropertyPrice"></span>
+                                    <button class="btn btn-outline-primary" id="modalChatBtn">
+                                        <i class="bi bi-chat-dots-fill me-1"></i>Chat Agent
+                                    </button>
+                                    <button class="btn btn-primary" id="modalBookBtn">
+                                        <i class="bi bi-calendar-check me-2"></i>Book Property
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
     <!-- Chat widget (same as other pages) -->
     <div class="chat-window" id="chatWindow">
         <div class="chat-header">
@@ -152,9 +210,18 @@
         <i class="bi bi-chat-dots-fill fs-4"></i>
     </button>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        const propertiesUrl = "<?= base_url('/properties/all') ?>";
+        const propertiesViewUrl = "<?= base_url('/properties/view') ?>";
+
+    </script>
+
 
     <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
     <script src="<?= base_url("assets/js/client.js")?>"></script>
+   
     </div>
 </body>
 

@@ -128,54 +128,66 @@ class UserController extends BaseController
      * Login logic
      */
     public function login()
-    {
-        $session = session();
-        $model = new UsersModel();
+{
+    $session = session();
+    $model = new UsersModel();
 
+    $Username = $this->request->getPost('inputEmail');
+    $Password = $this->request->getPost('inputPassword');
 
-        $Username = $this->request->getPost('inputEmail');
-        $Password = $this->request->getPost('inputPassword');
+    $user = $model->where('Email', $Username)->first();
 
-      
-       
-        
+    if ($user && password_verify($Password, $user['Password'])) {
 
-        $user = $model->where('Email', $Username)->first();
-        $ID  = $model->where('Email', $Username)->findColumn('UserID');
-        
-
-        if ($user && password_verify($Password, $user['Password'])) {
-
-            if (isset($user['verified']) && !$user['verified']) {
-                return redirect()->to('/')->with('error', 'Please verify your email before logging in.');
-            }
-
-     
-            $session->set([
-                'isLoggedIn'  => true,
-                'UserID'      => $user['UserID'],
-                'inputEmail'  => $user['Email'],
-                'role'        => $user['Role'],
-                'FirstName'   => $user['FirstName'],
-                'MiddleName'  => $user['MiddleName'],
-                'LastName'    => $user['LastName']
+        // Check if email is verified
+        if (isset($user['verified']) && !$user['verified']) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Please verify your email before logging in.'
             ]);
-            $model->setOfflineToOnline($ID);
-
-            // Redirect by role
-            switch ($user['Role']) {
-                case 'Agent':
-                    return redirect()->to('/users/agentHomepage')->with('success', 'Login successful!');
-                case 'Admin':
-                    return redirect()->to('/admin/adminHomepage')->with('success', 'Login successful!');
-                default:
-                    return redirect()->to('/users/clientHomepage')->with('success', 'Login successful!');
-            }
         }
 
-        $session->setFlashdata('error', 'Wrong username or password.');
-        return redirect()->to('/');
+        // Set session
+        $session->set([
+            'isLoggedIn'  => true,
+            'UserID'      => $user['UserID'],
+            'inputEmail'  => $user['Email'],
+            'role'        => $user['Role'],
+            'FirstName'   => $user['FirstName'],
+            'MiddleName'  => $user['MiddleName'],
+            'LastName'    => $user['LastName']
+        ]);
+
+        // Update online status
+        $model->setOfflineToOnline($user['UserID']);
+
+        // Determine redirect URL
+        switch ($user['Role']) {
+            case 'Agent':
+                $redirectURL = base_url('/users/agentHomepage');
+                break;
+            case 'Admin':
+                $redirectURL = base_url('/admin/adminHomepage');
+                break;
+            default:
+                $redirectURL = base_url('/users/clientHomepage');
+                break;
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'message' => 'Login successful!',
+            'redirect' => $redirectURL
+        ]);
     }
+
+    // Invalid login
+    return $this->response->setJSON([
+        'status' => 'error',
+        'message' => 'Wrong username or password.'
+    ]);
+}
+
 
     public function logout()
     {
@@ -282,6 +294,12 @@ class UserController extends BaseController
         session()->destroy();
         return redirect()->to('/');
     }
+
+  
+
+
+
+
 
  
 
