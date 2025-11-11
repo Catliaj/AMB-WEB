@@ -37,7 +37,7 @@ class PropertySeeder extends Seeder
                 'Bedrooms' => 3,
                 'Bathrooms' => 2,
                 'Parking_Spaces' => 2,
-                'agent_assigned' => 3,
+                'agent_assigned' => 2,
                 'Corporation' => 'BellaVita'
             ],
             [
@@ -51,7 +51,7 @@ class PropertySeeder extends Seeder
                 'Bedrooms' => 2,
                 'Bathrooms' => 2,
                 'Parking_Spaces' => 1,
-                'agent_assigned' => 4,
+                'agent_assigned' => 5,
                 'Corporation' => 'BellaVita'
             ],
             [

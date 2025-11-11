@@ -18,7 +18,6 @@
 <body>
     <div class="site-wrapper">
         <!-- Navigation -->
-
         <body class="home">
             <nav class="navbar navbar-expand-lg navbar-light sticky-top custom-nav" id="mainNav">
                 <div class="container-fluid">
@@ -184,7 +183,7 @@
                             <h2 class="h3 fw-medium mb-1">Featured Properties</h2>
                             <p class="text-muted mb-0">Handpicked properties just for you</p>
                         </div>
-                        <a class="btn btn-primary" href="browse.html">View All</a>
+                        <a class="btn btn-primary" href="/users/clientbrowse">View All</a>
                     </div>
 
                     <div class="row g-4">

@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 </head>
 <body>
+ 
   <nav class="navbar navbar-light fixed-top shadow-sm bg-white border-bottom">
     <div class="container-fluid d-flex justify-content-between align-items-center px-4">
       <h3 class="mb-0 text-secondary fw-semibold">Agent Dashboard</h3>
@@ -34,7 +35,7 @@
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h6 class="text-muted mb-1">Overall Views</h6>
-              <div class="fs-5 fw-bold text-success">1,245</div>
+              <div class="fs-5 fw-bold text-success"><?= $getTotalViewsByAgent?></div>
             </div>
             <div class="bg-light rounded-circle p-2">
               <i class="bi bi-eye-fill text-success fs-4"></i>
@@ -49,7 +50,7 @@
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h6 class="text-muted mb-1">Total Clients</h6>
-              <div class="fs-5 fw-bold text-primary">3</div>
+              <div class="fs-5 fw-bold text-primary"> <?= $totalClientHandle ?></div>
             </div>
             <div class="bg-light rounded-circle p-2">
               <i class="bi bi-people-fill text-primary fs-4"></i>

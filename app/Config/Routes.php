@@ -44,6 +44,11 @@ $routes->get('/users/clientbookings', 'UserController::ClientBookings');
 $routes->get('/users/clientbrowse', 'UserController::ClientBrowse');
 $routes->get('/users/logout', 'UserController::logoutClient');
 $routes->get('/users/chat', 'UserController::cleintChat');
+$routes->get('/properties/all', 'PropertyController::getAllProperties');
+$routes->get('properties/view/(:num)', 'PropertyController::viewProperty/$1');
+
+
+
 
 
 
@@ -66,6 +71,8 @@ $routes->post('property/updateStatus', 'AgentController::updateStatus');
 //chat Routes
 $routes->get('/chat/messages/(:num)', 'ChatController::getMessages/$1');
 $routes->post('/chat/send', 'ChatController::sendMessage');
+$routes->post('chat/startSession', 'ChatController::startSession');
+
 
 
 // Admin Routes
@@ -82,6 +89,9 @@ $routes->get('/admin/getusers', 'AdminController::getUsers');
 $routes->get('/admin/getProperty/(:num)', 'AdminController::getProperty/$1');
 $routes->delete('admin/property/delete-property/(:num)', 'AdminController::deleteProperty/$1');
 $routes->post('admin/property/store-property', 'AdminController::storePropertys');
+$routes->get('chat/view/(:num)', 'ChatController::view/$1');
+$routes->post('chat/startSession', 'ChatController::startSession');
+
 
 // Admin User Management Routes
 $routes->post('/admin/store-agent', 'AdminController::storeAgent');

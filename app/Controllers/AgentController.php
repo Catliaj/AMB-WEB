@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
+use App\Models\ChatSessionModel;
+use App\Models\PropertyViewLogsModel;
 
 class AgentController extends BaseController
 {
@@ -18,14 +20,22 @@ class AgentController extends BaseController
             return redirect()->to('/');
         }
 
-        $agentId = session()->get('userID');
+        $agentId = session()->get('UserID');
+        $chatSessionModel = new ChatSessionModel;
+        $propertyViewModel = new PropertyViewLogsModel;
+        $totalClientHandle = $chatSessionModel->getUsersHandledByAgent($agentId);
+        $getTotalViewsByAgent = $propertyViewModel->getTotalViewsByAgent($agentId);
+        
+       
       
         return view('Pages/agent/dashboard', [
             'agentID' => $agentId,
             'email' => session()->get('inputEmail'),
             'fullname' => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
             'currentUserId' => $agentId,
-            'otherUser' => null
+            'otherUser' => null,
+            'totalClientHandle' => $totalClientHandle,
+            'getTotalViewsByAgent' => $getTotalViewsByAgent,
         ]);
     }
 

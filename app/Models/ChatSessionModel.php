@@ -93,4 +93,14 @@ class ChatSessionModel extends Model
             ->orderBy('messages.created_at', 'ASC')
             ->findAll();
     }    
+
+   public function getUsersHandledByAgent($agentId)
+    {
+        return $this->db->table('chatSession')
+                        ->where('AgentID', $agentId)
+                        ->countAllResults();
+    }
+
+
+
 }

@@ -646,7 +646,7 @@
   }
 
   .badge-cancelled {
-    background-color: #d00c0c !important; 
+    background-color: #d00c0c !important;
     color: #333;
     padding: 0.4rem 0.75rem;
     border-radius: 0.5rem;
@@ -1002,7 +1002,6 @@
 
     .hero {
       grid-template-columns: 1fr;
-      /* Stack content */
       text-align: center;
       height: auto;
       padding: 40px 20px;
@@ -1035,11 +1034,16 @@
     .navbar-nav .nav-link {
       text-align: left;
       width: 100%;
-      padding-left: 1.8rem; /* adjust this for fine-tuning */
+      padding-left: 1.8rem;
+      /* adjust this for fine-tuning */
     }
 
     .navbar-nav .nav-item {
       width: 100%;
+    }
+
+    .property-modal-image-wrapper {
+      height: 420px;
     }
   }
 
@@ -1060,6 +1064,32 @@
     .hero-content {
       margin-top: 0;
     }
+
+    .property-modal-image-wrapper {
+      height: 360px;
+    }
+
+    .property-modal-details-overlay {
+      padding: 1rem;
+    }
+
+    .property-modal-details-overlay h5 {
+      font-size: 1.1rem;
+    }
+
+    .property-modal-details-overlay .house-stats {
+      gap: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .property-modal-details-overlay .price-book .price {
+      font-size: 1.1rem;
+    }
+
+    .property-modal-details-overlay .price-book button {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.9rem;
+    }
   }
 
   @media (max-width: 767px) {
@@ -1072,3 +1102,181 @@
       right: 0.5rem;
     }
   }
+
+  /* --- Tinder-Style Property Modal --- */
+  .property-modal-content {
+    border-radius: 1rem;
+    overflow: hidden;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background-color: var(--card-bg);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Image wrapper with overlay */
+  .property-modal-image-wrapper {
+    position: relative;
+    height: 500px;
+    /* desktop */
+    overflow: hidden;
+  }
+
+  /* Image zoom on hover */
+  .property-modal-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .property-modal-image-wrapper:hover img {
+    transform: scale(1.05);
+  }
+
+  /* Heart (favorite) top-right */
+  #propertyDetailsModal .property-favorite {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  #propertyDetailsModal .property-favorite.active i {
+    color: var(--primary);
+  }
+
+  /* Property type badge top-left */
+  #propertyDetailsModal .property-type-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background-color: var(--primary);
+    color: var(--card-bg);
+    padding: 0.4rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.9rem;
+    z-index: 10;
+    font-weight: 600;
+  }
+
+  /* Navigation arrows */
+  .modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.85);
+    border: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+  }
+
+  .modal-nav:hover {
+    background: var(--primary);
+    color: var(--card-bg);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .modal-nav.prev {
+    left: 0.75rem;
+  }
+
+  .modal-nav.next {
+    right: 0.75rem;
+  }
+
+  /* Overlay Details at bottom */
+  .property-modal-details-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 1.5rem;
+    /* Darker gradient for better contrast */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.2) 70%);
+    color: #fff;
+    /* always white for readability */
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+
+  .property-modal-details-overlay h5 {
+    color: #fff !important;
+    /* force white */
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+  .property-modal-details-overlay .location {
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+    gap: 0.5rem;
+    color: rgba(var(--text-color-rgb), 0.85);
+    /* use RGB for opacity in dark/light */
+  }
+
+  .property-modal-details-overlay .house-stats {
+    display: flex;
+    justify-content: start;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: rgba(var(--text-color-rgb), 0.85);
+  }
+
+  .property-modal-details-overlay .house-stats i {
+    margin-right: 0.25rem;
+  }
+
+  .property-modal-details-overlay .price-book {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+  }
+
+  .property-modal-details-overlay .price-book .price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .property-modal-details-overlay .price-book button {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+  }
+
+  .booking-card {
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    position: relative;
+}
+
+
+

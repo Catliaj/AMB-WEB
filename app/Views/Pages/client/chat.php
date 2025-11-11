@@ -47,6 +47,9 @@
                             <li class="nav-item d-lg-none">
                                 <a class="nav-link nav-link-custom" href="/users/clientprofile">Profile</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom" href="/users/chat">Chats</a>
+                            </li>
                         </ul>
 
                         <!-- Right-aligned (desktop only) -->
@@ -164,7 +167,10 @@ chatItems.forEach(item => {
           chatMessages.appendChild(div);
         });
 
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        requestAnimationFrame(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight; // ✅ scroll after render
+        });
+        
       }
     });
 

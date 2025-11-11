@@ -304,7 +304,7 @@
                     <div class="modal-body">
                             <img src="<?= base_url('assets/img/AMB_logo.png') ?>" alt="Account Logo" class="Account_Logo">
 
-                        <form action="<?= base_url('users/login') ?>" method="post">
+                        <form id="loginForm" action="<?= base_url('users/login') ?>" method="post">
                         <div class="mb-3 text-center">
                             <h3 class="Welcome">WELCOME!</h3>
                             <h6 class="msg">Welcome back! Log in to explore new property listings.</h6>
@@ -627,46 +627,55 @@ $(document).ready(function () {
 
 
 
+  <script>
+const loginForm = document.getElementById('loginForm');
 
-<script>
-  const loginForm = document.querySelector('form[action="<?= base_url('users/login') ?>"]');
+if (loginForm) {
+  loginForm.addEventListener('submit', function(e) {
+    e.preventDefault();
 
-  if (loginForm) {
-    loginForm.addEventListener('submit', function(e) {
-      e.preventDefault(); // stop form from submitting immediately
+    Swal.fire({
+      title: 'Logging in...',
+      text: 'Please wait while we verify your credentials.',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
 
+    fetch('<?= base_url("/users/login") ?>', {
+      method: 'POST',
+      body: new FormData(loginForm)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Welcome!',
+          text: data.message,
+          confirmButtonText: 'OK'
+        }).then(() => {
+          window.location.href = data.redirect; // ✅ Go to dashboard
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: data.message
+        });
+      }
+    })
+    .catch(error => {
       Swal.fire({
-        title: 'Logging in...',
-        text: 'Please wait while we check your credentials.',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
+        icon: 'error',
+        title: 'Error!',
+        text: 'Something went wrong. Please try again.'
       });
-
-      // ⏱ Add a short delay so the alert is visible before the redirect
-      setTimeout(() => {
-        loginForm.submit();
-      }, 2000); // 2000ms = 2 seconds delay
+      console.error(error);
     });
-  }
-
-  // ✅ Display success or error alerts after redirect
-  <?php if (session()->getFlashdata('success')): ?>
-    Swal.fire({
-      icon: 'success',
-      title: 'Welcome!',
-      text: '<?= session()->getFlashdata('success') ?>',
-      showConfirmButton: false,
-      timer: 2000
-    });
-  <?php elseif (session()->getFlashdata('error')): ?>
-    Swal.fire({
-      icon: 'error',
-      title: 'Oops...',
-      text: '<?= session()->getFlashdata('error') ?>'
-    });
-  <?php endif; ?>
+  });
+}
 </script>
 
 
