@@ -63,17 +63,31 @@
       <div class="col-md-6 col-lg-6">
         <div class="card p-4 shadow-sm animate__animated animate__fadeIn animate__delay-2s h-100">
           <h6 class="text-muted mb-3">Most Viewed Property</h6>
-          <div class="d-flex align-items-center gap-4">
-            <img src="https://images.unsplash.com/photo-1572120360610-d971b9d7767c?w=160&h=120&fit=crop"
-                 alt="Property" class="rounded shadow-sm" width="160" height="100">
-            <div>
-              <p class="mb-1 fw-bold text-dark fs-6">Sunnyvale Two-Story Home</p>
-              <p class="text-muted small mb-2">Taguig City • 2 Bedrooms • 1 Garage</p>
-              <p class="text-success mb-0 fw-semibold"><i class="bi bi-eye-fill"></i> 356 views</p>
+          <?php if (!empty($mostViewed)): ?>
+            <div class="d-flex align-items-center gap-4">
+              <img src="<?= base_url('uploads/properties/' . ($mostViewed['PropertyImage'] ?? 'no-image.jpg')) ?>" 
+     alt="<?= $mostViewed['Title'] ?? 'No Image' ?>" 
+     class="rounded shadow-sm" width="160" height="100">
+
+
+              <div>
+                <p class="mb-1 fw-bold text-dark fs-6"><?= esc($mostViewed['Title']) ?></p>
+                <p class="text-muted small mb-2">
+                  <?= esc($mostViewed['Location']) ?> • 
+                  <?= esc($mostViewed['Bedrooms'] ?? 0) ?> Bedrooms • 
+                  <?= esc($mostViewed['Parking_Spaces'] ?? 0) ?> Garage
+                </p>
+                <p class="text-success mb-0 fw-semibold">
+                  <i class="bi bi-eye-fill"></i> <?= esc($mostViewed['total_views'] ?? 0) ?> views
+                </p>
+              </div>
             </div>
-          </div>
+          <?php else: ?>
+            <p class="text-muted">No properties assigned yet.</p>
+          <?php endif; ?>
         </div>
       </div>
+
 
       <!-- Property Views Chart (wide) -->
       <div class="col-md-9">
@@ -119,25 +133,30 @@
       }
     });
 
-    // --- Clients list (Agent Rafael’s clients) ---
-    const clients = [
-      { name: "Anna Garcia", email: "anna.client@fakeph.net", img: "https://randomuser.me/api/portraits/women/10.jpg" },
-      { name: "Ben Cruz", email: "ben.client@fakeph.net", img: "https://randomuser.me/api/portraits/men/15.jpg" },
-      { name: "Carla Reyes", email: "carla.client@fakeph.net", img: "https://randomuser.me/api/portraits/women/22.jpg" },
-    ];
-
+   
+    const clients = <?= json_encode($clients) ?>;
     const clientList = document.getElementById("clientList");
+
+    let html = '';
     clients.forEach(c => {
-      clientList.innerHTML += `
-        <div class="d-flex align-items-center gap-3 border-bottom py-2">
-          <img src="${c.img}" class="rounded-circle" width="40">
-          <div>
-            <p class="mb-0 fw-bold">${c.name}</p>
-            <p class="text-muted small mb-0">${c.email}</p>
-          </div>
-        </div>
-      `;
+        // Fallback image if no client photo aayosin ko to pag may data
+        const imgSrc = c.img && c.img.trim() !== '' ? c.img : '<?= base_url('uploads/properties/no-image.jpg') ?>';
+
+
+        const fullName = c.name || (c.FirstName + ' ' + (c.MiddleName ? c.MiddleName + ' ' : '') + c.LastName) || 'No Name';
+
+        html += `
+            <div class="d-flex align-items-center gap-3 border-bottom py-2">
+                <img src="${imgSrc}" class="rounded-circle" width="40" height="40">
+                <div>
+                    <p class="mb-0 fw-bold">${fullName}</p>
+                    <p class="text-muted small mb-0">${c.email || 'No Email'}</p>
+                </div>
+            </div>
+        `;
     });
+
+clientList.innerHTML = html;
   </script>
 </body>
 </html>

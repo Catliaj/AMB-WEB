@@ -96,11 +96,23 @@ class ChatSessionModel extends Model
 
    public function getUsersHandledByAgent($agentId)
     {
-        return $this->db->table('chatSession')
-                        ->where('AgentID', $agentId)
-                        ->countAllResults();
+        return $this->where('AgentID', $agentId)
+                    ->countAllResults();
+    }
+
+    public function getClientsHandledByAgent($agentId)
+    {
+        // Use DISTINCT to avoid duplicates if a client has multiple sessions
+        return $this->db->table('chatSession AS cs')
+                        ->select('u.UserID, u.FirstName, u.MiddleName, u.LastName, u.Email, u.phoneNumber, u.Birthdate')
+                        ->join('users AS u', 'u.UserID = cs.UserID')
+                        ->where('cs.AgentID', $agentId)
+                        ->distinct()
+                        ->get()
+                        ->getResultArray();
     }
 
 
+  
 
 }

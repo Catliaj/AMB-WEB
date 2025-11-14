@@ -76,89 +76,58 @@
   <!-- 🔹 Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const clients = [
-      {
-        name: { first: "John", middle: "D.", last: "Smith" },
-        email: "johnsmith@example.com",
-        phone: "0917-555-1234",
-        bday: "1995-02-14",
-        age: 30,
-        property: "Modern Apartment in City Center",
-        idImage: "https://via.placeholder.com/400x250?text=John+Smith+ID",
-        photo: "https://randomuser.me/api/portraits/men/31.jpg"
-      },
-      {
-        name: { first: "Mary", middle: "A.", last: "Jane" },
-        email: "maryjane@example.com",
-        phone: "0918-777-5678",
-        bday: "1992-05-22",
-        age: 33,
-        property: "Cozy Suburban House",
-        idImage: "https://via.placeholder.com/400x250?text=Mary+Jane+ID",
-        photo: "https://randomuser.me/api/portraits/women/44.jpg"
-      },
-      {
-        name: { first: "Carlos", middle: "Dela", last: "Cruz" },
-        email: "carlosdc@example.com",
-        phone: "0920-222-9999",
-        bday: "1988-09-30",
-        age: 37,
-        property: "Luxury Condo with Ocean View",
-        idImage: "https://via.placeholder.com/400x250?text=Carlos+Dela+Cruz+ID",
-        photo: "https://randomuser.me/api/portraits/men/28.jpg"
-      },
-      {
-        name: { first: "Ella", middle: "Mae", last: "Santos" },
-        email: "ellas@example.com",
-        phone: "0921-889-7722",
-        bday: "1998-08-11",
-        age: 27,
-        property: "Townhouse in Green Village",
-        idImage: "https://via.placeholder.com/400x250?text=Ella+Mae+Santos+ID",
-        photo: "https://randomuser.me/api/portraits/women/12.jpg"
-      }
-    ];
+     const clients = <?= json_encode($clients) ?>;
 
     const listContainer = document.getElementById("clientsList");
     const detailsDiv = document.getElementById("clientDetails");
 
     clients.forEach((c, i) => {
-      const clientItem = document.createElement("div");
-      clientItem.classList.add("client-item", "animate__animated", "animate__fadeInUp");
-      clientItem.innerHTML = `
-        <img src="${c.photo}" class="client-photo rounded-circle">
-        <span class="client-name">${c.name.first} ${c.name.last}</span>
-      `;
-      clientItem.onclick = () => showClient(i);
-      listContainer.appendChild(clientItem);
-    });
+    const clientItem = document.createElement("div");
+    clientItem.classList.add("client-item", "animate__animated", "animate__fadeInUp");
 
-    function showClient(i) {
-      const c = clients[i];
-      detailsDiv.innerHTML = `
-        <div class="animate__animated animate__fadeIn">
-          <div class="text-center mb-3">
-            <img src="${c.photo}" class="client-detail-photo rounded-circle shadow-sm mb-2" alt="${c.name.first}">
-            <h5 class="fw-bold">${c.name.first} ${c.name.middle} ${c.name.last}</h5>
-          </div>
-          <p><strong>Email:</strong> ${c.email}</p>
-          <p><strong>Phone:</strong> ${c.phone}</p>
-          <p><strong>Birthday:</strong> ${c.bday}</p>
-          <p><strong>Age:</strong> ${c.age}</p>
-          <p><strong>Property Interested:</strong> ${c.property}</p>
-          <p><strong>Valid ID:</strong>
-            <button class="btn-eye" onclick="viewID('${c.idImage}')">
-              <i class="bi bi-eye-fill"></i> View ID
-            </button>
-          </p>
+    // Combine first + middle + last names
+    const fullName = [c.FirstName, c.MiddleName, c.LastName].filter(Boolean).join(' ');
+
+
+    //ayosin toh pag may data na picture
+    clientItem.innerHTML = `
+      <img src="${c.photo && c.photo.trim() !== '' ? c.photo : '<?= base_url('uploads/properties/no-image.jpg') ?>'}" 
+     class="client-photo rounded-circle">
+    <span class="client-name">${fullName}</span>
+    `;
+
+    clientItem.onclick = () => showClient(i);
+    listContainer.appendChild(clientItem);
+  });
+
+  function showClient(i) {
+    const c = clients[i];
+    const fullName = [c.FirstName, c.MiddleName, c.LastName].filter(Boolean).join(' ');
+
+    //ayosin toh pag may data na picture
+    detailsDiv.innerHTML = `
+      <div class="animate__animated animate__fadeIn">
+        <div class="text-center mb-3">
+         <img src="${c.photo && c.photo.trim() !== '' ? c.photo : '<?= base_url('uploads/properties/no-image.jpg') ?>'}" 
+          class="client-detail-photo rounded-circle shadow-sm mb-2" 
+          alt="${c.FirstName}">
+
+          <h5 class="fw-bold">${fullName}</h5>
         </div>
-      `;
-    }
+        <p><strong>Email:</strong> ${c.Email}</p>
+        <p><strong>Phone:</strong> ${c.phoneNumber}</p>
+        <p><strong>Birthday:</strong> ${c.Birthdate}</p>
+        
+      </div>
+    `;
+  }
 
     function viewID(src) {
-      document.getElementById("idImage").src = src;
+      const defaultImage = "<?= base_url('uploads/properties/no-image.jpg') ?>"; // default fallback
+      document.getElementById("idImage").src = src && src.trim() !== "" ? src : defaultImage;
       new bootstrap.Modal(document.getElementById("idModal")).show();
     }
+
   </script>
 </body>
 </html>

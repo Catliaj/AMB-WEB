@@ -44,46 +44,44 @@
             </tr>
           </thead>
           <tbody id="bookingTable">
-            <tr>
-              <td>John Doe</td>
-              <td>john@example.com</td>
-              <td>Sunset Villa</td>
-              <td>2025-10-20</td>
-              <td><span class="badge bg-warning text-dark">Pending</span></td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewBooking('John Doe', 'john@example.com', 'Sunset Villa', '2025-10-20')">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-success me-1" onclick="approveBooking(this)">
-                  <i class="bi bi-check-circle"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="disapproveBooking(this)">
-                  <i class="bi bi-x-circle"></i>
-                </button>
-              </td>
-            </tr>
-
-            <tr>
-              <td>Mary Jane</td>
-              <td>mary@example.com</td>
-              <td>Oceanfront Condo</td>
-              <td>2025-10-25</td>
-              <td><span class="badge bg-warning text-dark">Pending</span></td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewBooking('Mary Jane', 'mary@example.com', 'Oceanfront Condo', '2025-10-25')">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-success me-1" onclick="approveBooking(this)">
-                  <i class="bi bi-check-circle"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="disapproveBooking(this)">
-                  <i class="bi bi-x-circle"></i>
-                </button>
-              </td>
-            </tr>
+            <?php if (!empty($bookings)): ?>
+              <?php foreach($bookings as $b): ?>
+                <tr>
+                  <td><?= esc($b['ClientName']) ?></td>
+                  <td><?= esc($b['ClientEmail']) ?></td>
+                  <td><?= esc($b['PropertyTitle']) ?></td>
+                  <td><?= date('Y-m-d', strtotime($b['bookingDate'])) ?></td>
+                  <td>
+                    <?php
+                      $statusClass = 'bg-warning text-dark';
+                      if($b['BookingStatus'] === 'Approved') $statusClass = 'bg-success';
+                      if($b['BookingStatus'] === 'Disapproved') $statusClass = 'bg-danger';
+                    ?>
+                    <span class="badge <?= $statusClass ?>"><?= esc($b['BookingStatus']) ?></span>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-1"
+                            onclick="viewBooking('<?= esc($b['ClientName']) ?>', '<?= esc($b['ClientEmail']) ?>', '<?= esc($b['PropertyTitle']) ?>', '<?= date('Y-m-d', strtotime($b['bookingDate'])) ?>')">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-success me-1" onclick="approveBooking(this)">
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="disapproveBooking(this)">
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <tr>
+                <td colspan="6" class="text-center text-muted">No bookings found.</td>
+              </tr>
+            <?php endif; ?>
           </tbody>
         </table>
       </div>
+
     </div>
   </div>
 
