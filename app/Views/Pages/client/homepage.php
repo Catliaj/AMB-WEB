@@ -23,7 +23,7 @@
                 <div class="container-fluid">
                     <!-- Logo -->
                     <a class="navbar-brand d-flex align-items-center" href="homepage.html">
-                        <img src="images/amb_logo.png" alt="AMB Logo" height="40" class="me-2">
+                        <img src="<?= base_url('assets/img/AMB_logo.png') ?>" alt="AMB Logo" height="40" class="me-2">
                         <span class="logo-text">PROPERTY</span>
                     </a>
 
@@ -90,88 +90,8 @@
                     </div>
                 </div>
                 <div class="hero-image">
-                    <img src="images/house.png" alt="Dream Home">
-                </div>
-            </section>
+                    <img src="<?= base_url('assets/img/house.png') ?>" alt="Dream Home">
 
-            <!-- Second Section -->
-            <section class="second-section">
-                <div class="modern-home-image">
-                    <img src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&h=400&fit=crop"
-                        alt="Modern Home">
-                </div>
-
-                <div class="content-right">
-                    <h1>Find Your Dream Home</h1>
-                    <p class="subtitle">
-                        Explore our curated selection of exquisite properties meticulously tailored to your unique dream
-                        home.
-                    </p>
-
-                    <h2 class="section-subtitle">We Help You To Find Your Dream Home</h2>
-                    <p class="section-description">
-                        From cozy suburban retreats to sleek urban dwellings, our dedicated team guides you through
-                        every step of the journey,
-                        ensuring your dream home becomes a reality.
-                    </p>
-
-                    <div class="stats">
-                        <div class="stat-item">
-                            <h3>8K+</h3>
-                            <p>Properties Available</p>
-                        </div>
-                        <div class="stat-item">
-                            <h3>6K+</h3>
-                            <p>Happy Sold</p>
-                        </div>
-                        <div class="stat-item">
-                            <h3>2K+</h3>
-                            <p>Satisfied Agents</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Why Choose Us -->
-            <section class="why-choose">
-                <h2>Why Choose Us</h2>
-                <p style="margin-bottom: 0;">Elevating Your Home Buying Experience with Expertise, Integrity,</p>
-                <p style="margin-bottom: 30px;">and Unmatched Personalized Service</p>
-
-                <div class="features">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="bi bi-star-fill"></i>
-                        </div>
-                        <h3>Expert Guidance</h3>
-                        <p>Benefit from our team's seasoned expertise for a smooth buying journey.</p>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                        <h3>Personalized Service</h3>
-                        <p>Your dream home journey begins with us. Our services are tailored to your unique needs,
-                            making your journey stress-free.</p>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="bi bi-clipboard-check"></i>
-                        </div>
-                        <h3>Transparent Process</h3>
-                        <p>Stay informed with our clear and honest approach to buying and selling.</p>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="bi bi-headset"></i>
-                        </div>
-                        <h3>Exceptional Support</h3>
-                        <p>Benefit from our unwavering commitment to exceptional service, offering peace of mind with
-                            our responsive and attentive support team.</p>
-                    </div>
                 </div>
             </section>
 

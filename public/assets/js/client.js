@@ -361,3 +361,185 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sessionElement) sessionElement.click();
     }
 });
+
+// ===== BOOKING MODAL FUNCTIONALITY =====
+
+let currentBookingProperty = null;
+
+/**
+ * Open booking modal with property data
+ */
+function openBookingModal(propertyData) {
+    currentBookingProperty = propertyData;
+    
+    console.log('Populating booking modal with:', propertyData);
+    
+    // Populate property details
+    // Set up images for navigation
+currentBookingImages = propertyData.images || [propertyData.image || 'uploads/properties/no-image.jpg'];
+currentBookingImageIndex = 0;
+document.getElementById('bookingPropertyImage').src = currentBookingImages[0];
+    document.getElementById('bookingPropertyType').textContent = propertyData.property_type || 'Property';
+    document.getElementById('bookingPropertyTitle').textContent = propertyData.title || 'Property Title';
+    document.getElementById('bookingPropertyLocation').textContent = propertyData.location || 'Location';
+    document.getElementById('bookingPropertyPrice').textContent = '₱' + propertyData.price;
+    document.getElementById('bookingPropertyBedrooms').textContent = propertyData.bedrooms + ' Beds';
+    document.getElementById('bookingPropertyBathrooms').textContent = propertyData.bathrooms + ' Baths';
+    document.getElementById('bookingPropertySize').textContent = propertyData.size + ' sqft';
+    document.getElementById('bookingPropertyParking').textContent = propertyData.parking_spaces + ' Spaces';
+    document.getElementById('bookingPropertyAgent').textContent = propertyData.agent_assigned;
+    document.getElementById('bookingPropertyCorporation').textContent = propertyData.corporation;
+    document.getElementById('bookingPropertyDescription').textContent = propertyData.description;
+    
+    // Set property ID in hidden input
+    document.getElementById('bookingPropertyId').value = propertyData.id || '';
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('bookingDate').setAttribute('min', today);
+    
+    // Reset form
+    const form = document.getElementById('propertyBookingForm');
+    if (form) {
+        form.reset();
+    }
+    
+    // Show modal
+    const bookingModalEl = document.getElementById('bookingModal');
+    if (bookingModalEl) {
+        const bookingModal = new bootstrap.Modal(bookingModalEl);
+        bookingModal.show();
+    } else {
+        console.error('Booking modal element not found');
+    }
+}
+
+/**
+ * Handle booking form submission
+ */
+document.getElementById('propertyBookingForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        property_id: document.getElementById('bookingPropertyId').value,
+        property_title: currentBookingProperty?.title,
+        booking_date: document.getElementById('bookingDate').value,
+        booking_purpose: document.getElementById('bookingPurpose').value,
+        booking_notes: document.getElementById('bookingNotes').value,
+        property_details: {
+            location: currentBookingProperty?.location,
+            price: currentBookingProperty?.price,
+            agent: currentBookingProperty?.agent_assigned,
+            corporation: currentBookingProperty?.corporation
+        },
+        timestamp: new Date().toISOString()
+    };
+    
+    // Log booking data to console (replace with actual API call)
+    console.log('=== BOOKING SUBMISSION ===');
+    console.log('Property ID:', formData.property_id);
+    console.log('Property Title:', formData.property_title);
+    console.log('Booking Date:', formData.booking_date);
+    console.log('Purpose:', formData.booking_purpose);
+    console.log('Notes:', formData.booking_notes);
+    console.log('Full Booking Data:', formData);
+    console.log('========================');
+    
+    // Show success message with SweetAlert
+    Swal.fire({
+        icon: 'success',
+        title: 'Booking Submitted!',
+        html: `
+            <p><strong>${formData.property_title}</strong></p>
+            <p>Date: ${new Date(formData.booking_date).toLocaleDateString()}</p>
+            <p>Purpose: ${formData.booking_purpose}</p>
+        `,
+        confirmButtonText: 'Great!',
+        confirmButtonColor: '#469541'
+    }).then(() => {
+        // Close modal
+        const bookingModal = bootstrap.Modal.getInstance(document.getElementById('bookingModal'));
+        bookingModal.hide();
+        
+        // Here you would typically send data to your backend
+        // Example: submitBookingToServer(formData);
+    });
+});
+
+/**
+ * Update the "Book Property" button click handler in property details modal
+ */
+document.getElementById('modalBookBtn')?.addEventListener('click', function() {
+    if (!currentModalProperty) {
+        console.error('No property data available');
+        return;
+    }
+
+    // Get current property data from the details modal with proper field mapping
+    const propertyData = {
+        id: currentModalProperty.id || currentModalProperty.PropertyID,
+        title: currentModalProperty.Title || currentModalProperty.title || 'N/A',
+        location: currentModalProperty.Location || currentModalProperty.location || 'N/A',
+        property_type: currentModalProperty.Property_Type || currentModalProperty.type || 'N/A',
+        price: (currentModalProperty.Price || currentModalProperty.price || '0').toString().replace('₱', '').trim(),
+        bedrooms: currentModalProperty.Bedrooms || currentModalProperty.beds || '0',
+        bathrooms: currentModalProperty.Bathrooms || currentModalProperty.baths || '0',
+        size: currentModalProperty.Size || currentModalProperty.sqft || '0',
+        image: (currentModalProperty.images && currentModalProperty.images[0]) || 
+               (currentModalProperty.Images && currentModalProperty.Images[0]) || 
+               currentModalProperty.image || 
+               'uploads/properties/no-image.jpg',
+        images: currentModalProperty.images || currentModalProperty.Images || [],
+        parking_spaces: currentModalProperty.Parking_Spaces || currentModalProperty.parking_spaces || '0',
+        agent_assigned: currentModalProperty.Agent_Assigned || currentModalProperty.agent_assigned || 'N/A',
+        corporation: currentModalProperty.Corporation || currentModalProperty.corporation || 'N/A',
+        description: currentModalProperty.Description || currentModalProperty.description || 'No description available.'
+    };
+    
+    console.log('Opening booking modal with property:', propertyData);
+    
+    // Close property details modal
+    const propertyModal = bootstrap.Modal.getInstance(document.getElementById('propertyDetailsModal'));
+    if (propertyModal) {
+        propertyModal.hide();
+    }
+    
+    // Open booking modal after a short delay
+    setTimeout(() => {
+        openBookingModal(propertyData);
+    }, 300);
+});
+
+/**
+ * Example: Direct booking from property card
+ */
+function bookPropertyDirectly(propertyId) {
+    // Fetch property data and open booking modal
+    // Replace with your actual data fetching logic
+    fetch(`/api/properties/${propertyId}`)
+        .then(response => response.json())
+        .then(data => {
+            openBookingModal(data);
+        })
+        .catch(error => {
+            console.error('Error fetching property:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Failed to load property details. Please try again.'
+            });
+        });
+}
+
+let currentBookingImageIndex = 0;
+let currentBookingImages = [];
+
+/**
+ * Navigate through booking modal images
+ */
+function navigateBookingImage(step) {
+    if (!currentBookingImages || currentBookingImages.length === 0) return;
+    
+    currentBookingImageIndex = (currentBookingImageIndex + step + currentBookingImages.length) % currentBookingImages.length;
+    document.getElementById('bookingPropertyImage').src = currentBookingImages[currentBookingImageIndex];
+}
