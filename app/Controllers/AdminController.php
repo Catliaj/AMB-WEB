@@ -10,13 +10,19 @@ class AdminController extends BaseController
 {
     public function adminDashboard()
     {
-        if (!session()->get('isLoggedIn') || session()->get('role') !== 'Admin') {
-            return redirect()->to('/');
+        $session = session();
+        if (!$session->get('isLoggedIn') ) {
+            return redirect()->to('/'); 
+        }
+
+        if ($session->get('role') !== 'Admin') {
+            return redirect()->to('/'); 
         }
 
         $adminId = session()->get('UserID');
 
         // ✅ Fetch total users from database
+        
         $userModel = new \App\Models\UsersModel();
         $propertiesModel = new \App\Models\PropertyModel();
         $bookingModel = new \App\Models\BookingModel();
@@ -104,6 +110,15 @@ class AdminController extends BaseController
 
     public function generateReports()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Admin') {
+            return redirect()->to('/'); 
+        }
+
         return view('Pages/admin/generate-reports', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
@@ -116,6 +131,15 @@ class AdminController extends BaseController
 
     public function manageProperties()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Admin') {
+            return redirect()->to('/'); 
+        }
+
         $Property = new \App\Models\PropertyModel();
         $usersModel = new \App\Models\UsersModel();
         $data['properties'] = $Property->getPropertiesWithStatus();
@@ -143,6 +167,14 @@ class AdminController extends BaseController
 
     public function manageUsers()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Admin') {
+            return redirect()->to('/'); 
+        }
 
         $userModel = new \App\Models\UsersModel();
         $data['users'] = $userModel->getUsersList();
@@ -169,6 +201,15 @@ class AdminController extends BaseController
 
     public function userBooking()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Admin') {
+            return redirect()->to('/'); 
+        }
+
         $bookingModel = new \App\Models\BookingModel();
 
         $data = [
@@ -185,6 +226,15 @@ class AdminController extends BaseController
 
     public function viewChats()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Admin') {
+            return redirect()->to('/'); 
+        }
+        
         return view('Pages/admin/view-chats', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),

@@ -37,7 +37,7 @@
 
         <div class="d-flex justify-content-between">
           <a href="/users/agentHomepage" class="btn btn-outline-secondary">Back to Dashboard</a>
-          <button type="submit" class="btn btn-success">Save Changes</button>
+          <a href="/admin/logout" class="btn btn-outline-secondary">Logout</a>
         </div>
       </form>
     </div>

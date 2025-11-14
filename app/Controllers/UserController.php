@@ -128,65 +128,65 @@ class UserController extends BaseController
      * Login logic
      */
     public function login()
-{
-    $session = session();
-    $model = new UsersModel();
+    {
+        $session = session();
+        $model = new UsersModel();
 
-    $Username = $this->request->getPost('inputEmail');
-    $Password = $this->request->getPost('inputPassword');
+        $Username = $this->request->getPost('inputEmail');
+        $Password = $this->request->getPost('inputPassword');
 
-    $user = $model->where('Email', $Username)->first();
+        $user = $model->where('Email', $Username)->first();
 
-    if ($user && password_verify($Password, $user['Password'])) {
+        if ($user && password_verify($Password, $user['Password'])) {
 
-        // Check if email is verified
-        if (isset($user['verified']) && !$user['verified']) {
+            // Check if email is verified
+            if (isset($user['verified']) && !$user['verified']) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Please verify your email before logging in.'
+                ]);
+            }
+
+            // Set session
+            $session->set([
+                'isLoggedIn'  => true,
+                'UserID'      => $user['UserID'],
+                'inputEmail'  => $user['Email'],
+                'role'        => $user['Role'],
+                'FirstName'   => $user['FirstName'],
+                'MiddleName'  => $user['MiddleName'],
+                'LastName'    => $user['LastName']
+            ]);
+
+            // Update online status
+            $model->setOfflineToOnline($user['UserID']);
+
+            // Determine redirect URL
+            switch ($user['Role']) {
+                case 'Agent':
+                    $redirectURL = base_url('/users/agentHomepage');
+                    break;
+                case 'Admin':
+                    $redirectURL = base_url('/admin/adminHomepage');
+                    break;
+                default:
+                    $redirectURL = base_url('/users/clientHomepage');
+                    break;
+            }
+
             return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'Please verify your email before logging in.'
+                'status' => 'success',
+                'message' => 'Login successful!',
+                'redirect' => $redirectURL
             ]);
         }
 
-        // Set session
-        $session->set([
-            'isLoggedIn'  => true,
-            'UserID'      => $user['UserID'],
-            'inputEmail'  => $user['Email'],
-            'role'        => $user['Role'],
-            'FirstName'   => $user['FirstName'],
-            'MiddleName'  => $user['MiddleName'],
-            'LastName'    => $user['LastName']
-        ]);
-
-        // Update online status
-        $model->setOfflineToOnline($user['UserID']);
-
-        // Determine redirect URL
-        switch ($user['Role']) {
-            case 'Agent':
-                $redirectURL = base_url('/users/agentHomepage');
-                break;
-            case 'Admin':
-                $redirectURL = base_url('/admin/adminHomepage');
-                break;
-            default:
-                $redirectURL = base_url('/users/clientHomepage');
-                break;
-        }
-
+        // Invalid login
         return $this->response->setJSON([
-            'status' => 'success',
-            'message' => 'Login successful!',
-            'redirect' => $redirectURL
+            'status' => 'error',
+            'message' => 'Wrong username or password.'
         ]);
     }
-
-    // Invalid login
-    return $this->response->setJSON([
-        'status' => 'error',
-        'message' => 'Wrong username or password.'
-    ]);
-}
 
 
     public function logout()
@@ -200,6 +200,16 @@ class UserController extends BaseController
      */
     public function clientHomepage()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Client') {
+            return redirect()->to('/'); 
+        }
+
+
         return view('Pages/client/homepage', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
@@ -212,6 +222,16 @@ class UserController extends BaseController
 
     public function ClientBrowse()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Client') {
+            return redirect()->to('/'); 
+        }
+
+
          return view('Pages/client/browse', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
@@ -224,6 +244,16 @@ class UserController extends BaseController
 
     public function ClientBookings()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Client') {
+            return redirect()->to('/'); 
+        }
+
+
        return view('Pages/client/bookings', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
@@ -236,6 +266,16 @@ class UserController extends BaseController
 
     public function ClientProfile()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Client') {
+            return redirect()->to('/'); 
+        }
+
+
         return view('Pages/client/profile', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
@@ -248,6 +288,16 @@ class UserController extends BaseController
 
       public function cleintChat()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Client') {
+            return redirect()->to('/'); 
+        }
+
+        
         $session = session();
         $clientID = $session->get('UserID');
 

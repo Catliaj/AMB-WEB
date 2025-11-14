@@ -60,15 +60,17 @@ class PropertyViewLogsModel extends Model
     public function getMostViewedPropertyByAgent($agentId)
     {
         return $this->db->table('propertyviewlogs pv')
-                        ->select('p.PropertyID, p.PropertyName, p.Price, p.Location, COUNT(pv.id) as total_views')
-                        ->join('properties p', 'p.PropertyID = pv.PropertyID')
-                        ->where('p.agent_assigned', $agentId)
-                        ->groupBy('p.PropertyID')
-                        ->orderBy('total_views', 'DESC')
-                        ->limit(1)
-                        ->get()
-                        ->getRowArray();
+            ->select('p.PropertyID, p.Title, p.Price, p.Location, p.Bedrooms, p.Bathrooms, p.Parking_Spaces, pi.Image AS PropertyImage, COUNT(pv.id) AS total_views')
+            ->join('property p', 'p.PropertyID = pv.PropertyID')
+            ->join('(SELECT PropertyID, Image FROM propertyImage GROUP BY PropertyID) pi', 'pi.PropertyID = p.PropertyID', 'left')
+            ->where('p.agent_assigned', $agentId)
+            ->groupBy('p.PropertyID, p.Title, p.Price, p.Location, p.Bedrooms, p.Bathrooms, p.Parking_Spaces, pi.Image')
+            ->orderBy('total_views', 'DESC')
+            ->limit(1)
+            ->get()
+            ->getRowArray();
     }
+
 
 
 

@@ -16,16 +16,23 @@ class AgentController extends BaseController
 
     public function agentDashboard()
     {
-         if (!session()->get('isLoggedIn') || session()->get('role') !== 'Agent') {
-            return redirect()->to('/');
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
         }
+         
+        if ($session->get('role') !== 'Agent') {
+            return redirect()->to('/'); 
+        }
+
 
         $agentId = session()->get('UserID');
         $chatSessionModel = new ChatSessionModel;
         $propertyViewModel = new PropertyViewLogsModel;
         $totalClientHandle = $chatSessionModel->getUsersHandledByAgent($agentId);
         $getTotalViewsByAgent = $propertyViewModel->getTotalViewsByAgent($agentId);
-        
+        $clients = $chatSessionModel->getClientsHandledByAgent($agentId);
+        $mostViewed = $propertyViewModel->getMostViewedPropertyByAgent($agentId);
        
       
         return view('Pages/agent/dashboard', [
@@ -36,11 +43,23 @@ class AgentController extends BaseController
             'otherUser' => null,
             'totalClientHandle' => $totalClientHandle,
             'getTotalViewsByAgent' => $getTotalViewsByAgent,
+            'clients' => $clients,
+            'mostViewed' => $mostViewed,
         ]);
     }
 
     public function agentProfile()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Agent') {
+            return redirect()->to('/'); 
+        }
+
+
         return view('Pages/agent/view-profile', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
@@ -51,61 +70,98 @@ class AgentController extends BaseController
             ]);
     }
 
- public function agentProperties()
-{
-    $agentID = session()->get('UserID');
-    $propertyModel = new \App\Models\PropertyModel();
-    $propertyImagesModel = new \App\Models\PropertyImageModel();
-
-    $properties = $propertyModel->getPropertiesByAgents($agentID);
-
-    // Attach all images for each property
-    foreach ($properties as &$property) {
-        $images = $propertyImagesModel
-            ->where('PropertyID', $property['PropertyID'])
-            ->findAll();
-
-        $property['Images'] = [];
-
-        foreach ($images as $img) {
-            $property['Images'][] = base_url('uploads/properties/' . ($img['Image'] ?: 'no-image.jpg'));
+    public function agentProperties()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
         }
 
-        // fallback if no image exists
-        if (empty($property['Images'])) {
-            $property['Images'][] = base_url('uploads/properties/no-image.jpg');
+         if ($session->get('role') !== 'Agent') {
+            return redirect()->to('/'); 
         }
-    }
 
-    // If AJAX call
-    if ($this->request->isAJAX()) {
-        return $this->response->setJSON($properties);
-    }
 
-    return view('Pages/agent/properties', [
-        'UserID' => session()->get('UserID'),
-        'email' => session()->get('inputEmail'),
-        'fullname' => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
-    ]);
-}
+        $agentID = session()->get('UserID');
+        $propertyModel = new \App\Models\PropertyModel();
+        $propertyImagesModel = new \App\Models\PropertyImageModel();
+
+        $properties = $propertyModel->getPropertiesByAgents($agentID);
+       
+        // Attach all images for each property
+        foreach ($properties as &$property) {
+            $images = $propertyImagesModel
+                ->where('PropertyID', $property['PropertyID'])
+                ->findAll();
+
+            $property['Images'] = [];
+
+            foreach ($images as $img) {
+                $property['Images'][] = base_url('uploads/properties/' . ($img['Image'] ?: 'no-image.jpg'));
+            }
+
+            // fallback if no image exists
+            if (empty($property['Images'])) {
+                $property['Images'][] = base_url('uploads/properties/no-image.jpg');
+            }
+        }
+
+        // If AJAX call
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON($properties);
+        }
+
+        return view('Pages/agent/properties', [
+            'UserID' => session()->get('UserID'),
+            'email' => session()->get('inputEmail'),
+            'fullname' => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
+            
+        ]);
+    }
 
 
 
 
     public function agentClients()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+         if ($session->get('role') !== 'Agent') {
+            return redirect()->to('/'); 
+        }
+
+
+        $chatSessionModel = new ChatSessionModel;
+        $agentId = session()->get('UserID');
+
+        $clients = $chatSessionModel->getClientsHandledByAgent($agentId);
+
+
         return view('Pages/agent/clients', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
                 'fullname' => trim(session()->get('FirstName') . ' ' . session()->
                 get('LastName')),
                 'currentUserId' => session()->get('UserID'),
-                'otherUser' => null
+                'otherUser' => null,
+                'clients' => $clients,
             ]);
     }
 
     public function agentChat()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Agent') {
+            return redirect()->to('/'); 
+        }
+
+
         $session = session();
         $agentId = $session->get('UserID');
 
@@ -142,13 +198,28 @@ class AgentController extends BaseController
 
     public function agentBookings()
     {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Agent') {
+            return redirect()->to('/'); 
+        }
+
+        
+        $bookingModel = new \App\Models\BookingModel();
+        $agentID = session()->get('UserID'); // current agent
+        $bookings = $bookingModel->getBookingsByAgent($agentID);
+
         return view('Pages/agent/bookings', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
                 'fullname' => trim(session()->get('FirstName') . ' ' . session()->
                 get('LastName')),
                 'currentUserId' => session()->get('UserID'),
-                'otherUser' => null
+                'otherUser' => null,
+                'bookings' => $bookings,
             ]);
     }
 
@@ -163,7 +234,9 @@ class AgentController extends BaseController
         return redirect()->to('/');
     }
 
-    public function updateStatus()
+
+    //Nakalimutan ko san to ilalagay
+    /*public function updateStatus()
     {
         $propertyID = $this->request->getPost('propertyID');
         $status = $this->request->getPost('status');
@@ -174,7 +247,9 @@ class AgentController extends BaseController
         $builder->update(['New_Status' => $status]);
 
         return $this->response->setJSON(['status' => 'success']);
-    }
+    }*/
+
+    
 
 
 
