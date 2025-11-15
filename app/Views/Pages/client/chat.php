@@ -20,7 +20,7 @@
                 <div class="container-fluid">
                     <!-- Logo -->
                     <a class="navbar-brand d-flex align-items-center" href="homepage.html">
-                        <img src="<?= base_url('assets/img/AMB_logo.png') ?>" alt="AMB Logo" height="40" class="me-2">
+                        <img src="<?= base_url('assets/img/AMB_logo.png') ?>" alt="AMB Logo" height="50" class="me-2">
                         <span class="logo-text">PROPERTY</span>
                     </a>
 
@@ -46,9 +46,6 @@
                             </li>
                             <li class="nav-item d-lg-none">
                                 <a class="nav-link nav-link-custom" href="/users/clientprofile">Profile</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link nav-link-custom" href="/users/chat">Chats</a>
                             </li>
                         </ul>
 

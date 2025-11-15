@@ -22,7 +22,7 @@
         <div class="container-fluid">
             <!-- Logo -->
             <a class="navbar-brand d-flex align-items-center" href="homepage.html">
-                <img src="<?= base_url('assets/img/AMB_logo.png') ?>" alt="AMB Logo" height="40" class="me-2">
+                <img src="<?= base_url('assets/img/AMB_logo.png') ?>" alt="AMB Logo" height="50" class="me-2">
                 <span class="logo-text">PROPERTY</span>
             </a>
 
@@ -48,9 +48,6 @@
                     </li>
                     <li class="nav-item d-lg-none">
                         <a class="nav-link nav-link-custom" href="/users/clientprofile">Profile</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link nav-link-custom" href="/users/chat">Chats</a>
                     </li>
                 </ul>
 
@@ -190,32 +187,7 @@
     </div>
 </div>
 
-<!-- Chat widget (same as other pages) -->
-<div class="chat-window" id="chatWindow">
-    <div class="chat-header">
-        <div class="d-flex align-items-center">
-            <div class="chat-avatar">
-                <i class="bi bi-chat-dots-fill text-white"></i>
-            </div>
-            <div class="ms-3">
-                <p class="mb-0 fw-medium text-white small">Support Team</p>
-                <div class="d-flex align-items-center">
-                    <span class="status-dot"></span>
-                    <span class="text-white small ms-1" style="opacity: 0.9;">Online</span>
-                </div>
-            </div>
-        </div>
-        <button class="btn-close btn-close-white" onclick="toggleChat()"></button>
-    </div>
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-input-area">
-        <input type="text" class="form-control" id="chatInput" placeholder="Type your message..."
-            onkeypress="handleChatKeyPress(event)">
-        <button class="btn btn-primary" onclick="sendMessage()">
-            <i class="bi bi-send-fill"></i>
-        </button>
-    </div>
-</div>
+
 
 <!-- Booking Modal -->
 <div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
@@ -391,9 +363,10 @@
     </div>
 </div>
 
-<button class="chat-fab" id="chatButton" onclick="toggleChat()">
-    <i class="bi bi-chat-dots-fill fs-4"></i>
-</button>
+<!-- Chat Floating Action Button -->
+    <a href="/users/chat" class="chat-fab" id="chatButton">
+        <i class="bi bi-chat-dots-fill fs-4"></i>
+    </a>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

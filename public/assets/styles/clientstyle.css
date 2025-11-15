@@ -29,6 +29,20 @@
     --shadow: rgba(0, 0, 0, 0.3);
   }
 
+  html, body {
+    max-width: 1590px;
+    max-height: 1014px;
+    margin: 0 auto;
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+html::-webkit-scrollbar, 
+body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+
   /* Bootstrap Color Overrides */
   .btn-primary {
     background-color: var(--primary) !important;
@@ -92,6 +106,7 @@
     z-index: 999;
     transition: all 0.3s ease;
     border: none !important;
+    height: 100px;
   }
 
   .navbar.scrolled {
@@ -140,7 +155,7 @@
     border-radius: 0.5rem;
     transition: all 0.2s;
     color: var(--text-color) !important;
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 500;
   }
 
@@ -164,7 +179,7 @@
   .nav-link-custom.active {
     color: var(--primary) !important;
     background-color: transparent !important;
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 500;
   }
 
@@ -184,7 +199,7 @@
   /* Hero */
   .hero {
     background: linear-gradient(120deg, #d3f0ff 0%, #c8f5d2 100%);
-    height: 500px;
+    height: 620px;
     padding: 50px;
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -202,12 +217,12 @@
 
   .hero-content {
     align-self: start;
-    padding-top: 20px;
-    margin-top: -40px;
+    padding-top: 50px;
+    margin-top: -10px;
   }
 
   .hero-content h1 {
-    font-size: 48px;
+    font-size: 60px;
     font-weight: 800;
     margin-bottom: 20px;
     line-height: 1.2;
@@ -223,7 +238,30 @@
     margin-bottom: 30px;
     line-height: 1.8;
     animation: fadeInUp 1s ease;
+    font-size: 20px;
   }
+
+/* When hero image is gone */
+.hero.center-content {
+    grid-template-columns: 1fr; 
+    place-items: center; /* center content horizontally and vertically */
+    text-align: center;
+}
+
+/* Ensure hero-content itself centers its children */
+.hero.center-content .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* horizontal center */
+    justify-content: center; /* vertical center if needed */
+    margin-top: 0; /* reset any negative margin */
+}
+
+/* Search box centering inside hero-content */
+.hero.center-content .search-box {
+    margin: 20px 0 0; /* top spacing from text */
+    max-width: 1000px;
+}
 
   .search-box {
     display: flex;
@@ -233,7 +271,8 @@
     border-radius: 50px;
     padding: 8px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
+    max-width: 100%;       /* Allow full width of container */
+    width: 80%; 
     transition: all 0.3s ease;
     animation: fadeInUp 1.2s ease;
   }
@@ -283,101 +322,7 @@
     transform: scaleX(-1) scale(1.02);
   }
 
-  /* Second Section (content directly on background) */
-  .second-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    gap: 60px;
-    padding: 100px 80px;
-    border-radius: 0 0 20px 20px;
-    transition: background-color 0.3s ease;
-  }
-
-  /* Image styling */
-  .modern-home-image img {
-    width: 100%;
-    height: auto;
-    border-radius: 20px;
-    box-shadow: 0 8px 25px var(--shadow);
-    transition: transform 0.4s ease;
-  }
-
-  .modern-home-image img:hover {
-    transform: scale(1.02);
-  }
-
-  /* Text and stats */
-  .content-right {
-    color: var(--text-color);
-  }
-
-  .content-right h1 {
-    font-size: 42px;
-    font-weight: 700;
-    margin-bottom: 15px;
-  }
-
-  .subtitle {
-    color: var(--text-muted);
-    font-size: 18px;
-    margin-bottom: 30px;
-  }
-
-  .section-subtitle {
-    color: var(--primary);
-    font-size: 24px;
-    margin-bottom: 10px;
-  }
-
-  .section-description {
-    color: var(--text-muted);
-    line-height: 1.8;
-    margin-bottom: 40px;
-  }
-
-  .stats {
-    display: flex;
-    justify-content: space-between;
-    gap: 30px;
-    flex-wrap: wrap;
-  }
-
-  .stat-item h3 {
-    color: var(--primary);
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 5px;
-  }
-
-  .stat-item p {
-    color: var(--text-muted);
-    font-size: 15px;
-  }
-
-  /* Why Choose Us Section */
-  .why-choose {
-    text-align: center;
-    padding: 20px 20px;
-    margin: 10px 20px;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    transition: background-color 0.3s ease;
-  }
-
-  .why-choose h2 {
-    font-size: 2.2rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-    color: var(--primary);
-  }
-
-  .why-choose p {
-    color: var(--text-muted);
-    font-size: 1rem;
-    margin: 0 auto 10px;
-    max-width: 600px;
-  }
+  /* Features Section */
 
   .features {
     display: grid;
@@ -449,6 +394,8 @@
   .border-bottom {
     border-color: var(--border-color) !important;
   }
+
+  /* Browse Properties Section */
 
   /* Property Cards */
   .property-card {
@@ -696,7 +643,6 @@
     background-color: var(--muted);
   }
 
-  /* Optional subtle animation */
   @media (hover: hover) {
     .booking-card:hover .booking-image {
       transform: scale(1.03);
@@ -768,112 +714,7 @@
     border-color: var(--primary);
   }
 
-  /* Chat */
-  .chat-window {
-    position: fixed;
-    bottom: 6rem;
-    right: 1rem;
-    width: calc(100vw - 2rem);
-    max-width: 24rem;
-    height: 500px;
-    max-height: calc(100vh - 8rem);
-    background-color: white;
-    border-radius: 0.75rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    z-index: 1050;
-    display: none;
-    flex-direction: column;
-  }
-
-  .chat-window.active {
-    display: flex;
-  }
-
-  .chat-header {
-    background: linear-gradient(135deg, #469541 0%, #2d9fa8 100%);
-    padding: 1rem;
-    border-radius: 0.75rem 0.75rem 0 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .chat-avatar {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .status-dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background-color: #c8f5d2;
-  }
-
-  .chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-    background-color: #f5f5f5;
-  }
-
-  html[data-theme="dark"] .chat-messages {
-    background-color: #2d3447;
-  }
-
-  .chat-message {
-    margin-bottom: 1rem;
-  }
-
-  .message-bubble {
-    max-width: 80%;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    word-wrap: break-word;
-  }
-
-  .message-bubble.user {
-    background-color: #469541;
-    color: white;
-    margin-left: auto;
-    border-bottom-right-radius: 0;
-  }
-
-  .message-bubble.agent {
-    background-color: white;
-    color: #333333;
-    border-bottom-left-radius: 0;
-  }
-
-  html[data-theme="dark"] .message-bubble.agent {
-    background-color: #252a3a;
-    color: #f0f0f0;
-  }
-
-  .message-time {
-    font-size: 0.75rem;
-    opacity: 0.8;
-    margin-top: 0.25rem;
-  }
-
-  .chat-input-area {
-    padding: 1rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-    background-color: white;
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  html[data-theme="dark"] .chat-input-area {
-    background-color: #252a3a;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
+  /* Chat Floating Action Button */
   .chat-fab {
     position: fixed;
     bottom: 1.5rem;
@@ -937,7 +778,7 @@
   }
 
   .site-wrapper {
-    max-width: 1269px;
+    max-width: 100%;
     margin: 0 auto;
   }
 
