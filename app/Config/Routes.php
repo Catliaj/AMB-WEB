@@ -64,9 +64,9 @@ $routes->get('/users/logoutagent', 'AgentController::logoutAgent');
 
 //Agent Property Management Routes
 $routes->get('/users/agentproperties', 'AgentController::agentProperties');
-$routes->post('property/updateStatus', 'AgentController::updateStatus');
-
-
+$routes->get('users/getBooking/(:segment)', 'AgentController::getBooking/$1');         // GET /users/getBooking/{id}
+$routes->post('users/updateBookingStatus', 'AgentController::updateBookingStatus');    // POST { booking_id, status, reason? }
+$routes->post('property/updateStatus', 'PropertyController::updateStatus');
 
 //chat Routes
 $routes->get('/chat/messages/(:num)', 'ChatController::getMessages/$1');
