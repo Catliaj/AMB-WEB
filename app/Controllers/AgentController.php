@@ -98,12 +98,20 @@ class AgentController extends BaseController
             $property['Images'] = [];
 
             foreach ($images as $img) {
-                $property['Images'][] = base_url('uploads/properties/' . ($img['Image'] ?: 'no-image.jpg'));
+                $property['Images'][] = [
+                    'id' => $img['propertyImageID'] ?? null,
+                    'filename' => $img['Image'] ?? null,
+                    'url' => base_url('uploads/properties/' . ($img['Image'] ?: 'no-image.jpg'))
+                ];
             }
 
             // fallback if no image exists
             if (empty($property['Images'])) {
-                $property['Images'][] = base_url('uploads/properties/no-image.jpg');
+                $property['Images'][] = [
+                    'id' => null,
+                    'filename' => 'no-image.jpg',
+                    'url' => base_url('uploads/properties/no-image.jpg')
+                ];
             }
         }
 

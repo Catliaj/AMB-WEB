@@ -54,6 +54,7 @@
                 <span class="ms-2 small text-muted">${escapeHtml(date)}</span>
               </div>
               <p class="small text-muted mb-0">${notes ? notes : ''}</p>
+              ${ (b.Rating !== undefined && b.Rating !== null) ? `<div class="small text-warning mt-1">Rating: ${escapeHtml(String(b.Rating))} &#9733;</div>` : '' }
             </div>
           </div>
           <div class="col-auto pe-3">
@@ -195,6 +196,15 @@ function populateBookingModal(b) {
         window.location.href = '/users/clientbrowse';
       }
     };
+  }
+  // Populate rating in modal (if provided by server)
+  const ratingEl = document.getElementById('bookingModalRating');
+  if (ratingEl) {
+    if (b.Rating !== undefined && b.Rating !== null && b.Rating !== '') {
+      ratingEl.textContent = String(b.Rating) + ' ★';
+    } else {
+      ratingEl.textContent = '—';
+    }
   }
 }
 

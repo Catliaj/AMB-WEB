@@ -36,7 +36,7 @@
       <a href="/admin/adminHomepage"><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
       <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
-      <a href="/admin/userBookings"><i data-lucide="calendar"></i> User Bookings</a>
+      <!-- User Bookings removed -->
       <!-- View Chats removed for privacy -->
       <a href="/admin/Reports" class="active"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
     </nav>
@@ -164,12 +164,10 @@
   <script>
     lucide.createIcons();
 
-    const reportData = [
-      { id: "REP001", property: "Modern Condo", agent: "Agent A", status: "Approved", sales: 150000, date: "2025-10-05" },
-      { id: "REP002", property: "Family Home", agent: "Agent B", status: "Pending", sales: 90000, date: "2025-09-28" },
-      { id: "REP003", property: "Luxury Villa", agent: "Agent C", status: "Approved", sales: 240000, date: "2025-09-15" },
-      { id: "REP004", property: "Apartment Block", agent: "Agent A", status: "Rejected", sales: 0, date: "2025-08-12" }
-    ];
+    let reportData = [];
+    const REPORTS_DATA_URL = '<?= base_url('admin/reports/data') ?>';
+    const REPORTS_CSV_URL = '<?= base_url('admin/reports/export.csv') ?>';
+    const REPORTS_PDF_URL = '<?= base_url('admin/reports/export.pdf') ?>';
 
     function populateTable(data) {
       const tbody = document.getElementById("reportTableBody");
@@ -177,30 +175,35 @@
       data.forEach(row => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${row.id}</td>
-          <td>${row.property}</td>
-          <td>${row.agent}</td>
-          <td>${row.status}</td>
-          <td>₱${row.sales.toLocaleString()}</td>
-          <td>${row.date}</td>
+          <td>${row.bookingID ?? ''}</td>
+          <td>${row.PropertyTitle ?? ''}</td>
+          <td>${row.AgentName ?? ''}</td>
+          <td>${row.BookingStatus ?? ''}</td>
+          <td>₱${(Number(row.Sales) || 0).toLocaleString()}</td>
+          <td>${row.bookingDate ?? ''}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
     function updateSummaryMetrics(filtered) {
-      // Total sales
-      const total = filtered.reduce((sum, r) => sum + (Number(r.sales) || 0), 0);
+      // Total sales: strictly include rows where status is 'Confirmed' and reason is 'Reserved'.
+      const total = filtered.reduce((sum, r) => {
+        const status = String(r.BookingStatus || r.Status || '').toLowerCase();
+        const reason = String(r.Reason || '').toLowerCase();
+        const include = (status === 'confirmed' && reason === 'reserved');
+        return sum + (include ? (Number(r.Sales) || 0) : 0);
+      }, 0);
       const totalEl = document.getElementById('totalSales');
       if (totalEl) totalEl.textContent = '₱' + total.toLocaleString();
 
       // Total unique properties
-      const props = new Set(filtered.map(r => r.property));
+      const props = new Set(filtered.map(r => r.PropertyTitle || r.PropertyID || ''));
       const propEl = document.getElementById('totalProperties');
       if (propEl) propEl.textContent = props.size;
 
       // Active users — derive from unique agents involved in filtered results
-      const agents = new Set(filtered.map(r => r.agent));
+      const agents = new Set(filtered.map(r => r.AgentName || ''));
       const actEl = document.getElementById('activeUsers');
       if (actEl) actEl.textContent = agents.size;
     }
@@ -213,10 +216,10 @@
       const end = document.getElementById("endDate").value;
 
       return reportData.filter(r => {
-        const matchProperty = property === "All Properties" || r.property.includes(property);
-        const matchAgent = agent === "All Agents" || r.agent === agent;
-        const matchStatus = status === "All Status" || r.status === status;
-        const matchDate = (!start || r.date >= start) && (!end || r.date <= end);
+        const matchProperty = property === "All Properties" || (r.PropertyTitle && r.PropertyTitle.includes(property)) || (r.Property_Type && r.Property_Type.includes(property));
+        const matchAgent = agent === "All Agents" || (r.AgentName && r.AgentName === agent);
+        const matchStatus = status === "All Status" || (r.BookingStatus && r.BookingStatus === status);
+        const matchDate = (!start || (r.bookingDate && r.bookingDate >= start)) && (!end || (r.bookingDate && r.bookingDate <= end));
         return matchProperty && matchAgent && matchStatus && matchDate;
       });
     }
@@ -224,41 +227,105 @@
     function updateCharts(filtered) {
       const salesByType = { Apartment: 0, Condo: 0, House: 0 };
       filtered.forEach(r => {
-        if (r.property.includes("Condo")) salesByType.Condo += r.sales;
-        else if (r.property.includes("Apartment")) salesByType.Apartment += r.sales;
-        else salesByType.House += r.sales;
+        const title = (r.PropertyTitle || '').toLowerCase();
+        const sales = Number(r.Sales) || 0;
+        if (title.includes('condo')) salesByType.Condo += sales;
+        else if (title.includes('apartment')) salesByType.Apartment += sales;
+        else salesByType.House += sales;
       });
-      propertySalesChart.data.datasets[0].data = Object.values(salesByType);
+      // Convert aggregated sales into scatter data points with x indices matching propertyTypeLabels
+      const salesPoints = [
+        { x: 0, y: salesByType.Apartment },
+        { x: 1, y: salesByType.Condo },
+        { x: 2, y: salesByType.House }
+      ];
+      propertySalesChart.data.datasets[0].data = salesPoints;
       propertySalesChart.update();
 
-      const agentPerf = { "Agent A": 0, "Agent B": 0, "Agent C": 0 };
-      filtered.forEach(r => agentPerf[r.agent] += r.sales);
-      agentPerformanceChart.data.datasets[0].data = Object.values(agentPerf);
+      // Agent performance: build dynamic labels and data
+      const agentMap = {};
+      filtered.forEach(r => {
+        const name = r.AgentName || 'Unassigned';
+        const sales = Number(r.Sales) || 0;
+        agentMap[name] = (agentMap[name] || 0) + sales;
+      });
+      const labels = Object.keys(agentMap);
+      const data = Object.values(agentMap);
+      agentPerformanceChart.data.labels = labels.length ? labels : ['No Data'];
+      agentPerformanceChart.data.datasets[0].data = data.length ? data : [0];
       agentPerformanceChart.update();
     }
 
-    document.getElementById("generateReportBtn").addEventListener("click", () => {
-      const filtered = filterReports();
-      populateTable(filtered);
-      updateCharts(filtered);
-      updateSummaryMetrics(filtered);
-      const prev = document.getElementById('generateReportBtn');
-      if (prev) prev.setAttribute('aria-live','polite');
-    });
+    // Compute monthly booking counts (Jan..Dec) from filtered report rows and update bookingTrendsChart
+    function updateBookingTrends(filtered) {
+      const counts = Array(12).fill(0);
+      const currentYear = new Date().getFullYear();
+      filtered.forEach(r => {
+        const dstr = r.bookingDate || r.BookingDate || r.date || '';
+        if (!dstr) return;
+        const dt = new Date(dstr);
+        if (isNaN(dt)) {
+          // try parsing as YYYY-MM-DD HH:MM:SS
+          const parsed = Date.parse(dstr);
+          if (isNaN(parsed)) return;
+          dt = new Date(parsed);
+        }
+        if (dt.getFullYear() === currentYear) {
+          counts[dt.getMonth()] += 1;
+        }
+      });
+      bookingTrendsChart.data.labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      bookingTrendsChart.data.datasets[0].data = counts;
+      bookingTrendsChart.update();
+    }
+
+    async function fetchReports() {
+      const qs = buildFilterQuery();
+      const url = REPORTS_DATA_URL + (qs ? ('?' + qs) : '');
+      try {
+        const res = await fetch(url, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Failed to fetch reports');
+        const data = await res.json();
+        reportData = data;
+        const filtered = filterReports();
+            populateTable(filtered);
+            updateCharts(filtered);
+            updateBookingTrends(filtered);
+            updateSummaryMetrics(filtered);
+      } catch (err) {
+        console.error('reports fetch error', err);
+        alert('Failed to load reports.');
+      }
+    }
+
+    document.getElementById("generateReportBtn").addEventListener("click", fetchReports);
+
+    function buildFilterQuery() {
+      const params = new URLSearchParams();
+      const start = document.getElementById("startDate").value;
+      const end = document.getElementById("endDate").value;
+      const property = document.getElementById("propertyFilter").value;
+      const agent = document.getElementById("agentFilter").value;
+      const status = document.getElementById("bookingStatus").value;
+      if (start) params.set('startDate', start);
+      if (end) params.set('endDate', end);
+      if (property) params.set('property', property);
+      if (agent) params.set('agent', agent);
+      if (status) params.set('status', status);
+      return params.toString();
+    }
 
     document.getElementById("exportExcel").addEventListener("click", () => {
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.table_to_sheet(document.getElementById("reportTable"));
-      XLSX.utils.book_append_sheet(wb, ws, "Reports");
-      XLSX.writeFile(wb, "Reports.xlsx");
+      // Call server-side CSV generator and trigger download
+      const qs = buildFilterQuery();
+      const url = REPORTS_CSV_URL + (qs ? ('?' + qs) : '');
+      window.open(url, '_blank');
     });
 
     document.getElementById("exportPdf").addEventListener("click", () => {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.text("Reports Export", 10, 10);
-      doc.autoTable({ html: "#reportTable", startY: 20 });
-      doc.save("Reports.pdf");
+      const qs = buildFilterQuery();
+      const url = REPORTS_PDF_URL + (qs ? ('?' + qs) : '');
+      window.open(url, '_blank');
     });
 
     const chartColors = {
@@ -271,24 +338,53 @@
 
     const bookingTrendsCanvas = document.getElementById('bookingTrendsChart');
     bookingTrendsCanvas.style.width = '100%'; bookingTrendsCanvas.style.height = '100%';
+    // Initialize bookings-over-time chart with 12 months (counts start at 0)
+    const bookingMonthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const bookingTrendsChart = new Chart(bookingTrendsCanvas, {
       type: 'line',
       data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-        datasets: [{ label: 'Bookings', data: [30, 42, 38, 50, 62, 70, 78], borderColor: chartColors.accent1, borderWidth: 2, tension: 0.3 }]
+        labels: bookingMonthLabels,
+        datasets: [{ label: 'Bookings', data: Array(12).fill(0), borderColor: chartColors.accent1, borderWidth: 2, tension: 0.3, fill: false }]
       },
-      options: { responsive:false, maintainAspectRatio:false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: chartColors.muted } }, y: { ticks: { color: chartColors.muted } } } }
+      options: { responsive:false, maintainAspectRatio:false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: chartColors.muted } }, y: { ticks: { color: chartColors.muted }, beginAtZero: true } } }
     });
 
     const propertySalesCanvas = document.getElementById('propertySalesChart');
     propertySalesCanvas.style.width = '100%'; propertySalesCanvas.style.height = '100%';
+    // Use a scatter plot for Property Sales by Type. We map types to x positions 0..2
+    const propertyTypeLabels = ['Apartment', 'Condo', 'House'];
     const propertySalesChart = new Chart(propertySalesCanvas, {
-      type: 'bar',
+      type: 'scatter',
       data: {
-        labels: ['Apartment', 'Condo', 'House'],
-        datasets: [{ label: 'Sales', data: [320000, 210000, 420000], backgroundColor: [chartColors.accent1, chartColors.accent2, chartColors.accent3] }]
+        datasets: [{
+          label: 'Sales',
+          data: [
+            { x: 0, y: 320000 },
+            { x: 1, y: 210000 },
+            { x: 2, y: 420000 }
+          ],
+          backgroundColor: [chartColors.accent1, chartColors.accent2, chartColors.accent3],
+          pointRadius: 8
+        }]
       },
-      options: { responsive:false, maintainAspectRatio:false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: chartColors.muted } }, y: { ticks: { color: chartColors.muted } } } }
+      options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            type: 'linear',
+            min: 0,
+            max: propertyTypeLabels.length - 1,
+            ticks: {
+              stepSize: 1,
+              callback: function(value) { return propertyTypeLabels[value] ?? value; },
+              color: chartColors.muted
+            }
+          },
+          y: { ticks: { color: chartColors.muted } }
+        }
+      }
     });
 
     const agentPerformanceCanvas = document.getElementById('agentPerformanceChart');
@@ -302,9 +398,8 @@
       options: { responsive:false, maintainAspectRatio:false, plugins: { legend: { labels: { color: chartColors.text } } } }
     });
 
-    populateTable(reportData);
-    // initialize summary metrics and charts with full dataset
-    updateSummaryMetrics(reportData);
+    // initial load
+    fetchReports();
     (function(){
       try {
         const charts = {};
