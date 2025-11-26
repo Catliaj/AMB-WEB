@@ -141,8 +141,8 @@
               <img id="bookingModalImage" src="<?= base_url('uploads/properties/no-image.jpg') ?>" class="img-fluid rounded" alt="Property image" style="max-height:300px; object-fit:cover;">
             </div>
             <div class="d-flex justify-content-center gap-2">
-              <button id="modalContactAgentBtn" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-dots"></i> Contact Agent</button>
-              <button id="modalViewPropertyBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-up-right"></i> Open Property</button>
+                            <button id="modalContactAgentBtn" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-dots"></i> Contact Agent</button>
+                            <button id="modalDetailsBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-info-circle"></i> Details</button>
             </div>
           </div>
 
@@ -163,9 +163,7 @@
               <div><strong>Price:</strong> <span id="bookingModalPrice">—</span></div>
             </div>
 
-            <div class="mt-2">
-              <h6 class="mb-1">Notes</h6>
-              <p id="bookingModalNotes" class="small text-muted">No notes provided.</p>
+            
             </div>
 
             <div class="mt-3">
@@ -213,7 +211,7 @@
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="contractMode" id="modeBanko" value="banko">
-                            <label class="form-check-label" for="modeBanko">Banko (max age 30)</label>
+                            <label class="form-check-label" for="modeBanko">Bank (max age 30)</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="contractMode" id="modeFull" value="full">
