@@ -13,7 +13,7 @@ class BookingModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'userID', 'propertyID', 'bookingDate', 'status'
+        'userID', 'propertyID', 'bookingDate', 'status', 'Reason', 'Notes','created_at', 'updated_at'
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -114,6 +114,22 @@ class BookingModel extends Model
             ->findAll();
     }
 
+
+    public function getBookingsByUser($userID)
+    {
+        return $this->select('
+                booking.bookingID,
+                booking.bookingDate,
+                booking.status AS BookingStatus,
+                property.PropertyID,
+                property.Title AS PropertyTitle,
+                property.Location AS PropertyLocation
+            ')
+            ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
+            ->where('booking.userID', $userID)
+            ->orderBy('booking.bookingDate', 'DESC')
+            ->findAll();
+    }
 
 
 

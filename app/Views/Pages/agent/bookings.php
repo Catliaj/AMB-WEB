@@ -139,8 +139,8 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
-    window.updateBookingStatusUrl = <?= json_encode(site_url("property/updateStatus")) ?>;
-    window.getBookingUrl = <?= json_encode(site_url("users/getBooking")) ?>;
+   window.updateBookingStatusUrl = <?= json_encode(site_url("users/updateBookingStatus")) ?>;
+  window.getBookingUrl = <?= json_encode(site_url("users/getBooking")) ?>;
 
     const Toast = Swal.mixin({
       toast: true,
@@ -307,7 +307,7 @@
         if (st === 'pending') {
           // keep buttons as-is
         } else {
-          actionsCell.innerHTML = '<span class="text-muted small">Finalized</span>';
+          actionsCell.innerHTML = '<span class="text-muted small"></span>';
         }
       }
     }

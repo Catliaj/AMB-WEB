@@ -7,11 +7,12 @@ use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\PropertyModel;
 use App\Models\PropertyStatusHistoryModel;
 use App\Models\PropertyImageModel;
+use App\Models\UsersModel;
 
 class PropertyController extends BaseController
 {
     //para client to 
-    public function viewProperty($id)
+   public function viewProperty($id)
     {
         $propertyModel = new \App\Models\PropertyModel();
         $propertyImagesModel = new \App\Models\PropertyImageModel();
@@ -36,7 +37,7 @@ class PropertyController extends BaseController
         if (!$existing) {
             $viewModel->insert([
                 'PropertyID' => $id,
-                'UserID' => $userID,
+                'UserID'     => $userID,
                 'created_at' => date('Y-m-d H:i:s')
             ]);
         }
@@ -44,19 +45,56 @@ class PropertyController extends BaseController
         // Total views
         $property['total_views'] = $viewModel->where('PropertyID', $id)->countAllResults();
 
-        // Get latest status
+        // Get latest status (fallback to Available)
         $status = $statusModel->where('PropertyID', $id)->orderBy('Date', 'DESC')->first();
         $property['New_Status'] = $status['New_Status'] ?? 'Available';
 
-        // Agent info
-        $agent = $userModel->find($property['agent_assigned']);
-        $property['agent_name'] = $agent ? trim($agent['FirstName'] . ' ' . $agent['LastName']) : 'Unassigned';
+        // Resolve agent_assigned -> user (ensure Role = 'Agent')
+        $agentAssigned = $property['agent_assigned'] ?? null;
+        $agentInfo = [
+            'agent_id'    => null,
+            'agent_name'  => 'Unassigned',
+            'agent_email' => '',
+            'agent_phone' => ''
+        ];
 
-        // Images
+        if (!empty($agentAssigned)) {
+            // If numeric, look up by UserID and Role = Agent
+            if (is_numeric($agentAssigned)) {
+                $agent = $userModel
+                    ->where('UserID', (int) $agentAssigned)
+                    ->where('Role', 'Agent')
+                    ->first();
+            } else {
+                // If non-numeric (earlier you accepted names), try to find an Agent by name (first/last)
+                $agent = $userModel
+                    ->where('Role', 'Agent')
+                    ->groupStart()
+                        ->like('FirstName', $agentAssigned)
+                        ->orLike('LastName', $agentAssigned)
+                    ->groupEnd()
+                    ->first();
+            }
+
+            if ($agent) {
+                $agentInfo['agent_id']    = $agent['UserID'] ?? null;
+                $agentInfo['agent_name']  = trim(($agent['FirstName'] ?? '') . ' ' . ($agent['LastName'] ?? '')) ?: ($agent['Email'] ?? 'Agent');
+                $agentInfo['agent_email'] = $agent['Email'] ?? '';
+                $agentInfo['agent_phone'] = $agent['phoneNumber'] ?? ($agent['phone'] ?? '');
+            }
+        }
+
+        // attach agent info to response
+        $property['agent_id']    = $agentInfo['agent_id'];
+        $property['agent_name']  = $agentInfo['agent_name'];
+        $property['agent_email'] = $agentInfo['agent_email'];
+        $property['agent_phone'] = $agentInfo['agent_phone'];
+
+        // Images: return full URLs array, fallback to no-image
         $images = $propertyImagesModel->where('PropertyID', $id)->findAll();
-        $property['images'] = !empty($images) 
-        ? array_map(fn($img) => base_url('uploads/properties/' . $img['Image']), $images)
-        : [base_url('uploads/properties/no-image.jpg')];
+        $property['images'] = !empty($images)
+            ? array_map(fn($img) => base_url('uploads/properties/' . $img['Image']), $images)
+            : [base_url('uploads/properties/no-image.jpg')];
 
         return $this->response->setJSON($property);
     }
@@ -236,5 +274,32 @@ class PropertyController extends BaseController
         if (!empty($uploadedImageUrls)) $result['imageUrls'] = $uploadedImageUrls;
 
         return $this->response->setJSON($result);
+    }
+
+
+     public function getUser($id = null)
+    {
+        if (empty($id)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'User id required']);
+        }
+
+        $userModel = new UsersModel();
+        $user = $userModel->find($id);
+
+        if (!$user) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'User not found']);
+        }
+
+        // Limit fields returned for privacy. Add/remove fields as appropriate.
+        $data = [
+            'UserID'    => $user['UserID'] ?? null,
+            'FirstName' => $user['FirstName'] ?? '',
+            'LastName'  => $user['LastName'] ?? '',
+            'Email'     => $user['Email'] ?? '',
+            'phone'     => $user['phoneNumber'] ?? ($user['phone'] ?? ''),
+            'Role'      => $user['Role'] ?? '',
+        ];
+
+        return $this->response->setJSON($data);
     }
 }

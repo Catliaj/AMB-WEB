@@ -34,12 +34,9 @@
 
   <main class="container-fluid mt-5 pt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <div>
-        <h4 class="fw-bold text-secondary mb-0">Assigned Properties</h4>
-        <p class="small-hint mb-0">Manage properties assigned to you. Click View for details or Edit to change availability/image.</p>
-      </div>
+      
 
-      <div class="d-flex align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2 mt-3">
         <select id="filterSelect" class="form-select form-select-sm" style="width:auto">
           <option value="all">All</option>
           <option value="Available">Available</option>

@@ -40,6 +40,22 @@ class CreateBooking extends Migration
                 'null'           => true,
                 'default'        => 'Pending',
             ],
+            'Reason' => [
+                'type'           => 'TEXT',
+                'null'           => true,
+            ],
+            'Notes' => [
+                'type'           => 'TEXT',
+                'null'           => true,
+            ],
+            'created_at' => [
+                'type'       => 'DATETIME',
+                'null'       => true,
+            ],
+            'updated_at' => [
+                'type'       => 'DATETIME',
+                'null'       => true,
+            ],
 
          ]);
 

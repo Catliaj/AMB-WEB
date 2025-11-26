@@ -1,3 +1,6 @@
+// assets/js/client.js
+// Rebuilt client script with agent name resolution and booking modal improvements
+
 // ---------------------------
 // Global State
 // ---------------------------
@@ -7,7 +10,47 @@ let favorites = new Set();         // Favorite property IDs
 let currentModalIndex = 0;         // Current property shown in modal
 let currentImageIndex = 0;         // Current image in modal carousel
 let currentModalProperty = null; // store globally
+const myBookingsUrl = window.myBookingsUrl || '/index.php/bookings/mine';
 
+// ---------------------------
+// Agent helper (fetch + cache)
+// ---------------------------
+const agentCache = new Map();
+
+async function getAgentInfo(agentId) {
+  if (!agentId) return null;
+  if (agentCache.has(agentId)) return agentCache.get(agentId);
+
+  const base = window.getUserUrlBase || '/index.php/users/getUser';
+  const url = `${base}/${encodeURIComponent(agentId)}`;
+
+  try {
+    const res = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    if (!res.ok) {
+      console.warn('getAgentInfo: server returned', res.status, 'for agent', agentId);
+      agentCache.set(agentId, null);
+      return null;
+    }
+    const data = await res.json().catch(() => null);
+    if (!data) {
+      agentCache.set(agentId, null);
+      return null;
+    }
+    const name = ((data.FirstName || '') + ' ' + (data.LastName || '')).trim() || (data.Email || 'Agent');
+    const agent = {
+      id: data.UserID ?? agentId,
+      name,
+      email: data.Email ?? '',
+      phone: data.phone ?? data.phoneNumber ?? ''
+    };
+    agentCache.set(agentId, agent);
+    return agent;
+  } catch (err) {
+    console.error('getAgentInfo error', err);
+    agentCache.set(agentId, null);
+    return null;
+  }
+}
 
 // ---------------------------
 // Theme Management
@@ -73,7 +116,21 @@ function loadProperties() {
             return response.json();
         })
         .then(data => {
-            allProperties = data; // store globally
+            // Normalize properties to guarantee consistent fields (id, title, image, etc.)
+            allProperties = (Array.isArray(data) ? data : []).map(p => ({
+                id: p.id ?? p.PropertyID ?? null,
+                title: p.title ?? p.Title ?? '',
+                location: p.location ?? p.Location ?? '',
+                type: p.type ?? p.Property_Type ?? '',
+                price: p.price ?? p.Price ?? '',
+                beds: p.beds ?? p.Bedrooms ?? '',
+                baths: p.baths ?? p.Bathrooms ?? '',
+                sqft: p.sqft ?? p.Size ?? '',
+                image: (p.images && p.images[0]) || p.image || (p.Images && p.Images[0]) || (p.Image ? (p.Image.startsWith('http') ? p.Image : ('uploads/properties/' + p.Image)) : 'uploads/properties/no-image.jpg'),
+                images: p.images ?? p.Images ?? [],
+                agent_assigned: p.agent_assigned ?? p.Agent_Assigned ?? null,
+                raw: p // keep original if needed
+            }));
             filteredProperties = [...allProperties]; // default filter
             renderPropertiesGrid();
         })
@@ -92,34 +149,34 @@ function renderPropertyCard(property) {
         <div class="col-md-6 col-lg-4">
             <div class="property-card" onclick="openPropertyDetails(${property.id})">
                 <div class="property-image position-relative">
-                    <img src="${property.image || 'uploads/properties/no-image.jpg'}" alt="${property.title}" loading="lazy">
+                    <img src="${property.image || 'uploads/properties/no-image.jpg'}" alt="${escapeHtml(property.title)}" loading="lazy">
                     <button class="property-favorite ${isFavorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite(${property.id})">
                         <i class="bi ${isFavorite ? 'bi-heart-fill' : 'bi-heart'} fs-5"></i>
                     </button>
-                    <span class="property-type-badge">${property.type}</span>
+                    <span class="property-type-badge">${escapeHtml(property.type)}</span>
                 </div>
                 <div class="card-body">
-                    <h3 class="h5 mb-2">${property.title}</h3>
+                    <h3 class="h5 mb-2">${escapeHtml(property.title)}</h3>
                     <div class="d-flex align-items-center mb-3 text-muted">
                         <i class="bi bi-geo-alt text-accent me-2"></i>
-                        <small>${property.location}</small>
+                        <small>${escapeHtml(property.location)}</small>
                     </div>
                     <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
                         <div class="d-flex align-items-center">
                             <i class="bi bi-house-door me-1 text-muted"></i>
-                            <small class="text-muted">${property.beds}</small>
+                            <small class="text-muted">${escapeHtml(property.beds)}</small>
                         </div>
                         <div class="d-flex align-items-center">
                             <i class="bi bi-droplet me-1 text-muted"></i>
-                            <small class="text-muted">${property.baths}</small>
+                            <small class="text-muted">${escapeHtml(property.baths)}</small>
                         </div>
                         <div class="d-flex align-items-center">
                             <i class="bi bi-arrows-fullscreen me-1 text-muted"></i>
-                            <small class="text-muted">${property.sqft} sqft</small>
+                            <small class="text-muted">${escapeHtml(property.sqft)} sqft</small>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="property-price">${property.price}</span>
+                        <span class="property-price">${escapeHtml(property.price)}</span>
                         <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openPropertyDetails(${property.id})">
                             View Details
                         </button>
@@ -169,8 +226,9 @@ function updateAllFavoriteButtons() {
         }
     });
 }
+
 // ---------------------------
-// Modal
+// Modal: Property Details
 // ---------------------------
 function openPropertyDetails(propertyId) {
     fetch(`${propertiesViewUrl}/${propertyId}`)
@@ -192,37 +250,41 @@ function openPropertyDetails(propertyId) {
             const modal = new bootstrap.Modal(modalEl);
             modal.show();
         })
-        .catch(err => console.error('Error fetching property:', err));
+        .catch(err => {
+            console.error('Error fetching property:', err);
+            // optional UI feedback
+        });
 }
 
 function updatePropertyModal(property) {
     if (!property) return;
 
-    // ✅ Normalize property fields (support uppercase/lowercase)
+    // Normalize fields and update modal text content
     const propertyId = property.id || property.PropertyID;
-    const title = property.Title || 'N/A';
-    const location = property.Location || 'N/A';
-    const price = property.Price || 'N/A';
-    const beds = property.Bedrooms || 'N/A';
-    const baths = property.Bathrooms || 'N/A';
-    const sqft = property.Size || 'N/A';
-    const type = property.Property_Type || 'N/A';
+    const title = property.Title || property.title || 'N/A';
+    const location = property.Location || property.location || 'N/A';
+    const price = property.Price || property.price || 'N/A';
+    const beds = property.Bedrooms || property.beds || 'N/A';
+    const baths = property.Bathrooms || property.baths || 'N/A';
+    const sqft = property.Size || property.sqft || 'N/A';
+    const type = property.Property_Type || property.type || 'N/A';
     const images = property.images || property.Images || [];
 
-    // ✅ Update modal text content
-    document.getElementById('modalPropertyTitle').textContent = title;
-    document.getElementById('modalPropertyLocation').textContent = location;
-    document.getElementById('modalPropertyPrice').textContent = price;
-    document.getElementById('modalPropertyBeds').textContent = beds;
-    document.getElementById('modalPropertyBaths').textContent = baths;
-    document.getElementById('modalPropertySqft').textContent = sqft;
-    document.getElementById('modalPropertyType').textContent = type;
+    // Update modal text content
+    const el = id => document.getElementById(id);
+    el('modalPropertyTitle').textContent = title;
+    el('modalPropertyLocation').textContent = location;
+    el('modalPropertyPrice').textContent = price;
+    el('modalPropertyBeds').textContent = beds;
+    el('modalPropertyBaths').textContent = baths;
+    el('modalPropertySqft').textContent = sqft;
+    el('modalPropertyType').textContent = type;
 
-    // ✅ Update property image
+    // Update property image
     const imgEl = document.getElementById('modalPropertyImage');
-    imgEl.src = images[0] || 'uploads/properties/no-image.jpg';
+    if (imgEl) imgEl.src = images[0] || 'uploads/properties/no-image.jpg';
 
-    // ✅ Favorite button
+    // Favorite button behavior
     const favBtn = document.getElementById('modalFavoriteBtn');
     const icon = favBtn?.querySelector('i');
     if (favBtn && icon) {
@@ -240,68 +302,61 @@ function updatePropertyModal(property) {
         };
     }
 
-const chatBtn = document.getElementById('modalChatBtn');
-
-if (chatBtn) {
-    chatBtn.onclick = async () => {
-        if (!propertyId) {
-            console.error('Property ID is missing!', property);
-            Swal.fire({
-                title: 'Error',
-                text: 'Cannot start chat: property ID missing.',
-                icon: 'error'
-            });
-            return;
-        }
-
-        console.log('Starting chat with property ID:', propertyId);
-
-        try {
-            const response = await fetch('/chat/startSession', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ PropertyID: propertyId })
-            });
-
-            const data = await response.json();
-            console.log('Chat response:', data);
-
-            if (data.status === 'success') {
-                // SweetAlert confirmation with agent & property info
-                Swal.fire({
-                    title: 'Message Sent!',
-                    text: `Your message regarding "${data.propertyTitle}" has been sent to ${data.agentName}.`,
-                    icon: 'success',
-                    confirmButtonText: 'Go to Chat'
-                }).then(() => {
-                    window.location.href = '/users/chat';
-                });
-            } else {
-                Swal.fire({
-                    title: 'Error',
-                    text: data.error || 'Failed to start chat session',
-                    icon: 'error'
-                });
+    // Chat button behavior (unchanged)
+    const chatBtn = document.getElementById('modalChatBtn');
+    if (chatBtn) {
+        chatBtn.onclick = async () => {
+            if (!propertyId) {
+                console.error('Property ID is missing!', property);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ title: 'Error', text: 'Cannot start chat: property ID missing.', icon: 'error' });
+                } else {
+                    alert('Cannot start chat: property ID missing.');
+                }
+                return;
             }
 
-        } catch (err) {
-            console.error('Fetch error:', err);
-            Swal.fire({
-                title: 'Error',
-                text: 'Something went wrong while starting chat.',
-                icon: 'error'
-            });
-        }
-    };
+            try {
+                const response = await fetch('/chat/startSession', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ PropertyID: propertyId })
+                });
+
+                const data = await response.json();
+                if (data?.status === 'success') {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Message Sent!',
+                            text: `Your message regarding "${data.propertyTitle}" has been sent to ${data.agentName}.`,
+                            icon: 'success',
+                            confirmButtonText: 'Go to Chat'
+                        }).then(() => window.location.href = '/users/chat');
+                    } else {
+                        alert('Message sent! Redirecting to chat.');
+                        window.location.href = '/users/chat';
+                    }
+                } else {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ title: 'Error', text: data.error || 'Failed to start chat session', icon: 'error' });
+                    } else {
+                        alert(data.error || 'Failed to start chat session');
+                    }
+                }
+            } catch (err) {
+                console.error('Fetch error:', err);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ title: 'Error', text: 'Something went wrong while starting chat.', icon: 'error' });
+                } else {
+                    alert('Something went wrong while starting chat.');
+                }
+            }
+        };
+    }
 }
-
-
-
-}
-
 
 // ---------------------------
 // Modal Image Navigation
@@ -309,18 +364,20 @@ if (chatBtn) {
 function navigateProperty(step) {
     if (!currentModalProperty || !currentModalProperty.images || currentModalProperty.images.length === 0) return;
     currentImageIndex = (currentImageIndex + step + currentModalProperty.images.length) % currentModalProperty.images.length;
-    document.getElementById('modalPropertyImage').src = currentModalProperty.images[currentImageIndex];
+    const el = document.getElementById('modalPropertyImage');
+    if (el) el.src = currentModalProperty.images[currentImageIndex];
 }
 
-
 // ---------------------------
-// Chat
+// Chat helper
 // ---------------------------
 function openChatWithAgent(agentName, propertyId) {
-    toggleChat();
+    toggleChat?.();
     const chatInput = document.getElementById('chatInput');
-    chatInput.value = `Hello ${agentName}, I am interested in Property ID #${propertyId}`;
-    chatInput.focus();
+    if (chatInput) {
+        chatInput.value = `Hello ${agentName}, I am interested in Property ID #${propertyId}`;
+        chatInput.focus();
+    }
 }
 
 // ---------------------------
@@ -335,15 +392,135 @@ function applyFilters() {
     const bedroomsFilter = bedroomsEl?.value || 'all';
 
     filteredProperties = allProperties.filter(p => {
-        const matchesSearch = !searchQuery ||
-            p.title.toLowerCase().includes(searchQuery) ||
-            p.location.toLowerCase().includes(searchQuery);
-        const matchesType = typeFilter === 'all' || p.type === typeFilter;
-        const matchesBeds = bedroomsFilter === 'all' || p.beds === parseInt(bedroomsFilter);
+        const title = (p.title || '').toString().toLowerCase();
+        const loc = (p.location || '').toString().toLowerCase();
+        const matchesSearch = !searchQuery || title.includes(searchQuery) || loc.includes(searchQuery);
+        const matchesType = typeFilter === 'all' || (p.type || '') === typeFilter;
+        const matchesBeds = bedroomsFilter === 'all' || (p.beds == parseInt(bedroomsFilter));
         return matchesSearch && matchesType && matchesBeds;
     });
 
     renderPropertiesGrid();
+}
+
+// ---------------------------
+// Bookings: render & load
+// ---------------------------
+function renderBookingsList(bookings) {
+    const container = document.getElementById('bookingsList');
+    if (!container) return;
+
+    if (!bookings || bookings.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-4">You have no bookings.</div>';
+        return;
+    }
+
+    const html = bookings.map(b => {
+        const date = b.bookingDate ? new Date(b.bookingDate).toLocaleDateString() : '—';
+        const status = b.BookingStatus || b.status || 'Pending';
+        const img = (b.Images && b.Images[0]) ? b.Images[0] : 'uploads/properties/no-image.jpg';
+        const reason = b.Reason ? `<div><strong>Reason:</strong> ${escapeHtml(b.Reason)}</div>` : '';
+        const notes = b.Notes ? `<div><strong>Notes:</strong> ${escapeHtml(b.Notes)}</div>` : '';
+
+        return `
+        <div class="card mb-3">
+          <div class="row g-0 align-items-center">
+            <div class="col-auto" style="width:140px">
+              <img src="${escapeHtml(img)}" class="img-fluid rounded-start" style="height:100%; object-fit:cover;">
+            </div>
+            <div class="col">
+              <div class="card-body">
+                <h5 class="card-title mb-1">${escapeHtml(b.PropertyTitle || 'Property')}</h5>
+                <p class="mb-1 text-muted small">${escapeHtml(b.PropertyLocation || '')}</p>
+                <div class="mb-1"><strong>Date:</strong> ${escapeHtml(date)} &nbsp; <span class="badge ${badgeClassForStatus(status)}">${escapeHtml(status)}</span></div>
+                ${reason}
+                ${notes}
+              </div>
+            </div>
+            <div class="col-auto pe-3">
+              <div class="d-flex flex-column gap-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewBookingDetails(${b.bookingID})">View</button>
+                ${status.toLowerCase() === 'pending' ? `<button class="btn btn-sm btn-danger" onclick="cancelBooking(${b.bookingID})">Cancel</button>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+        `;
+    }).join('');
+
+    container.innerHTML = html;
+}
+
+async function loadMyBookings() {
+    const container = document.getElementById('bookingsList');
+    if (!container) return;
+    container.innerHTML = '<div class="text-center py-4">Loading your bookings...</div>';
+
+    try {
+        const res = await fetch(myBookingsUrl, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) throw new Error('Failed to fetch bookings: ' + res.status);
+        const data = await res.json().catch(() => []);
+        renderBookingsList(Array.isArray(data) ? data : []);
+    } catch (err) {
+        console.error('loadMyBookings error', err);
+        container.innerHTML = `<div class="text-center text-danger">Failed to load bookings. Please try later.</div>`;
+    }
+}
+
+// ---------------------------
+// Cancel booking helper
+// ---------------------------
+async function cancelBooking(bookingID) {
+    if (!confirm('Cancel this booking?')) return;
+    try {
+        const cancelUrl = window.bookingCancelUrl || '/index.php/bookings/cancel';
+        const params = new URLSearchParams();
+        params.append('booking_id', bookingID);
+        params.append('status', 'Cancelled');
+        if (window.csrfName && window.csrfHash) params.append(window.csrfName, window.csrfHash);
+
+        const res = await fetch(cancelUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+        });
+
+        const text = await res.text();
+        let json = null;
+        try { json = text ? JSON.parse(text) : {}; } catch (e) { /* ignore parse errors */ }
+
+        if (!res.ok || (json && json.error)) {
+            console.error('Cancel response:', text);
+            throw new Error(json?.error || 'Failed to cancel');
+        }
+
+        // reload bookings
+        await loadMyBookings();
+    } catch (err) {
+        console.error('Cancel booking failed', err);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'error', title: 'Failed', text: err.message || 'Unable to cancel booking.' });
+        } else {
+            alert(err.message || 'Unable to cancel booking.');
+        }
+    }
+}
+
+// ---------------------------
+// Utility
+// ---------------------------
+function escapeHtml(s) {
+    if (s === undefined || s === null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+function badgeClassForStatus(status) {
+    const s = String(status || '').toLowerCase();
+    if (s === 'confirmed') return 'bg-success text-white';
+    if (s === 'pending') return 'bg-warning text-dark';
+    if (s === 'rejected' || s === 'cancelled') return 'bg-danger text-white';
+    return 'bg-secondary text-white';
 }
 
 // ---------------------------
@@ -352,10 +529,11 @@ function applyFilters() {
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     setActiveNav();
-    loadProperties(); // Load properties via AJAX
+    loadProperties();
+    loadMyBookings();
 
-    // Auto-load session if initialSessionId exists
-    const initialSessionId = '<?= $initialSessionId ?? null ?>';
+    // Auto-load session link if provided
+    const initialSessionId = window.initialSessionId || null;
     if (initialSessionId) {
         const sessionElement = document.querySelector(`.chat-item[data-session-id='${initialSessionId}']`);
         if (sessionElement) sessionElement.click();
@@ -363,47 +541,73 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ===== BOOKING MODAL FUNCTIONALITY =====
-
 let currentBookingProperty = null;
+let currentBookingImageIndex = 0;
+let currentBookingImages = [];
 
-/**
- * Open booking modal with property data
- */
-function openBookingModal(propertyData) {
+// Async openBookingModal: resolves agent ID -> name/phone/email then shows modal
+async function openBookingModal(propertyData) {
     currentBookingProperty = propertyData;
-    
-    console.log('Populating booking modal with:', propertyData);
-    
-    // Populate property details
-    // Set up images for navigation
-currentBookingImages = propertyData.images || [propertyData.image || 'uploads/properties/no-image.jpg'];
-currentBookingImageIndex = 0;
-document.getElementById('bookingPropertyImage').src = currentBookingImages[0];
-    document.getElementById('bookingPropertyType').textContent = propertyData.property_type || 'Property';
-    document.getElementById('bookingPropertyTitle').textContent = propertyData.title || 'Property Title';
-    document.getElementById('bookingPropertyLocation').textContent = propertyData.location || 'Location';
-    document.getElementById('bookingPropertyPrice').textContent = '₱' + propertyData.price;
-    document.getElementById('bookingPropertyBedrooms').textContent = propertyData.bedrooms + ' Beds';
-    document.getElementById('bookingPropertyBathrooms').textContent = propertyData.bathrooms + ' Baths';
-    document.getElementById('bookingPropertySize').textContent = propertyData.size + ' sqft';
-    document.getElementById('bookingPropertyParking').textContent = propertyData.parking_spaces + ' Spaces';
-    document.getElementById('bookingPropertyAgent').textContent = propertyData.agent_assigned;
-    document.getElementById('bookingPropertyCorporation').textContent = propertyData.corporation;
-    document.getElementById('bookingPropertyDescription').textContent = propertyData.description;
-    
+    // console.log('Populating booking modal with:', propertyData);
+
+    // Images
+    currentBookingImages = propertyData.images || [propertyData.image || 'uploads/properties/no-image.jpg'];
+    currentBookingImageIndex = 0;
+    const imgEl = document.getElementById('bookingPropertyImage');
+    if (imgEl) imgEl.src = currentBookingImages[0];
+
+    // Basic fields
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value ?? '';
+    };
+
+    setText('bookingPropertyType', propertyData.property_type || 'Property');
+    setText('bookingPropertyTitle', propertyData.title || 'Property Title');
+    setText('bookingPropertyLocation', propertyData.location || 'Location');
+    setText('bookingPropertyPrice', '₱' + (propertyData.price || '0'));
+    setText('bookingPropertyBedrooms', propertyData.bedrooms + ' Beds');
+    setText('bookingPropertyBathrooms', propertyData.bathrooms + ' Baths');
+    setText('bookingPropertySize', propertyData.size + ' sqft');
+    setText('bookingPropertyParking', propertyData.parking_spaces + ' Spaces');
+    setText('bookingPropertyCorporation', propertyData.corporation || 'N/A');
+    setText('bookingPropertyDescription', propertyData.description || '');
+
     // Set property ID in hidden input
-    document.getElementById('bookingPropertyId').value = propertyData.id || '';
-    
-    // Set minimum date to today
+    const idInput = document.getElementById('bookingPropertyId');
+    if (idInput) idInput.value = propertyData.id || '';
+
+    // Set minimum date
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('bookingDate').setAttribute('min', today);
-    
+    const dateInput = document.getElementById('bookingDate');
+    if (dateInput) dateInput.setAttribute('min', today);
+
     // Reset form
     const form = document.getElementById('propertyBookingForm');
-    if (form) {
-        form.reset();
-    }
-    
+    if (form) form.reset();
+
+    // Resolve agent info (agent_assigned should be an ID or null)
+    // prefer server-provided agent info (from viewProperty); fall back to fetch by ID only if needed
+const agentId = propertyData.agent_assigned ?? propertyData.agent_id ?? null;
+
+// server may already include agent_name/agent_phone/agent_email
+let agentName = propertyData.agent_name ?? null;
+let agentPhone = propertyData.agent_phone ?? propertyData.agent_email ?? '';
+let agentEmail = propertyData.agent_email ?? '';
+
+if (!agentName && agentId) {
+  // only call getAgentInfo when server didn't return a name
+  const agent = await getAgentInfo(agentId);
+  agentName = agent?.name ?? agentName;
+  agentPhone = agent?.phone ?? agentPhone;
+  agentEmail = agent?.email ?? agentEmail;
+}
+
+// Populate agent fields (fallbacks)
+setText('bookingPropertyAgent', agentName || (agentId ? String(agentId) : 'Unassigned'));
+setText('bookingPropertyAgentPhone', agentPhone || '');
+setText('bookingPropertyAgentEmail', agentEmail || '');
+
     // Show modal
     const bookingModalEl = document.getElementById('bookingModal');
     if (bookingModalEl) {
@@ -417,65 +621,72 @@ document.getElementById('bookingPropertyImage').src = currentBookingImages[0];
 /**
  * Handle booking form submission
  */
-document.getElementById('propertyBookingForm')?.addEventListener('submit', function(e) {
+(function setupBookingForm() {
+  const bookingCreateUrl = window.bookingCreateUrl || '/index.php/bookings/create';
+  const csrfName = window.csrfName;
+  const csrfHash = window.csrfHash;
+  const form = document.getElementById('propertyBookingForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async function (e) {
     e.preventDefault();
-    
-    const formData = {
-        property_id: document.getElementById('bookingPropertyId').value,
-        property_title: currentBookingProperty?.title,
-        booking_date: document.getElementById('bookingDate').value,
-        booking_purpose: document.getElementById('bookingPurpose').value,
-        booking_notes: document.getElementById('bookingNotes').value,
-        property_details: {
-            location: currentBookingProperty?.location,
-            price: currentBookingProperty?.price,
-            agent: currentBookingProperty?.agent_assigned,
-            corporation: currentBookingProperty?.corporation
-        },
-        timestamp: new Date().toISOString()
-    };
-    
-    // Log booking data to console (replace with actual API call)
-    console.log('=== BOOKING SUBMISSION ===');
-    console.log('Property ID:', formData.property_id);
-    console.log('Property Title:', formData.property_title);
-    console.log('Booking Date:', formData.booking_date);
-    console.log('Purpose:', formData.booking_purpose);
-    console.log('Notes:', formData.booking_notes);
-    console.log('Full Booking Data:', formData);
-    console.log('========================');
-    
-    // Show success message with SweetAlert
-    Swal.fire({
-        icon: 'success',
-        title: 'Booking Submitted!',
-        html: `
-            <p><strong>${formData.property_title}</strong></p>
-            <p>Date: ${new Date(formData.booking_date).toLocaleDateString()}</p>
-            <p>Purpose: ${formData.booking_purpose}</p>
-        `,
-        confirmButtonText: 'Great!',
-        confirmButtonColor: '#469541'
-    }).then(() => {
-        // Close modal
-        const bookingModal = bootstrap.Modal.getInstance(document.getElementById('bookingModal'));
-        bookingModal.hide();
-        
-        // Here you would typically send data to your backend
-        // Example: submitBookingToServer(formData);
-    });
-});
+
+    const payload = new URLSearchParams();
+    payload.append('property_id', document.getElementById('bookingPropertyId').value);
+    payload.append('booking_date', document.getElementById('bookingDate').value);
+    payload.append('booking_purpose', document.getElementById('bookingPurpose').value || '');
+    payload.append('booking_notes', document.getElementById('bookingNotes').value || '');
+    if (csrfName && csrfHash) payload.append(csrfName, csrfHash);
+
+    try {
+      const res = await fetch(bookingCreateUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload.toString()
+      });
+
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : {}; } catch (e) { /* ignore parse error */ }
+
+      if (!res.ok || (data && data.error)) {
+        throw new Error(data?.error || ('Server error: ' + res.status));
+      }
+
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Booking Submitted!',
+          html: `<p><strong>${document.getElementById('bookingPropertyTitle')?.textContent || ''}</strong></p>
+                 <p>Date: ${new Date(document.getElementById('bookingDate').value).toLocaleDateString()}</p>`
+        });
+      } else {
+        alert('Booking submitted successfully.');
+      }
+
+      // close modal
+      bootstrap.Modal.getInstance(document.getElementById('bookingModal'))?.hide();
+      // refresh bookings list
+      loadMyBookings();
+
+    } catch (err) {
+      console.error('Booking save failed', err);
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({ icon: 'error', title: 'Failed', text: err.message || 'Could not save booking.' });
+      } else {
+        alert(err.message || 'Could not save booking.');
+      }
+    }
+  });
+})();
 
 /**
  * Update the "Book Property" button click handler in property details modal
  */
-document.getElementById('modalBookBtn')?.addEventListener('click', function() {
-    if (!currentModalProperty) {
-        console.error('No property data available');
-        return;
-    }
+document.getElementById('modalBookBtn')?.addEventListener('click', async function () {
+    if (!currentModalProperty) return console.error('No property data available');
 
-    // Get current property data from the details modal with proper field mapping
     const propertyData = {
         id: currentModalProperty.id || currentModalProperty.PropertyID,
         title: currentModalProperty.Title || currentModalProperty.title || 'N/A',
@@ -485,61 +696,64 @@ document.getElementById('modalBookBtn')?.addEventListener('click', function() {
         bedrooms: currentModalProperty.Bedrooms || currentModalProperty.beds || '0',
         bathrooms: currentModalProperty.Bathrooms || currentModalProperty.baths || '0',
         size: currentModalProperty.Size || currentModalProperty.sqft || '0',
-        image: (currentModalProperty.images && currentModalProperty.images[0]) || 
-               (currentModalProperty.Images && currentModalProperty.Images[0]) || 
-               currentModalProperty.image || 
-               'uploads/properties/no-image.jpg',
+        image: (currentModalProperty.images && currentModalProperty.images[0]) || (currentModalProperty.Images && currentModalProperty.Images[0]) || currentModalProperty.image || 'uploads/properties/no-image.jpg',
         images: currentModalProperty.images || currentModalProperty.Images || [],
         parking_spaces: currentModalProperty.Parking_Spaces || currentModalProperty.parking_spaces || '0',
-        agent_assigned: currentModalProperty.Agent_Assigned || currentModalProperty.agent_assigned || 'N/A',
+        // pass the agent ID (or null) so openBookingModal can resolve it to a name
+        agent_assigned: currentModalProperty.Agent_Assigned || currentModalProperty.agent_assigned || null,
         corporation: currentModalProperty.Corporation || currentModalProperty.corporation || 'N/A',
         description: currentModalProperty.Description || currentModalProperty.description || 'No description available.'
     };
-    
-    console.log('Opening booking modal with property:', propertyData);
-    
-    // Close property details modal
+
+    // close details modal
     const propertyModal = bootstrap.Modal.getInstance(document.getElementById('propertyDetailsModal'));
-    if (propertyModal) {
-        propertyModal.hide();
-    }
-    
-    // Open booking modal after a short delay
-    setTimeout(() => {
-        openBookingModal(propertyData);
-    }, 300);
+    if (propertyModal) propertyModal.hide();
+
+    // open booking modal (await so it's populated with agent name)
+    await openBookingModal(propertyData);
 });
 
 /**
  * Example: Direct booking from property card
  */
 function bookPropertyDirectly(propertyId) {
-    // Fetch property data and open booking modal
-    // Replace with your actual data fetching logic
-    fetch(`/api/properties/${propertyId}`)
+    fetch(`${propertiesViewUrl}/${propertyId}`)
         .then(response => response.json())
         .then(data => {
-            openBookingModal(data);
+            // normalize server-side response if needed and call openBookingModal
+            const property = {
+                id: data.id ?? data.PropertyID,
+                title: data.title ?? data.Title,
+                location: data.location ?? data.Location,
+                property_type: data.type ?? data.Property_Type,
+                price: data.price ?? data.Price,
+                bedrooms: data.bedrooms ?? data.Bedrooms,
+                bathrooms: data.bathrooms ?? data.Bathrooms,
+                size: data.size ?? data.Size,
+                image: (data.images && data.images[0]) || data.image || (data.Images && data.Images[0]) || 'uploads/properties/no-image.jpg',
+                images: data.images ?? data.Images ?? [],
+                agent_assigned: data.agent_assigned ?? data.Agent_Assigned ?? null,
+                corporation: data.corporation ?? data.Corporation,
+                description: data.description ?? data.Description
+            };
+            openBookingModal(property);
         })
         .catch(error => {
             console.error('Error fetching property:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Failed to load property details. Please try again.'
-            });
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Oops...', text: 'Failed to load property details. Please try again.' });
+            } else {
+                alert('Failed to load property details. Please try again.');
+            }
         });
 }
 
-let currentBookingImageIndex = 0;
-let currentBookingImages = [];
-
-/**
- * Navigate through booking modal images
- */
+// ---------------------------
+// Booking modal image navigation
+// ---------------------------
 function navigateBookingImage(step) {
     if (!currentBookingImages || currentBookingImages.length === 0) return;
-    
     currentBookingImageIndex = (currentBookingImageIndex + step + currentBookingImages.length) % currentBookingImages.length;
-    document.getElementById('bookingPropertyImage').src = currentBookingImages[currentBookingImageIndex];
+    const el = document.getElementById('bookingPropertyImage');
+    if (el) el.src = currentBookingImages[currentBookingImageIndex];
 }
