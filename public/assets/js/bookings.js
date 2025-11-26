@@ -17,12 +17,51 @@
       if (!res.ok) throw new Error('Failed to load bookings: ' + res.status);
       const data = await res.json();
 
-      if (!Array.isArray(data) || data.length === 0) {
-        container.innerHTML = '<div class="text-center text-muted py-4">You have no bookings yet.<br><small>Book a property from the listing to see it here.</small></div>';
+      // page mode: 'reservations' => show pending/confirmed (reservations)
+      // 'bookings' => show cancelled or viewing (default client bookings page)
+      const mode = window.bookingsMode || 'bookings';
+      let filtered = data;
+      if (Array.isArray(data)) {
+        if (mode === 'reservations') {
+          filtered = data.filter(b => {
+            const s = String(b.BookingStatus || b.status || '').toLowerCase();
+            return s === 'pending' || s === 'confirmed' || s === 'reserved';
+          });
+        } else {
+          // bookings page shows cancelled or viewing (or other non-active statuses)
+          filtered = data.filter(b => {
+            const s = String(b.BookingStatus || b.status || '').toLowerCase();
+            return s === 'cancelled' || s === 'rejected' || s === 'viewing' || s === 'completed';
+          });
+        }
+      }
+
+      // Update reservation counters when on reservations page
+      try {
+        if (window.bookingsMode === 'reservations') {
+          const totalCount = Array.isArray(filtered) ? filtered.length : 0;
+          const scheduledCount = Array.isArray(filtered) ? filtered.filter(x => String((x.BookingStatus||x.status||'')).toLowerCase() === 'confirmed').length : 0;
+          const pendingCount = Array.isArray(filtered) ? filtered.filter(x => String((x.BookingStatus||x.status||'')).toLowerCase() === 'pending').length : 0;
+          const totalEl = document.getElementById('totalReservationsCount');
+          const scheduledEl = document.getElementById('scheduledReservationsCount');
+          const pendingEl = document.getElementById('pendingReservationsCount');
+          if (totalEl) totalEl.textContent = String(totalCount);
+          if (scheduledEl) scheduledEl.textContent = String(scheduledCount);
+          if (pendingEl) pendingEl.textContent = String(pendingCount);
+        }
+      } catch (e) {
+        console.warn('Failed to update reservation counters', e);
+      }
+
+      if (!Array.isArray(filtered) || filtered.length === 0) {
+        const emptyMsg = (window.bookingsMode === 'reservations')
+          ? '<div class="text-center text-muted py-4">You have no reservations (pending or confirmed).</div>'
+          : '<div class="text-center text-muted py-4">You have no bookings to display.</div>';
+        container.innerHTML = emptyMsg;
         return;
       }
 
-      container.innerHTML = data.map(renderBookingCard).join('');
+      container.innerHTML = filtered.map(renderBookingCard).join('');
       // attach listeners for detail buttons
       container.querySelectorAll('.btn-view-booking').forEach(btn => btn.addEventListener('click', onViewBooking));
       container.querySelectorAll('.btn-cancel-booking').forEach(btn => btn.addEventListener('click', onCancelBooking));
@@ -33,8 +72,12 @@
   }
 
   function renderBookingCard(b) {
-    const date = b.bookingDate ? new Date(b.bookingDate).toLocaleDateString() : '—';
+    // Clients cannot assign booking dates; do not display booking date on client view
+    const date = '—';
     const status = b.BookingStatus || b.status || 'Pending';
+    // Display label: treat 'Confirmed' as 'Scheduled' for clients
+    const _s = String(status || '').toLowerCase();
+    const displayStatus = _s === 'confirmed' ? 'Scheduled' : (status ? String(status).charAt(0).toUpperCase() + String(status).slice(1) : 'Pending');
     const img = (b.Images && b.Images[0]) ? b.Images[0] : (b.Image ? b.Image : 'uploads/properties/no-image.jpg');
     const badgeClass = statusClass(status);
     const notes = b.Notes || b.Notes === 0 ? escapeHtml(b.Notes) : '';
@@ -50,8 +93,7 @@
               <h6 class="mb-1">${escapeHtml(b.PropertyTitle || b.Title || 'Property')}</h6>
               <p class="text-muted small mb-1">${escapeHtml(b.PropertyLocation || b.Location || '')}</p>
               <div class="mb-1">
-                <span class="badge ${badgeClass}">${escapeHtml(status)}</span>
-                <span class="ms-2 small text-muted">${escapeHtml(date)}</span>
+                <span class="badge ${badgeClass}">${escapeHtml(displayStatus)}</span>
               </div>
               <p class="small text-muted mb-0">${notes ? notes : ''}</p>
             </div>
@@ -59,7 +101,7 @@
           <div class="col-auto pe-3">
             <div class="d-flex flex-column gap-2">
               <button class="btn btn-sm btn-outline-primary btn-view-booking" data-id="${b.bookingID}">Details</button>
-              ${ (String(status).toLowerCase() === 'pending') ? `<button class="btn btn-sm btn-danger btn-cancel-booking" data-id="${b.bookingID}">Cancel</button>` : '' }
+              ${ (['pending','confirmed'].includes(String(status).toLowerCase())) ? `<button class="btn btn-sm btn-danger btn-cancel-booking" data-id="${b.bookingID}">Cancel</button>` : '' }
             </div>
           </div>
         </div>
@@ -103,11 +145,12 @@ function populateBookingModal(b) {
   document.getElementById('bookingModalTitle').textContent = 'Booking #' + (b.bookingID || '');
   document.getElementById('bookingModalPropertyTitle').textContent = b.PropertyTitle || b.Title || 'Property';
   document.getElementById('bookingModalLocation').textContent = b.PropertyLocation || b.Location || '';
-  document.getElementById('bookingModalDate').textContent = (b.bookingDate ? new Date(b.bookingDate).toLocaleString() : '—');
 
   const status = b.BookingStatus || b.status || 'Pending';
+  // Map confirmed -> Scheduled for UI label
+  const statusDisplay = String(status || '').toLowerCase() === 'confirmed' ? 'Scheduled' : (status ? String(status).charAt(0).toUpperCase() + String(status).slice(1) : 'Pending');
   const statusEl = document.getElementById('bookingModalStatus');
-  statusEl.textContent = status;
+  statusEl.textContent = statusDisplay;
   statusEl.className = 'badge ' + statusClass(status);
 
   // image and price
@@ -155,7 +198,7 @@ function populateBookingModal(b) {
 
   // show/hide cancel button depending on status
   const cancelBtn = document.getElementById('modalCancelBookingBtn');
-  if (String(status).toLowerCase() === 'pending') {
+  if (['pending','confirmed'].includes(String(status).toLowerCase())) {
     cancelBtn.style.display = '';
     cancelBtn.dataset.id = b.bookingID;
     cancelBtn.onclick = onCancelBooking;

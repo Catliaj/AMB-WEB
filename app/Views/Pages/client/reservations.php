@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>My Bookings - ABM</title>
+    <title>My Reservations - ABM</title>
 
     <link href="<?= base_url("bootstrap5/css/bootstrap.min.css")?>" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -41,10 +41,10 @@
                                 <a class="nav-link nav-link-custom" href="/users/clientbrowse">Browse Properties</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom active" href="/users/clientbookings">My Bookings</a>
+                                <a class="nav-link nav-link-custom" href="/users/clientbookings">My Bookings</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" href="/users/clientreservations">Reservations</a>
+                                <a class="nav-link nav-link-custom active" href="/users/clientreservations">Reservations</a>
                             </li>
                             <li class="nav-item d-lg-none">
                                 <a class="nav-link nav-link-custom" href="/users/clientprofile">Profile</a>
@@ -80,8 +80,8 @@
                                     <i class="bi bi-calendar-check"></i>
                                 </div>
                                 <div>
-                                    <p class="text-muted small mb-0">Total Bookings</p>
-                                    <h3 class="h4 mb-0">4</h3>
+                                    <p class="text-muted small mb-0">Total Reservations</p>
+                                    <h3 id="totalReservationsCount" class="h4 mb-0">0</h3>
                                 </div>
                             </div>
                         </div>
@@ -95,8 +95,8 @@
                                     <i class="bi bi-check-circle"></i>
                                 </div>
                                 <div>
-                                    <p class="text-muted small mb-0">Confirmed</p>
-                                    <h3 class="h4 mb-0">2</h3>
+                                    <p class="text-muted small mb-0">Scheduled</p>
+                                    <h3 id="scheduledReservationsCount" class="h4 mb-0">0</h3>
                                 </div>
                             </div>
                         </div>
@@ -110,8 +110,8 @@
                                     <i class="bi bi-clock"></i>
                                 </div>
                                 <div>
-                                    <p class="text-muted small mb-0">Upcoming</p>
-                                    <h3 class="h4 mb-0">2</h3>
+                                    <p class="text-muted small mb-0">Pending</p>
+                                    <h3 id="pendingReservationsCount" class="h4 mb-0">0</h3>
                                 </div>
                             </div>
                         </div>
@@ -120,13 +120,12 @@
             </div>
 
             <div id="bookingsList">
-                <!-- Bookings are rendered via client.js from bookingsData -->
+                <!-- Reservations will be rendered here by bookings.js (mode: reservations) -->
             </div>
 
         </div>
     </main>
-    <!-- Booking Detail Modal (paste into the bookings view before closing </body>) -->
-    <!-- Booking Detail Modal (paste into the bookings view before closing </body>) -->
+
 <div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
@@ -151,10 +150,9 @@
             <h5 id="bookingModalPropertyTitle" class="mb-1">Property title</h5>
             <p id="bookingModalLocation" class="text-muted small mb-2">Location</p>
 
-            <div class="mb-2">
-              <span id="bookingModalStatus" class="badge bg-secondary">Status</span>
-              <span class="ms-2 text-muted" id="bookingModalDate">Date</span>
-            </div>
+                        <div class="mb-2">
+                            <span id="bookingModalStatus" class="badge bg-secondary">Status</span>
+                        </div>
 
             <div id="bookingModalMeta" class="mb-2 small text-muted">
               <div><strong>Agent:</strong> <span id="bookingModalAgent">—</span></div>
@@ -165,9 +163,10 @@
               <div><strong>Price:</strong> <span id="bookingModalPrice">—</span></div>
             </div>
 
-                        <div class="mb-2">
-                            <span class="badge bg-secondary" id="bookingModalStatus">Status</span>
-                        </div>
+            <div class="mt-2">
+              <h6 class="mb-1">Notes</h6>
+              <p id="bookingModalNotes" class="small text-muted">No notes provided.</p>
+            </div>
 
             <div class="mt-3">
               <!-- Hidden agent id (if available) -->
@@ -205,8 +204,8 @@
           window.getUserUrlBase = <?= json_encode(site_url('users/getUser')) ?>;
         window.csrfName = <?= json_encode(csrf_token()) ?>;
         window.csrfHash = <?= json_encode(csrf_hash()) ?>;
-                // this page shows cancelled/viewing bookings only
-                window.bookingsMode = 'bookings';
+    // Reservations page: show pending/confirmed/reserved
+    window.bookingsMode = 'reservations';
     </script>
     </div>
 </body>

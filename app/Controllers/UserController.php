@@ -271,6 +271,28 @@ class UserController extends BaseController
             ]);
     }
 
+    public function ClientReservations()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Client') {
+            return redirect()->to('/'); 
+        }
+
+
+       return view('Pages/client/reservations', [
+                'UserID' => session()->get('UserID'),
+                'email' => session()->get('inputEmail'),
+                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
+                get('LastName')),
+                'currentUserId' => session()->get('UserID'),
+                'otherUser' => null
+            ]);
+    }
+
     public function ClientProfile()
     {
         $session = session();
@@ -392,14 +414,15 @@ class UserController extends BaseController
             }
         }
 
-        // Now validate required fields
+        // Now parse/normalize input fields
         $propertyID = $input['property_id'] ?? $input['propertyID'] ?? null;
-        $bookingDate = $input['booking_date'] ?? $input['bookingDate'] ?? null;
+        $bookingDate = $input['booking_date'] ?? $input['bookingDate'] ?? null; // optional for clients
         $purpose = $input['booking_purpose'] ?? $input['purpose'] ?? null;
         $notes = $input['booking_notes'] ?? $input['notes'] ?? null;
 
-        if (empty($propertyID) || empty($bookingDate)) {
-            return $this->response->setStatusCode(400)->setJSON(['error' => 'property_id and booking_date are required']);
+        // property_id is required; bookingDate is optional (agents will assign dates)
+        if (empty($propertyID)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'property_id is required']);
         }
 
         // Save booking using your BookingModel
@@ -408,7 +431,8 @@ class UserController extends BaseController
         $data = [
             'userID'     => $session->get('UserID'),
             'propertyID' => $propertyID,
-            'bookingDate'=> $bookingDate,
+            // Allow NULL bookingDate for client-created bookings; agents will set the date later
+            'bookingDate'=> !empty($bookingDate) ? $bookingDate : null,
             'status'     => 'Pending',
             'Reason'     => $purpose,
             'Notes'      => $notes,

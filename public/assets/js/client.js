@@ -420,8 +420,11 @@ function renderBookingsList(bookings) {
     }
 
     const html = bookings.map(b => {
-        const date = b.bookingDate ? new Date(b.bookingDate).toLocaleDateString() : '—';
+        // Clients do not set booking dates; show placeholder instead
+        const date = '—';
         const status = b.BookingStatus || b.status || 'Pending';
+        // Map confirmed -> Scheduled for display
+        const statusDisplay = String(status || '').toLowerCase() === 'confirmed' ? 'Scheduled' : (status ? String(status).charAt(0).toUpperCase() + String(status).slice(1) : 'Pending');
         const img = (b.Images && b.Images[0]) ? b.Images[0] : 'uploads/properties/no-image.jpg';
         const reason = b.Reason ? `<div><strong>Reason:</strong> ${escapeHtml(b.Reason)}</div>` : '';
         const notes = b.Notes ? `<div><strong>Notes:</strong> ${escapeHtml(b.Notes)}</div>` : '';
@@ -436,7 +439,7 @@ function renderBookingsList(bookings) {
               <div class="card-body">
                 <h5 class="card-title mb-1">${escapeHtml(b.PropertyTitle || 'Property')}</h5>
                 <p class="mb-1 text-muted small">${escapeHtml(b.PropertyLocation || '')}</p>
-                <div class="mb-1"><strong>Date:</strong> ${escapeHtml(date)} &nbsp; <span class="badge ${badgeClassForStatus(status)}">${escapeHtml(status)}</span></div>
+                <div class="mb-1"><strong>Date:</strong> ${escapeHtml(date)} &nbsp; <span class="badge ${badgeClassForStatus(status)}">${escapeHtml(statusDisplay)}</span></div>
                 ${reason}
                 ${notes}
               </div>
@@ -581,10 +584,7 @@ async function openBookingModal(propertyData) {
     const idInput = document.getElementById('bookingPropertyId');
     if (idInput) idInput.value = propertyData.id || '';
 
-    // Set minimum date
-    const today = new Date().toISOString().split('T')[0];
-    const dateInput = document.getElementById('bookingDate');
-    if (dateInput) dateInput.setAttribute('min', today);
+    // Booking date input removed from client UI; agent will assign dates.
 
     // Reset form
     const form = document.getElementById('propertyBookingForm');
@@ -637,7 +637,7 @@ setText('bookingPropertyAgentEmail', agentEmail || '');
 
     const payload = new URLSearchParams();
     payload.append('property_id', document.getElementById('bookingPropertyId').value);
-    payload.append('booking_date', document.getElementById('bookingDate').value);
+    // Do not send booking_date from client — agents will assign booking dates.
     payload.append('booking_purpose', document.getElementById('bookingPurpose').value || '');
     payload.append('booking_notes', document.getElementById('bookingNotes').value || '');
     if (csrfName && csrfHash) payload.append(csrfName, csrfHash);
@@ -658,16 +658,16 @@ setText('bookingPropertyAgentEmail', agentEmail || '');
         throw new Error(data?.error || ('Server error: ' + res.status));
       }
 
-      if (typeof Swal !== 'undefined') {
-        Swal.fire({
-          icon: 'success',
-          title: 'Booking Submitted!',
-          html: `<p><strong>${document.getElementById('bookingPropertyTitle')?.textContent || ''}</strong></p>
-                 <p>Date: ${new Date(document.getElementById('bookingDate').value).toLocaleDateString()}</p>`
-        });
-      } else {
-        alert('Booking submitted successfully.');
-      }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Booking Submitted!',
+                    html: `<p><strong>${document.getElementById('bookingPropertyTitle')?.textContent || ''}</strong></p>
+                                 <p>Date: —</p>`
+                });
+            } else {
+                alert('Booking submitted successfully.');
+            }
 
       // close modal
       bootstrap.Modal.getInstance(document.getElementById('bookingModal'))?.hide();

@@ -42,6 +42,7 @@ $routes->get('/users/clientHomepage', 'UserController::clientHomepage');
 $routes->get('/users/clientprofile', 'UserController::ClientProfile');
 $routes->get('/users/clientbookings', 'UserController::ClientBookings');
 $routes->get('/users/clientbrowse', 'UserController::ClientBrowse');
+$routes->get('/users/clientreservations', 'UserController::ClientReservations');
 $routes->get('/users/logout', 'UserController::logoutClient');
 $routes->get('/users/chat', 'UserController::cleintChat');
 $routes->get('/properties/all', 'PropertyController::getAllProperties');
@@ -91,6 +92,14 @@ $routes->get('/admin/booking/(:num)', 'AdminController::getBookingDetails/$1');
 // Removed admin chat viewing for privacy reasons
 $routes->get('/admin/logout', 'AdminController::logoutAdmin');
 $routes->get('/admin/getusers', 'AdminController::getUsers');
+// Legacy / alternate route: map /getUsers to the admin handler to avoid 404s
+$routes->get('/getUsers', 'AdminController::getUsers');
+// Additional aliases to catch different caller patterns (avoid Home::getUsers 404)
+$routes->get('getusers', 'AdminController::getUsers');
+$routes->get('Home/getUsers', 'AdminController::getUsers');
+$routes->get('Home/getusers', 'AdminController::getUsers');
+$routes->get('home/getUsers', 'AdminController::getUsers');
+$routes->get('home/getusers', 'AdminController::getUsers');
 
 // Admin Property Management Routes
 $routes->get('/admin/getProperty/(:num)', 'AdminController::getProperty/$1');

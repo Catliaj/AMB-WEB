@@ -43,6 +43,9 @@
                     <li class="nav-item">
                         <a class="nav-link nav-link-custom" href="/users/clientbrowse">Browse Properties</a>
                     </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom" href="/users/clientreservations">Reservations</a>
+                            </li>
                     <li class="nav-item">
                         <a class="nav-link nav-link-custom" href="/users/clientbookings">My Bookings</a>
                     </li>
@@ -315,14 +318,7 @@
                             <input type="hidden" id="bookingPropertyId" name="property_id">
 
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="bookingDate" class="form-label">
-                                        <i class="bi bi-calendar-event me-1"></i>
-                                        Booking Date
-                                    </label>
-                                    <input type="date" class="form-control" id="bookingDate" name="booking_date"
-                                        required>
-                                </div>
+                                <!-- Booking Date removed: agents assign booking dates. -->
 
                                 <div class="col-md-6">
                                     <label for="bookingPurpose" class="form-label">
