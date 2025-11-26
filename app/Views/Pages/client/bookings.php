@@ -143,7 +143,7 @@
             </div>
             <div class="d-flex justify-content-center gap-2">
               <button id="modalContactAgentBtn" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-dots"></i> Contact Agent</button>
-              <button id="modalViewPropertyBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-up-right"></i> Open Property</button>
+              <button id="modalDetailsBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-info-circle"></i> Details</button>
             </div>
           </div>
 
@@ -165,9 +165,7 @@
               <div><strong>Price:</strong> <span id="bookingModalPrice">—</span></div>
             </div>
 
-                        <div class="mb-2">
-                            <span class="badge bg-secondary" id="bookingModalStatus">Status</span>
-                        </div>
+            
 
             <div class="mt-3">
               <!-- Hidden agent id (if available) -->
