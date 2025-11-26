@@ -861,6 +861,16 @@ async function viewBookingDetails(id) {
         const notesEl = document.getElementById('bookingModalNotes');
         if (notesEl) notesEl.textContent = booking.Notes || booking.Reason || 'No notes provided.';
 
+        // Additional property details
+        setText('bookingModalBeds', booking.PropertyBedrooms || booking.Bedrooms || '—');
+        setText('bookingModalBaths', booking.PropertyBathrooms || booking.Bathrooms || '—');
+        setText('bookingModalSize', booking.PropertySize || booking.Size || '—');
+        setText('bookingModalParking', booking.PropertyParking || booking.Parking_Spaces || '—');
+        setText('bookingModalPropertyType', booking.Property_Type || '—');
+        setText('bookingModalCorporation', booking.Corporation || '—');
+        const descEl = document.getElementById('bookingModalDescription');
+        if (descEl) descEl.textContent = booking.PropertyDescription || booking.Description || '—';
+
         // agent info
         const agentId = booking.agent_id ?? booking.assigned_agent ?? booking.Agent_Assigned ?? null;
         const agentName = booking.agent_name ?? booking.assigned_agent_name ?? booking.assigned_agent ?? null;

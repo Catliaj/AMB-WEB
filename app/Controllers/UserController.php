@@ -485,7 +485,15 @@ class UserController extends BaseController
                 booking.Notes,
                 property.PropertyID,
                 property.Title AS PropertyTitle,
+                property.Description AS PropertyDescription,
+                property.Property_Type,
                 property.Location AS PropertyLocation,
+                property.Size AS PropertySize,
+                property.Bedrooms AS PropertyBedrooms,
+                property.Bathrooms AS PropertyBathrooms,
+                property.Parking_Spaces AS PropertyParking,
+                property.agent_assigned,
+                property.Corporation,
                 property.Price AS PropertyPrice
             ')
             ->join('property', 'property.PropertyID = booking.propertyID', 'left')

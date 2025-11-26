@@ -219,6 +219,7 @@ function populateBookingModal(b) {
   setText('bookingModalBaths', baths !== null && baths !== undefined ? String(baths) : '—');
   setText('bookingModalSize', size !== null && size !== undefined ? String(size) : '—');
   setText('bookingModalParking', parking !== null && parking !== undefined ? String(parking) : '—');
+  setText('bookingModalPropertyType', b.Property_Type !== null && b.Property_Type !== undefined ? String(b.Property_Type) : '—');
   setText('bookingModalCorporation', corp !== null && corp !== undefined ? String(corp) : '—');
   const descEl = document.getElementById('bookingModalDescription');
   if (descEl) descEl.textContent = desc || '—';

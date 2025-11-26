@@ -103,6 +103,9 @@ $routes->get('Home/getUsers', 'AdminController::getUsers');
 $routes->get('Home/getusers', 'AdminController::getUsers');
 $routes->get('home/getUsers', 'AdminController::getUsers');
 $routes->get('home/getusers', 'AdminController::getUsers');
+// Similar aliases for getProperty
+$routes->get('Home/getProperty/(:num)', 'AdminController::getProperty/$1');
+$routes->get('home/getProperty/(:num)', 'AdminController::getProperty/$1');
 
 // Admin Property Management Routes
 $routes->get('/admin/getProperty/(:num)', 'AdminController::getProperty/$1');

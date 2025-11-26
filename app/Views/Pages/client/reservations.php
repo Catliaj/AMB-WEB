@@ -166,6 +166,7 @@
                                 <div class="col-6"><small class="text-muted d-block">Bathrooms</small><span id="bookingModalBaths">—</span></div>
                                 <div class="col-6"><small class="text-muted d-block">Size</small><span id="bookingModalSize">—</span></div>
                                 <div class="col-6"><small class="text-muted d-block">Parking</small><span id="bookingModalParking">—</span></div>
+                                <div class="col-6"><small class="text-muted d-block">Property Type</small><span id="bookingModalPropertyType">—</span></div>
                                 <div class="col-12"><small class="text-muted d-block">Corporation</small><span id="bookingModalCorporation">—</span></div>
                             </div>
                         </div>
