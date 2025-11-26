@@ -1,0 +1,162 @@
+:root {
+  --brand-azure: #2b74cc;
+  --brand-shark: #333333;
+  --brand-goblin: #438f41;
+
+  --bg: var(--brand-shark);
+  --panel: #171717;
+  --card: #1f1f1f;
+  --text: #e6e6e6;
+  --muted: #9ca3af;
+  --accent1: var(--brand-goblin);
+  --accent2: var(--brand-azure);
+  --accent3: #68b76b;
+  --shadow: 0 0 12px rgba(0,0,0,0.25);
+  --hover-overlay: rgba(255,255,255,0.04);
+  --hover-panel: rgba(255,255,255,0.03);
+  --tooltip-bg: #000;
+  --th-bg: rgba(255,255,255,0.05);
+  --divider: rgba(255,255,255,0.1);
+  --quick-item-bg: rgba(255,255,255,0.03);
+  --quick-item-hover: rgba(255,255,255,0.07);
+
+  color-scheme: dark;
+  font-family: "Montserrat", sans-serif;
+}
+
+html[data-theme="light"] {
+  --bg: #f9f9f9;
+  --panel: #f1f1f1;
+  --card: #fafafa;
+  --text: #111827;
+  --muted: #898989;
+  --accent1: var(--brand-goblin);
+  --accent2: var(--brand-azure);
+  --accent3: #68b76b;
+  --shadow: 0 8px 30px rgba(30,40,60,0.06);
+  --hover-overlay: rgba(0,0,0,0.04);
+  --hover-panel: rgba(0,0,0,0.03);
+  --tooltip-bg: #111;
+  --th-bg: rgba(0,0,0,0.03);
+  --divider: rgba(0,0,0,0.08);
+  --quick-item-bg: rgba(0,0,0,0.02);
+  --quick-item-hover: rgba(0,0,0,0.04);
+  color-scheme: light;
+}
+
+html, body {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 220ms ease, color 220ms ease;
+}
+
+.sidebar, .main, .card, .chart-card, .right-panel {
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease;
+}
+
+/* ... all existing CSS content unchanged ... */
+
+/* Override styles to make everything smaller */
+
+:root {
+  font-size: 12.5px; /* reduced from 14px to make all text smaller globally */
+}
+
+/* Sidebar smaller width */
+.sidebar {
+  width: 200px !important;
+}
+.sidebar img {
+  width: 102px !important; /* about 85% of 120px */
+}
+
+/* Profile avatar and pic sizes reduced */
+.profile-avatar {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+}
+.profile-pic, .profile-pic img {
+  width: 85px !important;
+  height: 85px !important;
+}
+
+/* Icon buttons smaller */
+.icon-btn, #userTable .icon-btn, button.icon-btn {
+  width: 30px !important;
+  height: 30px !important;
+  padding: 4px !important;
+  border-radius: 8px !important;
+}
+.icon-btn svg, #userTable .icon-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Buttons smaller */
+.btn {
+  padding: 5px 10px !important;
+  font-size: 11px !important;
+  border-radius: 8px !important;
+  gap: 4px !important;
+}
+.btn svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Headers and text smaller */
+header h1 {
+  font-size: 17px !important;
+}
+.right-panel h3 {
+  font-size: 12px !important;
+}
+.card h2, .summary-card h2 {
+  font-size: 10px !important;
+}
+.card .value, .summary-card .value {
+  font-size: 17px !important;
+}
+.chart-card h3 {
+  font-size: 12px !important;
+}
+
+/* Inputs and selects smaller */
+input, select, .filters input, .filters select {
+  padding: 5px 8px !important;
+  font-size: 11px !important;
+}
+
+/* Table paddings smaller */
+th, td {
+  padding: 8px 10px !important;
+  font-size: 11px !important;
+}
+
+/* Adjust grid gaps smaller */
+.layout {
+  gap: 16px !important;
+}
+.filters {
+  gap: 8px !important;
+  margin-bottom: 16px !important;
+}
+
+/* Reduce toggle toggle font and padding */
+.toggle {
+  font-size: 11px !important;
+  padding: 3px 8px !important;
+}
+
+/* Adjust other common small containers */
+.card, .right-panel, .summary-card {
+  padding: 14px !important;
+  border-radius: 10px !important;
+}
+
+/* Footer font size smaller */
+footer {
+  font-size: 10px !important;
+}
