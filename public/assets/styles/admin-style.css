@@ -528,4 +528,82 @@ footer {
   font-size: 12px;
 }
 
+/* Modal dark theme for admin area: apply by adding `modal-dark` to `.modal-content` */
+.modal .modal-content.modal-dark {
+  background: var(--card) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.modal .modal-content.modal-dark .modal-header,
+.modal .modal-content.modal-dark .modal-body,
+.modal .modal-content.modal-dark .modal-footer {
+  background: transparent;
+  color: var(--text) !important;
+}
+.modal .modal-content.modal-dark .btn-close {
+  filter: invert(1) hue-rotate(180deg) brightness(1.2);
+  opacity: 0.9;
+}
+.modal .modal-content.modal-dark .btn-primary {
+  background: var(--brand-azure); border-color: var(--brand-azure);
+}
+.modal .modal-content.modal-dark .btn-secondary {
+  background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid rgba(255,255,255,0.03);
+}
+
+/* Simple modal used by user-bookings details */
+.simple-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.55);
+  z-index: 1200;
+  padding: 20px;
+}
+.simple-modal.open { display: flex; }
+.simple-modal .simple-modal-content {
+  width: 100%;
+  max-width: 680px;
+  background: var(--card);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+.simple-modal .close-modal { background: transparent; border: none; color: var(--text); font-size: 24px; float: right; cursor: pointer; }
+.simple-modal h3 { margin-top: 0; }
+
+
+/* Reports view specific styles (moved from inline styles in generate-reports.php) */
+.summary-wrapper { padding: 18px 0 8px; }
+.summary-wrapper h2 { margin: 0 0 6px; color: var(--text); font-size: 18px; }
+.summary-wrapper .summary-note { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+.summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.summary-card { background: var(--card); border-radius: 10px; padding: 14px; box-shadow: var(--shadow); display:flex; flex-direction:column; gap:8px; }
+.summary-card h2 { font-size: 12px; color: var(--muted); margin:0; display:flex; align-items:center; gap:8px; }
+.summary-card .value { font-size: 20px; font-weight:700; color:var(--text); }
+.summary-card .stat-desc { margin:0; font-size:13px; color:var(--muted); }
+.summary-card .icon { width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; background: rgba(255,255,255,0.03); color:var(--text); }
+
+.report-layout { display:grid; grid-template-columns: 2fr 1fr; gap:20px; align-items:start; }
+.report-preview { padding:14px; border-radius:10px; overflow:auto; background: var(--card); box-shadow: var(--shadow); }
+.chart-section { display:flex; flex-direction:column; gap:14px; }
+
+.report-preview h3 { margin-bottom: 10px; }
+
+@media (max-width: 900px) {
+  .summary-cards { grid-template-columns: 1fr; }
+  .report-layout { grid-template-columns: 1fr; }
+}
+
+/* Header controls layout for Reports page */
+.header-actions { display:flex; align-items:center; gap:12px; }
+.header-actions .controls-help { color: var(--muted); font-size:13px; }
+.header-actions .controls { display:flex; gap:8px; }
+.btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.04); color: var(--text); }
+
+
+
 

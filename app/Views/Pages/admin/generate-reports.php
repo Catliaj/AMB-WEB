@@ -10,11 +10,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
   <link rel="stylesheet" href="<?= base_url('assets/styles/admin-style.css')?>">
-
   
-
 </head>
 
   <script>
@@ -38,7 +37,7 @@
       <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
       <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
       <a href="/admin/userBookings"><i data-lucide="calendar"></i> User Bookings</a>
-      <a href="/admin/viewChats"><i data-lucide="message-circle"></i> View Chats</a>
+      <!-- View Chats removed for privacy -->
       <a href="/admin/Reports" class="active"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
     </nav>
 
@@ -57,14 +56,14 @@
         <button id="toggleSidebar" class="btn"><i data-lucide="menu"></i></button>
         <h1><i data-lucide="bar-chart-2"></i> Generate Reports</h1>
       </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div class="controls-help" style="color:#9ca3af; font-size:13px;">Actions: Generate updates the table; Export downloads the current filtered report.</div>
-          <div class="controls">
-            <button class="btn primary" id="generateReportBtn"><i data-lucide="refresh-ccw"></i> Generate</button>
-            <button class="btn secondary" id="exportPdf"><i data-lucide="file-down"></i> PDF</button>
-            <button class="btn secondary" id="exportExcel"><i data-lucide="file-spreadsheet"></i> Excel</button>
-          </div>
+      <div class="header-actions">
+        <div class="controls-help">Actions: Generate updates the table; Export downloads the current filtered report.</div>
+        <div class="controls">
+          <button class="btn primary" id="generateReportBtn"><i data-lucide="refresh-ccw"></i> Generate</button>
+          <button class="btn secondary" id="exportPdf"><i data-lucide="file-down"></i> PDF</button>
+          <button class="btn secondary" id="exportExcel"><i data-lucide="file-spreadsheet"></i> Excel</button>
         </div>
+      </div>
     </header>
 
     <div class="filters">
@@ -95,17 +94,17 @@
       <p class="summary-note">Overview of key metrics for the selected filters and date range.</p>
       <div class="summary-cards">
         <div class="summary-card">
-          <h2>Total Sales</h2>
+          <h2><span class="icon"><i data-lucide="dollar-sign"></i></span> Total Sales</h2>
           <div class="value" id="totalSales">₱1,250,000</div>
           <p class="stat-desc">Sum of all confirmed sales in the selected period.</p>
         </div>
         <div class="summary-card">
-          <h2>Total Properties</h2>
+          <h2><span class="icon"><i data-lucide="home"></i></span> Total Properties</h2>
           <div class="value" id="totalProperties">128</div>
           <p class="stat-desc">Number of properties available or listed in the selected filters.</p>
         </div>
         <div class="summary-card">
-          <h2>Active Users</h2>
+          <h2><span class="icon"><i data-lucide="users"></i></span> Active Users</h2>
           <div class="value" id="activeUsers">86</div>
           <p class="stat-desc">Users who have an active booking or activity within the date range.</p>
         </div>
@@ -114,7 +113,7 @@
 
     <div class="report-layout">
       <div class="report-preview">
-        <h3 style="margin-bottom:10px;">Report Preview</h3>
+        <h3>Report Preview</h3>
         <table id="reportTable">
           <thead>
             <tr>

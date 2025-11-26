@@ -62,7 +62,7 @@
       <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
       <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
       <a href="/admin/userBookings"><i data-lucide="calendar"></i> User Bookings</a>
-      <a href="/admin/viewChats"><i data-lucide="message-circle"></i> View Chats</a>
+      <!-- View Chats removed for privacy -->
       <a href="/admin/Reports"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
     </nav>
     <div class="profile-box">

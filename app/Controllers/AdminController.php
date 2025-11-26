@@ -223,27 +223,39 @@ class AdminController extends BaseController
         return view('Pages/admin/user-bookings', $data);
     }
 
-
-    public function viewChats()
+    /**
+     * Return booking details as JSON for admin UI (GET /admin/booking/{id})
+     */
+    public function getBookingDetails($id = null)
     {
         $session = session();
-        if (!$session->get('isLoggedIn')) {
-            return redirect()->to('/'); // not logged in
+        if (!$session->get('isLoggedIn') ) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
         }
 
-         if ($session->get('role') !== 'Admin') {
-            return redirect()->to('/'); 
+        if ($session->get('role') !== 'Admin') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
         }
-        
-        return view('Pages/admin/view-chats', [
-                'UserID' => session()->get('UserID'),
-                'email' => session()->get('inputEmail'),
-                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
-                get('LastName')),
-                'currentUserId' => session()->get('UserID'),
-                'otherUser' => null
-            ]);
+
+        if (!$id) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'Missing booking id']);
+        }
+
+        $bookingModel = new \App\Models\BookingModel();
+        $booking = $bookingModel
+            ->select('booking.*, property.Title AS PropertyTitle, property.Location AS PropertyLocation, CONCAT(users.FirstName, " ", users.LastName) AS ClientName, users.Email AS ClientEmail, users.phoneNumber AS ClientPhone')
+            ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
+            ->join('users', 'users.UserID = booking.UserID', 'left')
+            ->where('booking.bookingID', $id)
+            ->first();
+
+        if (!$booking) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'Booking not found']);
+        }
+
+        return $this->response->setJSON($booking);
     }
+
 
     public function logoutAdmin(): ResponseInterface
     {
@@ -397,5 +409,101 @@ class AdminController extends BaseController
         } else {
             return redirect()->back()->with('error', 'Failed to add agent.');
         }
+    }
+
+    /**
+     * Deactivate a user (set status to 'Deactivated')
+     * Expected: POST /admin/user/deactivate/{id}
+     */
+    public function deactivateUser($id = null)
+    {
+        $userModel = new UsersModel();
+        $user = $userModel->find($id);
+        if (!$user) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'User not found'])->setStatusCode(404);
+        }
+
+        $updated = $userModel->update($id, ['status' => 'Deactivated', 'updated_at' => date('Y-m-d H:i:s')]);
+
+        if ($updated) {
+            return $this->response->setJSON(['status' => 'success', 'message' => 'User deactivated']);
+        }
+
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to update user'])->setStatusCode(500);
+    }
+
+    /**
+     * Delete a user
+     * Expected: DELETE /admin/user/delete/{id}
+     */
+    public function deleteUser($id = null)
+    {
+        $userModel = new UsersModel();
+        $user = $userModel->find($id);
+        if (!$user) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'User not found'])->setStatusCode(404);
+        }
+
+        $deleted = $userModel->delete($id);
+        if ($deleted) {
+            return $this->response->setJSON(['status' => 'success', 'message' => 'User deleted']);
+        }
+
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to delete user'])->setStatusCode(500);
+    }
+
+    /**
+     * Reactivate a previously deactivated user
+     * Expected: POST /admin/user/reactivate/{id}
+     */
+    public function reactivateUser($id = null)
+    {
+        $userModel = new UsersModel();
+        $user = $userModel->find($id);
+        if (!$user) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'User not found'])->setStatusCode(404);
+        }
+
+        $updated = $userModel->update($id, ['status' => 'Offline', 'updated_at' => date('Y-m-d H:i:s')]);
+
+        if ($updated) {
+            return $this->response->setJSON(['status' => 'success', 'message' => 'User reactivated']);
+        }
+
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to reactivate user'])->setStatusCode(500);
+    }
+
+    /**
+     * Update an existing user (AJAX)
+     * Expected: POST /admin/user/update/{id}
+     */
+    public function updateUser($id = null)
+    {
+        $userModel = new UsersModel();
+        $user = $userModel->find($id);
+        if (!$user) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'User not found'])->setStatusCode(404);
+        }
+
+        $data = [];
+        $post = $this->request->getPost();
+        if (isset($post['FirstName'])) $data['FirstName'] = $post['FirstName'];
+        if (isset($post['MiddleName'])) $data['MiddleName'] = $post['MiddleName'];
+        if (isset($post['LastName'])) $data['LastName'] = $post['LastName'];
+        if (isset($post['Birthdate'])) $data['Birthdate'] = $post['Birthdate'];
+        if (isset($post['PhoneNumber'])) $data['PhoneNumber'] = $post['PhoneNumber'];
+        if (isset($post['Email'])) $data['Email'] = $post['Email'];
+        if (!empty($post['Password'])) {
+            $data['password'] = password_hash($post['Password'], PASSWORD_BCRYPT);
+        }
+        $data['updated_at'] = date('Y-m-d H:i:s');
+
+        $updated = $userModel->update($id, $data);
+
+        if ($updated) {
+            return $this->response->setJSON(['status' => 'success', 'message' => 'User updated']);
+        }
+
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to update user'])->setStatusCode(500);
     }
 }

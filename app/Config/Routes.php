@@ -86,7 +86,9 @@ $routes->get('/admin/Reports', 'AdminController::generateReports');
 $routes->get('/admin/ManageProperties', 'AdminController::manageProperties');
 $routes->get('/admin/manageUsers', 'AdminController::manageUsers');
 $routes->get('/admin/userBookings', 'AdminController::userBooking');
-$routes->get('/admin/viewChats', 'AdminController::viewChats');
+// Fetch booking details (JSON) for Admin detail popups
+$routes->get('/admin/booking/(:num)', 'AdminController::getBookingDetails/$1');
+// Removed admin chat viewing for privacy reasons
 $routes->get('/admin/logout', 'AdminController::logoutAdmin');
 $routes->get('/admin/getusers', 'AdminController::getUsers');
 
@@ -100,6 +102,12 @@ $routes->post('chat/startSession', 'ChatController::startSession');
 
 // Admin User Management Routes
 $routes->post('/admin/store-agent', 'AdminController::storeAgent');
+// Admin user actions (deactivate / delete)
+$routes->post('admin/user/deactivate/(:num)', 'AdminController::deactivateUser/$1');
+$routes->delete('admin/user/delete/(:num)', 'AdminController::deleteUser/$1');
+// Reactivate and update user
+$routes->post('admin/user/reactivate/(:num)', 'AdminController::reactivateUser/$1');
+$routes->post('admin/user/update/(:num)', 'AdminController::updateUser/$1');
 
 
 
