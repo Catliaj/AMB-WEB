@@ -131,6 +131,9 @@
         <div class="modal-content property-modal-content">
             <div class="modal-body p-0 position-relative">
 
+                <!-- Close button (visible) -->
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+
                 <!-- Image Area with Overlayed Details -->
                 <div class="property-modal-image-wrapper position-relative">
                     <img id="modalPropertyImage" class="property-details-image" alt="Property Image">
@@ -318,7 +321,14 @@
                             <input type="hidden" id="bookingPropertyId" name="property_id">
 
                             <div class="row g-3">
-                                <!-- Booking Date removed: agents assign booking dates. -->
+                                <div class="col-md-6">
+                                    <label for="bookingDate" class="form-label">
+                                        <i class="bi bi-calendar-event me-1"></i>
+                                        Preferred Date & Time
+                                    </label>
+                                    <input type="datetime-local" id="bookingDate" name="booking_date" class="form-control">
+                                    <div class="form-text small">Optional — agent may reschedule.</div>
+                                </div>
 
                                 <div class="col-md-6">
                                     <label for="bookingPurpose" class="form-label">
