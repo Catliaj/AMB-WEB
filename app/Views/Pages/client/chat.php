@@ -117,8 +117,11 @@
   </div>
 
   <!-- ✅ Scripts -->
-<script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
-<script>
+  <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
+  <?php $initialSession = $_GET['session'] ?? null; ?>
+  <script>
+  window.initialSessionId = <?= json_encode($initialSession) ?>;
+
 const chatItems = document.querySelectorAll('.chat-item');
 const chatHeader = document.getElementById('chatHeader');
 const chatMessages = document.getElementById('chatMessages');
@@ -184,6 +187,49 @@ messageInput.addEventListener('keypress', e => {
     sendMessage();
   }
 });
+
+// Auto-open a session if one was provided via the `session` query parameter
+if (window.initialSessionId) {
+  // try to find the corresponding sidebar element and click it
+  const el = document.querySelector(`.chat-item[data-session-id='${window.initialSessionId}']`);
+  if (el) {
+    el.click();
+  } else {
+    // fallback: fetch messages directly for the session id
+    currentSessionId = window.initialSessionId;
+    chatHeader.textContent = 'Conversation';
+    chatMessages.innerHTML = '<p class="text-muted text-center">Loading...</p>';
+    $.ajax({
+      url: `/chat/messages/${currentSessionId}`,
+      method: 'GET',
+      dataType: 'json',
+      success: function(messages) {
+        chatMessages.innerHTML = '';
+        if (!messages || messages.length === 0) {
+          chatMessages.innerHTML = '<p class="text-muted text-center">No messages yet.</p>';
+        } else {
+          messages.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = 'message p-2 rounded-3 my-1';
+            div.style.maxWidth = '75%';
+            div.textContent = msg.messageContent;
+
+            if (msg.senderRole === currentRole) {
+              div.classList.add('bg-primary', 'text-white', 'align-self-end');
+            } else {
+              div.classList.add('bg-white', 'border', 'align-self-start');
+            }
+
+            chatMessages.appendChild(div);
+          });
+          requestAnimationFrame(() => { chatMessages.scrollTop = chatMessages.scrollHeight; });
+        }
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+      }
+    });
+  }
+}
 
 function sendMessage() {
   const text = messageInput.value.trim();

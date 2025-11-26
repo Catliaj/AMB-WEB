@@ -71,12 +71,24 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="row align-items-center">
+                        <?php
+                            $first = $user['FirstName'] ?? '';
+                            $last = $user['LastName'] ?? '';
+                            $initials = strtoupper(trim(($first ? $first[0] : '') . ($last ? $last[0] : '')));
+                            $profileImage = !empty($user['Image'])
+                                ? base_url('uploads/profiles/' . $user['Image'])
+                                : base_url('uploads/profiles/default-profile.jpg');
+                        ?>
                         <div class="col-md-auto text-center text-md-start mb-3 mb-md-0">
-                            <div class="avatar-large mx-auto mx-md-0">JD</div>
+                            <?php if (!empty($user['Image'])): ?>
+                                <img src="<?= esc($profileImage) ?>" alt="Profile" class="avatar-large-img rounded-circle" style="width:96px;height:96px;object-fit:cover;" onerror="this.onerror=null;this.src='<?= base_url('uploads/profiles/default-profile.jpg') ?>'">
+                            <?php else: ?>
+                                <div class="avatar-large mx-auto mx-md-0"><?= esc($initials ?: 'U') ?></div>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md">
-                            <h3 class="h5 mb-1">John Doe</h3>
-                            <p class="text-muted small mb-3">john.doe@example.com</p>
+                            <h3 class="h5 mb-1"><?= esc(trim($first . ' ' . $last) ?: 'User') ?></h3>
+                            <p class="text-muted small mb-3"><?= esc($user['Email'] ?? session()->get('inputEmail') ?? '') ?></p>
                             <div class="d-flex gap-2 flex-wrap">
                                 <button class="btn btn-primary btn-sm">Change Photo</button>
                                 <button class="btn btn-outline-secondary btn-sm">Remove Photo</button>
@@ -124,14 +136,14 @@
                                     <label class="form-label">First Name</label>
                                     <div class="input-icon-wrapper">
                                         <i class="bi bi-person input-icon"></i>
-                                        <input type="text" class="form-control input-with-icon" value="John">
+                                        <input type="text" class="form-control input-with-icon" value="<?= esc($user['FirstName'] ?? '') ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Last Name</label>
                                     <div class="input-icon-wrapper">
                                         <i class="bi bi-person input-icon"></i>
-                                        <input type="text" class="form-control input-with-icon" value="Doe">
+                                        <input type="text" class="form-control input-with-icon" value="<?= esc($user['LastName'] ?? '') ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -139,7 +151,7 @@
                                     <div class="input-icon-wrapper">
                                         <i class="bi bi-envelope input-icon"></i>
                                         <input type="email" class="form-control input-with-icon"
-                                            value="john.doe@example.com">
+                                            value="<?= esc($user['Email'] ?? '') ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -147,7 +159,7 @@
                                     <div class="input-icon-wrapper">
                                         <i class="bi bi-telephone input-icon"></i>
                                         <input type="tel" class="form-control input-with-icon"
-                                            value="+1 (555) 123-4567">
+                                            value="<?= esc($user['phoneNumber'] ?? '') ?>">
                                     </div>
                                 </div>
                                 <div class="col-12">
@@ -155,7 +167,7 @@
                                     <div class="input-icon-wrapper">
                                         <i class="bi bi-geo-alt input-icon"></i>
                                         <input type="text" class="form-control input-with-icon"
-                                            value="123 Main Street, Los Angeles, CA 90001">
+                                            value="<?= esc($user['Address'] ?? '') ?>">
                                     </div>
                                 </div>
                             </div>
@@ -172,32 +184,36 @@
                     <div class="card">
                         <div class="card-body">
                             <h3 class="h5 fw-medium mb-4">Security Settings</h3>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label">Current Password</label>
-                                    <div class="input-icon-wrapper">
-                                        <i class="bi bi-lock input-icon"></i>
-                                        <input type="password" class="form-control input-with-icon">
+                            <div id="securityAlert"></div>
+                            <form id="changePasswordForm">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Current Password</label>
+                                        <div class="input-icon-wrapper">
+                                            <i class="bi bi-lock input-icon"></i>
+                                            <input name="current_password" id="current_password" type="password" class="form-control input-with-icon" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">New Password</label>
+                                        <div class="input-icon-wrapper">
+                                            <i class="bi bi-lock input-icon"></i>
+                                            <input name="new_password" id="new_password" type="password" class="form-control input-with-icon" required>
+                                            <div class="form-text">At least 8 characters, include letters and numbers.</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Confirm New Password</label>
+                                        <div class="input-icon-wrapper">
+                                            <i class="bi bi-lock input-icon"></i>
+                                            <input name="confirm_password" id="confirm_password" type="password" class="form-control input-with-icon" required>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-12">
-                                    <label class="form-label">New Password</label>
-                                    <div class="input-icon-wrapper">
-                                        <i class="bi bi-lock input-icon"></i>
-                                        <input type="password" class="form-control input-with-icon">
-                                    </div>
+                                <div class="mt-4 d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary" id="changePasswordBtn">Update Password</button>
                                 </div>
-                                <div class="col-12">
-                                    <label class="form-label">Confirm New Password</label>
-                                    <div class="input-icon-wrapper">
-                                        <i class="bi bi-lock input-icon"></i>
-                                        <input type="password" class="form-control input-with-icon">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-4 d-flex justify-content-end">
-                                <button class="btn btn-primary">Update Password</button>
-                            </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -301,6 +317,55 @@
 
     <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
     <script src="<?= base_url("assets/js/client.js")?>"></script>
+    <script>
+    (function(){
+        const form = document.getElementById('changePasswordForm');
+        const alertHolder = document.getElementById('securityAlert');
+        const btn = document.getElementById('changePasswordBtn');
+
+        function showAlert(message, type = 'danger'){
+            alertHolder.innerHTML = `<div class="alert alert-${type} alert-dismissible" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+        }
+
+        form && form.addEventListener('submit', async function(e){
+            e.preventDefault();
+            alertHolder.innerHTML = '';
+            const current = document.getElementById('current_password').value.trim();
+            const nw = document.getElementById('new_password').value.trim();
+            const confirm = document.getElementById('confirm_password').value.trim();
+
+            if (!current || !nw || !confirm) { showAlert('All fields are required.', 'warning'); return; }
+            if (nw !== confirm) { showAlert('Passwords do not match.', 'warning'); return; }
+            if (nw.length < 8 || !/[A-Za-z]/.test(nw) || !/[0-9]/.test(nw)) {
+                showAlert('Password must be at least 8 characters and include letters and numbers.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            const payload = { current_password: current, new_password: nw, confirm_password: confirm };
+
+            try {
+                const res = await fetch('<?= base_url('/users/change-password') ?>', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (res.ok && json.status === 'success'){
+                    showAlert(json.message || 'Password updated.', 'success');
+                    form.reset();
+                } else {
+                    showAlert(json.message || 'Failed to update password.','danger');
+                }
+            } catch (err) {
+                showAlert('Network error. Try again.','danger');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    })();
+    </script>
     </div>
 </body>
 

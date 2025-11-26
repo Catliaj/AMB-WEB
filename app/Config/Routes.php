@@ -118,6 +118,8 @@ $routes->post('admin/user/update/(:num)', 'AdminController::updateUser/$1');
 $routes->post('/users/signup', 'UserController::StoreUsers');
 $routes->post('/users/request-otp', 'UserController::requestOtp');
 $routes->get('/verify-email', 'UserController::verifyEmail');
+// Change password endpoint (used by profile Security tab)
+$routes->post('/users/change-password', 'UserController::changePassword');
 
 
 /*

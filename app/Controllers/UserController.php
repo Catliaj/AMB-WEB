@@ -212,6 +212,9 @@ class UserController extends BaseController
             return redirect()->to('/'); 
         }
 
+        // Load top-viewed properties (uses property view logs)
+        $pvModel = new \App\Models\PropertyViewLogsModel();
+        $topViewed = $pvModel->getTopViewed(3);
 
         return view('Pages/client/homepage', [
                 'UserID' => session()->get('UserID'),
@@ -219,7 +222,8 @@ class UserController extends BaseController
                 'fullname' => trim(session()->get('FirstName') . ' ' . session()->
                 get('LastName')),
                 'currentUserId' => session()->get('UserID'),
-                'otherUser' => null
+                'otherUser' => null,
+                'topViewed' => $topViewed
             ]);
     }
 
@@ -278,14 +282,17 @@ class UserController extends BaseController
             return redirect()->to('/'); 
         }
 
+        // Load full user record so the view can show profile image and other fields
+        $usersModel = new UsersModel();
+        $user = $usersModel->find(session()->get('UserID'));
 
         return view('Pages/client/profile', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
-                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
-                get('LastName')),
+                'fullname' => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
                 'currentUserId' => session()->get('UserID'),
-                'otherUser' => null
+                'otherUser' => null,
+                'user' => $user
             ]);
     }
 
@@ -534,6 +541,74 @@ class UserController extends BaseController
         } catch (\Exception $e) {
             log_message('error', 'Booking cancel failed: ' . $e->getMessage());
             return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+        }
+    }
+
+    /**
+     * Change password for logged-in user
+     * Expects JSON { current_password, new_password, confirm_password }
+     */
+    public function changePassword()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+
+        // Accept JSON or form-urlencoded
+        $contentType = $this->request->getHeaderLine('Content-Type');
+        if (strpos($contentType, 'application/json') !== false) {
+            try {
+                $input = $this->request->getJSON(true) ?? [];
+            } catch (\Throwable $e) {
+                return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Invalid JSON body']);
+            }
+        } else {
+            $input = $this->request->getPost() ?? [];
+            if (empty($input)) {
+                parse_str($this->request->getBody(), $input);
+            }
+        }
+
+        $current = $input['current_password'] ?? null;
+        $new = $input['new_password'] ?? null;
+        $confirm = $input['confirm_password'] ?? null;
+
+        if (empty($current) || empty($new) || empty($confirm)) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'All password fields are required']);
+        }
+
+        if ($new !== $confirm) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'New password and confirmation do not match']);
+        }
+
+        // Basic strength: at least 8 chars, contain letter and number
+        if (strlen($new) < 8 || !preg_match('/[A-Za-z]/', $new) || !preg_match('/[0-9]/', $new)) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Password must be at least 8 characters and include letters and numbers']);
+        }
+
+        $usersModel = new UsersModel();
+        $userId = $session->get('UserID');
+        $user = $usersModel->find($userId);
+        if (!$user) {
+            return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'User not found']);
+        }
+
+        if (!isset($user['Password']) || !password_verify($current, $user['Password'])) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Current password is incorrect']);
+        }
+
+        try {
+            $hash = password_hash($new, PASSWORD_BCRYPT);
+            $updated = $usersModel->update($userId, ['Password' => $hash, 'updated_at' => date('Y-m-d H:i:s')]);
+            if ($updated === false) {
+                return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Failed to update password']);
+            }
+
+            return $this->response->setJSON(['status' => 'success', 'message' => 'Password changed successfully']);
+        } catch (\Throwable $e) {
+            log_message('error', 'Password change failed: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Server error']);
         }
     }
 
