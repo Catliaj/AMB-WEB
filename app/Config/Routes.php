@@ -51,6 +51,9 @@ $routes->get('properties/view/(:num)', 'PropertyController::viewProperty/$1');
 $routes->post('bookings/create', 'UserController::create');
 $routes->get('bookings/mine', 'UserController::mine');
 $routes->post('bookings/cancel', 'UserController::cancel');
+// Contract proposals + confirmations (used by client + agent flows)
+$routes->post('bookings/proposeContract', 'UserController::proposeContract');
+$routes->post('bookings/confirmContract', 'UserController::confirmContract');
 $routes->get('users/getUser/(:num)', 'PropertyController::getUser/$1');
 
 

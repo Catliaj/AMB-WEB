@@ -585,21 +585,24 @@ async function openBookingModal(propertyData) {
     if (idInput) idInput.value = propertyData.id || '';
 
         // Ensure booking date input cannot select past dates: set `min` to current local datetime
-        const bookingDateEl = document.getElementById('bookingDate');
-        if (bookingDateEl) {
-            // helper: format date to `YYYY-MM-DDTHH:MM` for datetime-local
-            const toLocalDatetimeValue = (d) => {
+            // For separate date input (YYYY-MM-DD), set min to today's date
+            const bookingDateEl = document.getElementById('bookingDate');
+            if (bookingDateEl) {
+                const now = new Date();
                 const pad = (n) => String(n).padStart(2, '0');
-                return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-            };
-            const now = new Date();
-            bookingDateEl.min = toLocalDatetimeValue(now);
-            // if existing value is in the past, clear it
-            if (bookingDateEl.value) {
-                const selected = new Date(bookingDateEl.value);
-                if (isNaN(selected.getTime()) || selected < now) bookingDateEl.value = '';
+                const today = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+                bookingDateEl.min = today;
+                if (bookingDateEl.value) {
+                    const selected = new Date(bookingDateEl.value + 'T00:00:00');
+                    if (isNaN(selected.getTime()) || selected < new Date(today + 'T00:00:00')) bookingDateEl.value = '';
+                }
             }
-        }
+
+            // Clear time fields when opening modal
+            const timeEl = document.getElementById('bookingTime');
+            const ampmEl = document.getElementById('bookingTimeAmpm');
+            if (timeEl) timeEl.value = '';
+            if (ampmEl) ampmEl.value = 'AM';
 
     // Reset form
     const form = document.getElementById('propertyBookingForm');
@@ -647,14 +650,46 @@ setText('bookingPropertyAgentEmail', agentEmail || '');
   const form = document.getElementById('propertyBookingForm');
   if (!form) return;
 
-  form.addEventListener('submit', async function (e) {
+    form.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const payload = new URLSearchParams();
     payload.append('property_id', document.getElementById('bookingPropertyId').value);
-    // Include preferred booking date/time when provided by client
-    const bookingDateEl = document.getElementById('bookingDate');
-    if (bookingDateEl && bookingDateEl.value) payload.append('booking_date', bookingDateEl.value);
+        // Include preferred booking date/time when provided by client.
+        // We accept separate date input + typable time + AM/PM and combine into local ISO-like string: YYYY-MM-DDTHH:MM
+        const bookingDateEl2 = document.getElementById('bookingDate');
+        const bookingTimeEl = document.getElementById('bookingTime');
+        const bookingAmpmEl = document.getElementById('bookingTimeAmpm');
+        let combined = '';
+        if (bookingDateEl2 && bookingDateEl2.value) {
+            const datePart = bookingDateEl2.value; // YYYY-MM-DD
+            let hour = null, minute = '00';
+            if (bookingTimeEl && bookingTimeEl.value) {
+                const t = bookingTimeEl.value.trim();
+                const m = t.match(/^(\d{1,2}):(\d{2})$/);
+                if (m) {
+                    hour = parseInt(m[1], 10);
+                    minute = m[2];
+                }
+            }
+
+            if (hour !== null) {
+                // adjust hour based on AM/PM if provided
+                const ampm = bookingAmpmEl?.value || '';
+                if (/^am$/i.test(ampm)) {
+                    if (hour === 12) hour = 0;
+                } else if (/^pm$/i.test(ampm)) {
+                    if (hour < 12) hour = hour + 12;
+                }
+                const pad = (n) => String(n).padStart(2, '0');
+                combined = `${datePart}T${pad(hour)}:${pad(Number(minute))}`;
+            } else {
+                // date only
+                combined = datePart;
+            }
+
+            if (combined) payload.append('booking_date', combined);
+        }
     payload.append('booking_purpose', document.getElementById('bookingPurpose').value || '');
     payload.append('booking_notes', document.getElementById('bookingNotes').value || '');
     if (csrfName && csrfHash) payload.append(csrfName, csrfHash);

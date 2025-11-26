@@ -142,7 +142,6 @@
             </div>
             <div class="d-flex justify-content-center gap-2">
                             <button id="modalContactAgentBtn" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-dots"></i> Contact Agent</button>
-                            <button id="modalDetailsBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-info-circle"></i> Details</button>
             </div>
           </div>
 
@@ -154,24 +153,35 @@
                             <span id="bookingModalStatus" class="badge bg-secondary">Status</span>
                         </div>
 
-            <div id="bookingModalMeta" class="mb-2 small text-muted">
-              <div><strong>Agent:</strong> <span id="bookingModalAgent">—</span></div>
-              <div id="bookingModalAgentContacts" class="small text-muted">
-                <div><i class="bi bi-telephone me-1"></i><span id="bookingModalAgentPhone">—</span></div>
-                <div><i class="bi bi-envelope me-1"></i><span id="bookingModalAgentEmail">—</span></div>
-              </div>
-              <div><strong>Price:</strong> <span id="bookingModalPrice">—</span></div>
+                        <div id="bookingModalMeta" class="mb-2 small text-muted">
+                            <div class="mb-1"><strong>Agent:</strong> <span id="bookingModalAgent">—</span></div>
+                            <div id="bookingModalAgentContacts" class="small text-muted mb-2">
+                                <div><i class="bi bi-telephone me-1"></i><span id="bookingModalAgentPhone">—</span></div>
+                                <div><i class="bi bi-envelope me-1"></i><span id="bookingModalAgentEmail">—</span></div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6"><small class="text-muted d-block">Price</small><strong id="bookingModalPrice">—</strong></div>
+                                <div class="col-6"><small class="text-muted d-block">Date & Time</small><span id="bookingModalDate">—</span></div>
+                                <div class="col-6"><small class="text-muted d-block">Bedrooms</small><span id="bookingModalBeds">—</span></div>
+                                <div class="col-6"><small class="text-muted d-block">Bathrooms</small><span id="bookingModalBaths">—</span></div>
+                                <div class="col-6"><small class="text-muted d-block">Size</small><span id="bookingModalSize">—</span></div>
+                                <div class="col-6"><small class="text-muted d-block">Parking</small><span id="bookingModalParking">—</span></div>
+                                <div class="col-12"><small class="text-muted d-block">Corporation</small><span id="bookingModalCorporation">—</span></div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <h6 class="mb-1">Property Description</h6>
+                            <p id="bookingModalDescription" class="small text-muted mb-0">—</p>
+                        </div>
             </div>
 
-            
-            </div>
-
-            <div class="mt-3">
-              <!-- Hidden agent id (if available) -->
-              <input type="hidden" id="bookingModalAgentId" value="">
-              <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
-              <button id="modalCloseBtn" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-            </div>
+                        <div class="mt-3 d-flex justify-content-end">
+                            <!-- Hidden agent id (if available) -->
+                            <input type="hidden" id="bookingModalAgentId" value="">
+                            <button id="modalConfirmContractBtn" class="btn btn-success btn-sm me-2" style="display:none">Confirm Contract</button>
+                            <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
+                            <button id="modalCloseBtn" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                        </div>
           </div>
         </div>
 

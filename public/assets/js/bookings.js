@@ -185,6 +185,44 @@ function populateBookingModal(b) {
   setText('bookingModalPrice', b.PropertyPrice ? `₱${Number(b.PropertyPrice).toLocaleString()}` : (b.Price ? `₱${Number(b.Price).toLocaleString()}` : '—'));
   setText('bookingModalNotes', b.Notes || b.Reason || 'No notes provided.');
 
+  // Booking date/time: accept various server keys and format for display
+  const rawDate = b.booking_date ?? b.BookingDate ?? b.scheduled_at ?? b.scheduledAt ?? b.date ?? null;
+  const dateEl = document.getElementById('bookingModalDate');
+  if (dateEl) {
+    if (rawDate) {
+      // Try to parse ISO-like strings, otherwise show raw
+      let formatted = rawDate;
+      try {
+        const d = new Date(rawDate);
+        if (!isNaN(d.getTime())) {
+          formatted = d.toLocaleString();
+        }
+      } catch (e) {
+        // leave formatted as raw
+      }
+      dateEl.textContent = String(formatted);
+    } else {
+      dateEl.textContent = '—';
+    }
+  }
+
+  // Property details: support when booking JSON includes property fields or nested property object
+  const prop = b.Property ?? b.property ?? b.property_details ?? {};
+  const beds = b.PropertyBedrooms ?? b.Bedrooms ?? b.beds ?? prop.Bedrooms ?? prop.beds ?? '—';
+  const baths = b.PropertyBathrooms ?? b.Bathrooms ?? b.baths ?? prop.Bathrooms ?? prop.baths ?? '—';
+  const size = b.PropertySize ?? b.Size ?? b.size ?? prop.Size ?? prop.sqft ?? prop.sqft ?? '—';
+  const parking = b.PropertyParking ?? b.Parking ?? b.parking_spaces ?? b.parking ?? prop.Parking_Spaces ?? prop.parking_spaces ?? '—';
+  const corp = b.Corporation ?? b.corporation ?? prop.Corporation ?? prop.corporation ?? '—';
+  const desc = b.PropertyDescription ?? b.Description ?? b.description ?? prop.Description ?? prop.description ?? '';
+
+  setText('bookingModalBeds', beds !== null && beds !== undefined ? String(beds) : '—');
+  setText('bookingModalBaths', baths !== null && baths !== undefined ? String(baths) : '—');
+  setText('bookingModalSize', size !== null && size !== undefined ? String(size) : '—');
+  setText('bookingModalParking', parking !== null && parking !== undefined ? String(parking) : '—');
+  setText('bookingModalCorporation', corp !== null && corp !== undefined ? String(corp) : '—');
+  const descEl = document.getElementById('bookingModalDescription');
+  if (descEl) descEl.textContent = desc || '—';
+
   // --- AGENT INFO: prefer server-provided fields if present ---
   // server keys: agent_id, agent_name, agent_phone, agent_email
   // booking payload keys used previously: assigned_agent, agent_name
@@ -232,6 +270,26 @@ function populateBookingModal(b) {
     }
   }
 
+  // Show Confirm Contract button when booking is confirmed
+  const confirmBtn = document.getElementById('modalConfirmContractBtn');
+  if (confirmBtn) {
+    if (String(status).toLowerCase() === 'confirmed') {
+      confirmBtn.style.display = '';
+      // set dataset for use by handler
+      confirmBtn.dataset.id = b.bookingID ?? '';
+      // price fallback
+      const price = b.PropertyPrice ?? b.Price ?? b.property_price ?? (b.Property && (b.Property.Price || b.Property.price)) ?? 0;
+      confirmBtn.dataset.price = String(price || 0);
+      // attach click handler that calls existing onConfirmContract with a small wrapper
+      confirmBtn.onclick = (ev) => {
+        try { onConfirmContract({ currentTarget: confirmBtn }); } catch (err) { console.error(err); }
+      };
+    } else {
+      confirmBtn.style.display = 'none';
+      confirmBtn.onclick = null;
+    }
+  }
+
   // contact agent button action:
   const contactBtn = document.getElementById('modalContactAgentBtn');
   if (contactBtn) {
@@ -252,50 +310,8 @@ function populateBookingModal(b) {
     };
   }
 
-  // details button: fetch and show inline property details where possible, otherwise open property page
-  const detailsBtn = document.getElementById('modalDetailsBtn');
-  if (detailsBtn) {
-    detailsBtn.onclick = async () => {
-      const bookingModalEl = document.getElementById('bookingDetailModal');
-      // try to keep the modal open and inject property summary into the history area
-      const propId = b.PropertyID || b.property_id || b.PropertyId || b.PropertyId;
-      if (!propId) {
-        window.location.href = '/users/clientbrowse';
-        return;
-      }
-
-      // If a JSON endpoint base is exposed, try fetching property JSON and render summary
-      if (window.getPropertyJsonUrlBase) {
-        try {
-          const res = await fetch(`${window.getPropertyJsonUrlBase}/${encodeURIComponent(propId)}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-          if (res.ok) {
-            const p = await res.json();
-            const historyEl = document.getElementById('bookingModalHistory');
-            if (historyEl) {
-              historyEl.innerHTML = `
-                <div class="mt-3">
-                  <h6 class="mb-1">Property Details</h6>
-                  <p class="small text-muted mb-1">${escapeHtml(p.Title || p.PropertyTitle || p.name || '')}</p>
-                  <p class="small text-muted mb-0">Price: ${p.Price ? '₱' + Number(p.Price).toLocaleString() : '—'}</p>
-                </div>
-              `;
-            }
-            return;
-          }
-        } catch (err) {
-          // ignore and fallback to page redirect
-          console.warn('property json fetch failed', err);
-        }
-      }
-
-      // fallback: open property page
-      try {
-        // close booking modal then redirect to property view page
-        bootstrap.Modal.getInstance(bookingModalEl)?.hide();
-      } catch (e) { /* ignore */ }
-      window.location.href = `/properties/view/${encodeURIComponent(propId)}`;
-    };
-  }
+  // Details: we fetch property details from the card's Details button (btn-view-booking).
+  // The in-modal details button has been removed to avoid duplicate behavior.
 }
 
   async function onCancelBooking(e) {

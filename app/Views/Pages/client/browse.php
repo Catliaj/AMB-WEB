@@ -324,10 +324,25 @@
                                 <div class="col-md-6">
                                     <label for="bookingDate" class="form-label">
                                         <i class="bi bi-calendar-event me-1"></i>
-                                        Preferred Date & Time
+                                        Preferred Date
                                     </label>
-                                    <input type="datetime-local" id="bookingDate" name="booking_date" class="form-control">
+                                    <input type="date" id="bookingDate" name="booking_date" class="form-control">
                                     <div class="form-text small">Optional — agent may reschedule.</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="bookingTime" class="form-label">
+                                        <i class="bi bi-clock me-1"></i>
+                                        Preferred Time
+                                    </label>
+                                    <div class="d-flex gap-2">
+                                        <input type="text" id="bookingTime" name="booking_time" class="form-control" placeholder="hh:mm" aria-label="Time (hh:mm)">
+                                        <select id="bookingTimeAmpm" name="booking_time_ampm" class="form-select" aria-label="AM or PM">
+                                            <option value="AM">AM</option>
+                                            <option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-text small">Optional — enter hour and minutes (e.g. 10:30).</div>
                                 </div>
 
                                 <div class="col-md-6">
