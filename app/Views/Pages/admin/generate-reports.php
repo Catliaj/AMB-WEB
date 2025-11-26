@@ -13,6 +13,8 @@
 
   <link rel="stylesheet" href="<?= base_url('assets/styles/admin-style.css')?>">
 
+  
+
 </head>
 
   <script>
@@ -55,11 +57,14 @@
         <button id="toggleSidebar" class="btn"><i data-lucide="menu"></i></button>
         <h1><i data-lucide="bar-chart-2"></i> Generate Reports</h1>
       </div>
-      <div class="controls">
-        <button class="btn primary" id="generateReportBtn"><i data-lucide="refresh-ccw"></i></button>
-        <button class="btn" id="exportPdf"><i data-lucide="file-down"></i></button>
-        <button class="btn" id="exportExcel"><i data-lucide="file-spreadsheet"></i></button>
-      </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="controls-help" style="color:#9ca3af; font-size:13px;">Actions: Generate updates the table; Export downloads the current filtered report.</div>
+          <div class="controls">
+            <button class="btn primary" id="generateReportBtn"><i data-lucide="refresh-ccw"></i> Generate</button>
+            <button class="btn secondary" id="exportPdf"><i data-lucide="file-down"></i> PDF</button>
+            <button class="btn secondary" id="exportExcel"><i data-lucide="file-spreadsheet"></i> Excel</button>
+          </div>
+        </div>
     </header>
 
     <div class="filters">
@@ -85,20 +90,27 @@
       </select>
     </div>
 
-    <div class="summary-cards">
-      <div class="summary-card">
-        <h2>Total Sales</h2>
-        <div class="value" id="totalSales">₱1,250,000</div>
+    <section class="summary-wrapper">
+      <h2>Summary</h2>
+      <p class="summary-note">Overview of key metrics for the selected filters and date range.</p>
+      <div class="summary-cards">
+        <div class="summary-card">
+          <h2>Total Sales</h2>
+          <div class="value" id="totalSales">₱1,250,000</div>
+          <p class="stat-desc">Sum of all confirmed sales in the selected period.</p>
+        </div>
+        <div class="summary-card">
+          <h2>Total Properties</h2>
+          <div class="value" id="totalProperties">128</div>
+          <p class="stat-desc">Number of properties available or listed in the selected filters.</p>
+        </div>
+        <div class="summary-card">
+          <h2>Active Users</h2>
+          <div class="value" id="activeUsers">86</div>
+          <p class="stat-desc">Users who have an active booking or activity within the date range.</p>
+        </div>
       </div>
-      <div class="summary-card">
-        <h2>Total Properties</h2>
-        <div class="value" id="totalProperties">128</div>
-      </div>
-      <div class="summary-card">
-        <h2>Active Users</h2>
-        <div class="value" id="activeUsers">86</div>
-      </div>
-    </div>
+    </section>
 
     <div class="report-layout">
       <div class="report-preview">
@@ -177,6 +189,23 @@
       });
     }
 
+    function updateSummaryMetrics(filtered) {
+      // Total sales
+      const total = filtered.reduce((sum, r) => sum + (Number(r.sales) || 0), 0);
+      const totalEl = document.getElementById('totalSales');
+      if (totalEl) totalEl.textContent = '₱' + total.toLocaleString();
+
+      // Total unique properties
+      const props = new Set(filtered.map(r => r.property));
+      const propEl = document.getElementById('totalProperties');
+      if (propEl) propEl.textContent = props.size;
+
+      // Active users — derive from unique agents involved in filtered results
+      const agents = new Set(filtered.map(r => r.agent));
+      const actEl = document.getElementById('activeUsers');
+      if (actEl) actEl.textContent = agents.size;
+    }
+
     function filterReports() {
       const property = document.getElementById("propertyFilter").value;
       const agent = document.getElementById("agentFilter").value;
@@ -213,7 +242,9 @@
       const filtered = filterReports();
       populateTable(filtered);
       updateCharts(filtered);
-      alert("Report updated based on filters!");
+      updateSummaryMetrics(filtered);
+      const prev = document.getElementById('generateReportBtn');
+      if (prev) prev.setAttribute('aria-live','polite');
     });
 
     document.getElementById("exportExcel").addEventListener("click", () => {
@@ -273,6 +304,8 @@
     });
 
     populateTable(reportData);
+    // initialize summary metrics and charts with full dataset
+    updateSummaryMetrics(reportData);
     (function(){
       try {
         const charts = {};
