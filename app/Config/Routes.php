@@ -110,6 +110,8 @@ $routes->post('/admin/store-agent', 'AdminController::storeAgent');
 $routes->post('/users/signup', 'UserController::StoreUsers');
 $routes->post('/users/request-otp', 'UserController::requestOtp');
 $routes->get('/verify-email', 'UserController::verifyEmail');
+// Change password endpoint (used by profile Security tab)
+$routes->post('/users/change-password', 'UserController::changePassword');
 
 
 /*

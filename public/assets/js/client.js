@@ -328,16 +328,20 @@ function updatePropertyModal(property) {
 
                 const data = await response.json();
                 if (data?.status === 'success') {
+                    // If the server returned a chat session id, include it in the redirect
+                    const sessionId = data.sessionId || data.chatSessionID || data.chatSessionId || null;
+                    const target = sessionId ? `/users/chat?session=${encodeURIComponent(sessionId)}` : '/users/chat';
+
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             title: 'Message Sent!',
                             text: `Your message regarding "${data.propertyTitle}" has been sent to ${data.agentName}.`,
                             icon: 'success',
                             confirmButtonText: 'Go to Chat'
-                        }).then(() => window.location.href = '/users/chat');
+                        }).then(() => window.location.href = target);
                     } else {
                         alert('Message sent! Redirecting to chat.');
-                        window.location.href = '/users/chat';
+                        window.location.href = target;
                     }
                 } else {
                     if (typeof Swal !== 'undefined') {

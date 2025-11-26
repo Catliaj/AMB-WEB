@@ -105,130 +105,164 @@
                     </div>
 
                     <div class="row g-4">
-                        <!-- We'll display a few featured cards statically or let JS handle favorites; keep cards simple -->
-                        <div class="col-md-6 col-lg-4">
-                            <div class="property-card" onclick="alert('Property details coming soon!')">
-                                <div class="property-image">
-                                    <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
-                                        alt="Modern Family House" loading="lazy">
-                                    <button class="property-favorite"
-                                        onclick="event.stopPropagation(); toggleFavorite(1)">
-                                        <i class="bi bi-heart fs-5"></i>
-                                    </button>
-                                    <span class="property-type-badge">For Sale</span>
+                        <?php if (!empty($topViewed) && is_array($topViewed)): ?>
+                            <?php foreach ($topViewed as $prop): ?>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="property-card" onclick="window.location='/property/view/<?= esc($prop['PropertyID']) ?>'">
+                                        <div class="property-image">
+                                            <img src="<?= esc($prop['PropertyImage'] ? base_url('uploads/properties/' . $prop['PropertyImage']) : base_url('uploads/properties/no-image.jpg')) ?>"
+                                                alt="<?= esc($prop['Title']) ?>" loading="lazy">
+                                            <button class="property-favorite" onclick="event.stopPropagation(); toggleFavorite(<?= intval($prop['PropertyID']) ?>)">
+                                                <i class="bi bi-heart fs-5"></i>
+                                            </button>
+                                            <span class="property-type-badge">For Sale</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <h3 class="h5 mb-2"><?= esc($prop['Title']) ?></h3>
+                                            <div class="d-flex align-items-center mb-3 text-muted">
+                                                <i class="bi bi-geo-alt text-accent me-2"></i>
+                                                <small><?= esc($prop['Location']) ?></small>
+                                            </div>
+                                            <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-house-door me-1 text-muted"></i>
+                                                    <small class="text-muted"><?= esc($prop['Bedrooms'] ?? '-') ?></small>
+                                                </div>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-droplet me-1 text-muted"></i>
+                                                    <small class="text-muted"><?= esc($prop['Bathrooms'] ?? '-') ?></small>
+                                                </div>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-cash-stack me-1 text-muted"></i>
+                                                    <small class="text-muted"><?= esc(number_format($prop['Price'] ?? 0)) ?></small>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="property-price">PHP <?= esc(number_format($prop['Price'] ?? 0)) ?></span>
+                                                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.location='/property/view/<?= esc($prop['PropertyID']) ?>'">View Details</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <h3 class="h5 mb-2">Modern Family House</h3>
-                                    <div class="d-flex align-items-center mb-3 text-muted">
-                                        <i class="bi bi-geo-alt text-accent me-2"></i>
-                                        <small>Beverly Hills, CA</small>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <!-- Fallback: keep the three static featured cards if no data -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="property-card" onclick="alert('Property details coming soon!')">
+                                    <div class="property-image">
+                                        <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+                                            alt="Modern Family House" loading="lazy">
+                                        <button class="property-favorite" onclick="event.stopPropagation(); toggleFavorite(1)">
+                                            <i class="bi bi-heart fs-5"></i>
+                                        </button>
+                                        <span class="property-type-badge">For Sale</span>
                                     </div>
-                                    <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-house-door me-1 text-muted"></i>
-                                            <small class="text-muted">4</small>
+                                    <div class="card-body">
+                                        <h3 class="h5 mb-2">Modern Family House</h3>
+                                        <div class="d-flex align-items-center mb-3 text-muted">
+                                            <i class="bi bi-geo-alt text-accent me-2"></i>
+                                            <small>Beverly Hills, CA</small>
                                         </div>
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-droplet me-1 text-muted"></i>
-                                            <small class="text-muted">3</small>
+                                        <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-house-door me-1 text-muted"></i>
+                                                <small class="text-muted">4</small>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-droplet me-1 text-muted"></i>
+                                                <small class="text-muted">3</small>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-arrows-fullscreen me-1 text-muted"></i>
+                                                <small class="text-muted">3200 sqft</small>
+                                            </div>
                                         </div>
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-arrows-fullscreen me-1 text-muted"></i>
-                                            <small class="text-muted">3200 sqft</small>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="property-price">$2,500,000</span>
+                                            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); alert('View details coming soon!')">View Details</button>
                                         </div>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="property-price">$2,500,000</span>
-                                        <button class="btn btn-primary btn-sm"
-                                            onclick="event.stopPropagation(); alert('View details coming soon!')">View
-                                            Details</button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Add two more featured cards (static) -->
-                        <div class="col-md-6 col-lg-4">
-                            <div class="property-card" onclick="alert('Property details coming soon!')">
-                                <div class="property-image">
-                                    <img src="https://images.unsplash.com/photo-1715985160020-d8cd6fdc8ba9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
-                                        alt="Luxury Penthouse" loading="lazy">
-                                    <button class="property-favorite"
-                                        onclick="event.stopPropagation(); toggleFavorite(2)">
-                                        <i class="bi bi-heart fs-5"></i>
-                                    </button>
-                                    <span class="property-type-badge">For Rent</span>
-                                </div>
-                                <div class="card-body">
-                                    <h3 class="h5 mb-2">Luxury Penthouse</h3>
-                                    <div class="d-flex align-items-center mb-3 text-muted">
-                                        <i class="bi bi-geo-alt text-accent me-2"></i>
-                                        <small>Manhattan, NY</small>
+                            <!-- second fallback card -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="property-card" onclick="alert('Property details coming soon!')">
+                                    <div class="property-image">
+                                        <img src="https://images.unsplash.com/photo-1715985160020-d8cd6fdc8ba9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+                                            alt="Luxury Penthouse" loading="lazy">
+                                        <button class="property-favorite" onclick="event.stopPropagation(); toggleFavorite(2)">
+                                            <i class="bi bi-heart fs-5"></i>
+                                        </button>
+                                        <span class="property-type-badge">For Rent</span>
                                     </div>
-                                    <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-house-door me-1 text-muted"></i>
-                                            <small class="text-muted">3</small>
+                                    <div class="card-body">
+                                        <h3 class="h5 mb-2">Luxury Penthouse</h3>
+                                        <div class="d-flex align-items-center mb-3 text-muted">
+                                            <i class="bi bi-geo-alt text-accent me-2"></i>
+                                            <small>Manhattan, NY</small>
                                         </div>
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-droplet me-1 text-muted"></i>
-                                            <small class="text-muted">2</small>
+                                        <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-house-door me-1 text-muted"></i>
+                                                <small class="text-muted">3</small>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-droplet me-1 text-muted"></i>
+                                                <small class="text-muted">2</small>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-arrows-fullscreen me-1 text-muted"></i>
+                                                <small class="text-muted">2400 sqft</small>
+                                            </div>
                                         </div>
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-arrows-fullscreen me-1 text-muted"></i>
-                                            <small class="text-muted">2400 sqft</small>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="property-price">$12,000/mo</span>
+                                            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); alert('View details coming soon!')">View Details</button>
                                         </div>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="property-price">$12,000/mo</span>
-                                        <button class="btn btn-primary btn-sm"
-                                            onclick="event.stopPropagation(); alert('View details coming soon!')">View
-                                            Details</button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="col-md-6 col-lg-4">
-                            <div class="property-card" onclick="alert('Property details coming soon!')">
-                                <div class="property-image">
-                                    <img src="https://images.unsplash.com/photo-1591268193431-c86baf208255?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
-                                        alt="Garden Villa Estate" loading="lazy">
-                                    <button class="property-favorite"
-                                        onclick="event.stopPropagation(); toggleFavorite(3)">
-                                        <i class="bi bi-heart fs-5"></i>
-                                    </button>
-                                    <span class="property-type-badge">For Sale</span>
-                                </div>
-                                <div class="card-body">
-                                    <h3 class="h5 mb-2">Garden Villa Estate</h3>
-                                    <div class="d-flex align-items-center mb-3 text-muted">
-                                        <i class="bi bi-geo-alt text-accent me-2"></i>
-                                        <small>Miami, FL</small>
+                            <!-- third fallback card -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="property-card" onclick="alert('Property details coming soon!')">
+                                    <div class="property-image">
+                                        <img src="https://images.unsplash.com/photo-1591268193431-c86baf208255?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+                                            alt="Garden Villa Estate" loading="lazy">
+                                        <button class="property-favorite" onclick="event.stopPropagation(); toggleFavorite(3)">
+                                            <i class="bi bi-heart fs-5"></i>
+                                        </button>
+                                        <span class="property-type-badge">For Sale</span>
                                     </div>
-                                    <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-house-door me-1 text-muted"></i>
-                                            <small class="text-muted">5</small>
+                                    <div class="card-body">
+                                        <h3 class="h5 mb-2">Garden Villa Estate</h3>
+                                        <div class="d-flex align-items-center mb-3 text-muted">
+                                            <i class="bi bi-geo-alt text-accent me-2"></i>
+                                            <small>Miami, FL</small>
                                         </div>
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-droplet me-1 text-muted"></i>
-                                            <small class="text-muted">4</small>
+                                        <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-house-door me-1 text-muted"></i>
+                                                <small class="text-muted">5</small>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-droplet me-1 text-muted"></i>
+                                                <small class="text-muted">4</small>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-arrows-fullscreen me-1 text-muted"></i>
+                                                <small class="text-muted">4800 sqft</small>
+                                            </div>
                                         </div>
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-arrows-fullscreen me-1 text-muted"></i>
-                                            <small class="text-muted">4800 sqft</small>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="property-price">$4,200,000</span>
+                                            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); alert('View details coming soon!')">View Details</button>
                                         </div>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="property-price">$4,200,000</span>
-                                        <button class="btn btn-primary btn-sm"
-                                            onclick="event.stopPropagation(); alert('View details coming soon!')">View
-                                            Details</button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        <?php endif; ?>
                     </div> <!-- row -->
                 </div>
             </section>

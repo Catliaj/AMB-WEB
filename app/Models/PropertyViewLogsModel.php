@@ -71,6 +71,24 @@ class PropertyViewLogsModel extends Model
             ->getRowArray();
     }
 
+    /**
+     * Return the top most-viewed properties across the site.
+     * @param int $limit
+     * @return array
+     */
+    public function getTopViewed(int $limit = 3)
+    {
+        return $this->db->table('propertyviewlogs pv')
+            ->select('p.PropertyID, p.Title, p.Price, p.Location, p.Bedrooms, p.Bathrooms, p.Parking_Spaces, pi.Image AS PropertyImage, COUNT(pv.id) AS total_views')
+            ->join('property p', 'p.PropertyID = pv.PropertyID')
+            ->join('(SELECT PropertyID, Image FROM propertyImage GROUP BY PropertyID) pi', 'pi.PropertyID = p.PropertyID', 'left')
+            ->groupBy('p.PropertyID, p.Title, p.Price, p.Location, p.Bedrooms, p.Bathrooms, p.Parking_Spaces, pi.Image')
+            ->orderBy('total_views', 'DESC')
+            ->limit($limit)
+            ->get()
+            ->getResultArray();
+    }
+
 
 
 
