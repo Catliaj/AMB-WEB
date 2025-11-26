@@ -47,8 +47,10 @@ $routes->get('/users/chat', 'UserController::cleintChat');
 $routes->get('/properties/all', 'PropertyController::getAllProperties');
 $routes->get('properties/view/(:num)', 'PropertyController::viewProperty/$1');
 
-
-
+$routes->post('bookings/create', 'UserController::create');
+$routes->get('bookings/mine', 'UserController::mine');
+$routes->post('bookings/cancel', 'UserController::cancel');
+$routes->get('users/getUser/(:num)', 'PropertyController::getUser/$1');
 
 
 
@@ -57,6 +59,7 @@ $routes->get('properties/view/(:num)', 'PropertyController::viewProperty/$1');
 $routes->get('/users/agentHomepage', 'AgentController::agentDashboard');
 $routes->get('/users/agentprofile', 'AgentController::agentProfile');
 
+
 $routes->get('/users/agentclients', 'AgentController::agentClients');
 $routes->get('/users/agentchat', 'AgentController::agentChat');
 $routes->get('/users/agentbookings', 'AgentController::agentBookings');
@@ -64,7 +67,9 @@ $routes->get('/users/logoutagent', 'AgentController::logoutAgent');
 
 //Agent Property Management Routes
 $routes->get('/users/agentproperties', 'AgentController::agentProperties');
-$routes->post('property/updateStatus', 'AgentController::updateStatus');
+$routes->get('users/getBooking/(:segment)', 'AgentController::getBooking/$1');         // GET /users/getBooking/{id}
+$routes->post('users/updateBookingStatus', 'AgentController::updateBookingStatus');    // POST { booking_id, status, reason? }
+$routes->post('property/updateStatus', 'PropertyController::updateStatus');
 
 
 

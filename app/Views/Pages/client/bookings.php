@@ -9,6 +9,7 @@
     <link href="<?= base_url("bootstrap5/css/bootstrap.min.css")?>" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?= base_url("assets/styles/clientstyle.css")?>">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 </head>
 
 <body>
@@ -118,16 +119,91 @@
             <div id="bookingsList">
                 <!-- Bookings are rendered via client.js from bookingsData -->
             </div>
+
         </div>
     </main>
+    <!-- Booking Detail Modal (paste into the bookings view before closing </body>) -->
+    <!-- Booking Detail Modal (paste into the bookings view before closing </body>) -->
+<div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bookingModalTitle">Booking Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <div id="bookingImageWrapper" class="mb-3 text-center">
+              <img id="bookingModalImage" src="<?= base_url('uploads/properties/no-image.jpg') ?>" class="img-fluid rounded" alt="Property image" style="max-height:300px; object-fit:cover;">
+            </div>
+            <div class="d-flex justify-content-center gap-2">
+              <button id="modalContactAgentBtn" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-dots"></i> Contact Agent</button>
+              <button id="modalViewPropertyBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-up-right"></i> Open Property</button>
+            </div>
+          </div>
+
+          <div class="col-md-7">
+            <h5 id="bookingModalPropertyTitle" class="mb-1">Property title</h5>
+            <p id="bookingModalLocation" class="text-muted small mb-2">Location</p>
+
+            <div class="mb-2">
+              <span id="bookingModalStatus" class="badge bg-secondary">Status</span>
+              <span class="ms-2 text-muted" id="bookingModalDate">Date</span>
+            </div>
+
+            <div id="bookingModalMeta" class="mb-2 small text-muted">
+              <div><strong>Agent:</strong> <span id="bookingModalAgent">—</span></div>
+              <div id="bookingModalAgentContacts" class="small text-muted">
+                <div><i class="bi bi-telephone me-1"></i><span id="bookingModalAgentPhone">—</span></div>
+                <div><i class="bi bi-envelope me-1"></i><span id="bookingModalAgentEmail">—</span></div>
+              </div>
+              <div><strong>Price:</strong> <span id="bookingModalPrice">—</span></div>
+            </div>
+
+            <div class="mt-2">
+              <h6 class="mb-1">Notes</h6>
+              <p id="bookingModalNotes" class="small text-muted">No notes provided.</p>
+            </div>
+
+            <div class="mt-3">
+              <!-- Hidden agent id (if available) -->
+              <input type="hidden" id="bookingModalAgentId" value="">
+              <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
+              <button id="modalCloseBtn" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="bookingModalHistory" class="mt-3 small text-muted">
+          <!-- optional status history/other details will be injected here -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- Chat Floating Action Button -->
     <a href="/users/chat" class="chat-fab" id="chatButton">
         <i class="bi bi-chat-dots-fill fs-4"></i>
     </a>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
     <script src="<?= base_url("assets/js/client.js")?>"></script>
+    <script src="<?= base_url("assets/js/bookings.js")?>"></script>
+     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/en-gb.js"></script>
+    <script>
+        window.bookingCreateUrl = <?= json_encode(site_url('bookings/create')) ?>;
+        window.myBookingsUrl = <?= json_encode(site_url('bookings/mine')) ?>;
+        window.bookingCancelUrl = <?= json_encode(site_url('bookings/cancel')) ?>;
+          window.getUserUrlBase = <?= json_encode(site_url('users/getUser')) ?>;
+        window.csrfName = <?= json_encode(csrf_token()) ?>;
+        window.csrfHash = <?= json_encode(csrf_hash()) ?>;
+    </script>
     </div>
 </body>
 

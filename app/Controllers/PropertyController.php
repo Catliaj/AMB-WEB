@@ -4,11 +4,15 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
+use App\Models\PropertyModel;
+use App\Models\PropertyStatusHistoryModel;
+use App\Models\PropertyImageModel;
+use App\Models\UsersModel;
 
 class PropertyController extends BaseController
 {
     //para client to 
-    public function viewProperty($id)
+   public function viewProperty($id)
     {
         $propertyModel = new \App\Models\PropertyModel();
         $propertyImagesModel = new \App\Models\PropertyImageModel();
@@ -33,7 +37,7 @@ class PropertyController extends BaseController
         if (!$existing) {
             $viewModel->insert([
                 'PropertyID' => $id,
-                'UserID' => $userID,
+                'UserID'     => $userID,
                 'created_at' => date('Y-m-d H:i:s')
             ]);
         }
@@ -41,19 +45,56 @@ class PropertyController extends BaseController
         // Total views
         $property['total_views'] = $viewModel->where('PropertyID', $id)->countAllResults();
 
-        // Get latest status
+        // Get latest status (fallback to Available)
         $status = $statusModel->where('PropertyID', $id)->orderBy('Date', 'DESC')->first();
         $property['New_Status'] = $status['New_Status'] ?? 'Available';
 
-        // Agent info
-        $agent = $userModel->find($property['agent_assigned']);
-        $property['agent_name'] = $agent ? trim($agent['FirstName'] . ' ' . $agent['LastName']) : 'Unassigned';
+        // Resolve agent_assigned -> user (ensure Role = 'Agent')
+        $agentAssigned = $property['agent_assigned'] ?? null;
+        $agentInfo = [
+            'agent_id'    => null,
+            'agent_name'  => 'Unassigned',
+            'agent_email' => '',
+            'agent_phone' => ''
+        ];
 
-        // Images
+        if (!empty($agentAssigned)) {
+            // If numeric, look up by UserID and Role = Agent
+            if (is_numeric($agentAssigned)) {
+                $agent = $userModel
+                    ->where('UserID', (int) $agentAssigned)
+                    ->where('Role', 'Agent')
+                    ->first();
+            } else {
+                // If non-numeric (earlier you accepted names), try to find an Agent by name (first/last)
+                $agent = $userModel
+                    ->where('Role', 'Agent')
+                    ->groupStart()
+                        ->like('FirstName', $agentAssigned)
+                        ->orLike('LastName', $agentAssigned)
+                    ->groupEnd()
+                    ->first();
+            }
+
+            if ($agent) {
+                $agentInfo['agent_id']    = $agent['UserID'] ?? null;
+                $agentInfo['agent_name']  = trim(($agent['FirstName'] ?? '') . ' ' . ($agent['LastName'] ?? '')) ?: ($agent['Email'] ?? 'Agent');
+                $agentInfo['agent_email'] = $agent['Email'] ?? '';
+                $agentInfo['agent_phone'] = $agent['phoneNumber'] ?? ($agent['phone'] ?? '');
+            }
+        }
+
+        // attach agent info to response
+        $property['agent_id']    = $agentInfo['agent_id'];
+        $property['agent_name']  = $agentInfo['agent_name'];
+        $property['agent_email'] = $agentInfo['agent_email'];
+        $property['agent_phone'] = $agentInfo['agent_phone'];
+
+        // Images: return full URLs array, fallback to no-image
         $images = $propertyImagesModel->where('PropertyID', $id)->findAll();
-        $property['images'] = !empty($images) 
-        ? array_map(fn($img) => base_url('uploads/properties/' . $img['Image']), $images)
-        : [base_url('uploads/properties/no-image.jpg')];
+        $property['images'] = !empty($images)
+            ? array_map(fn($img) => base_url('uploads/properties/' . $img['Image']), $images)
+            : [base_url('uploads/properties/no-image.jpg')];
 
         return $this->response->setJSON($property);
     }
@@ -107,5 +148,158 @@ class PropertyController extends BaseController
         }
 
         return $this->response->setJSON($properties);
+    }
+ public function updateStatus()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        // propertyID required
+        $propertyID = $this->request->getPost('propertyID') ?? $this->request->getPost('propertyId') ?? null;
+        if (empty($propertyID)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'propertyID is required']);
+        }
+
+        $propertyModel = new PropertyModel();
+        $property = $propertyModel->find($propertyID);
+        if (!$property) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'Property not found']);
+        }
+
+        // Optional ownership check (agent only)
+        $userId = $session->get('UserID');
+        if (isset($property['agent_assigned']) && !empty($property['agent_assigned']) && $property['agent_assigned'] != $userId) {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'You do not have permission to update this property']);
+        }
+
+        // Collect updatable property fields (only those present in PropertyModel->allowedFields)
+        $updateData = [];
+        $title = $this->request->getPost('title');
+        $location = $this->request->getPost('location');
+        $price = $this->request->getPost('price');
+        $description = $this->request->getPost('description');
+        $status = $this->request->getPost('status');
+
+        if ($title !== null) $updateData['Title'] = $title;
+        if ($location !== null) $updateData['Location'] = $location;
+        if ($price !== null) $updateData['Price'] = $price;
+        if ($description !== null) $updateData['Description'] = $description;
+
+        // Update property row if there's data to update
+        if (!empty($updateData)) {
+            try {
+                $propertyModel->update($propertyID, $updateData);
+            } catch (\Exception $e) {
+                log_message('error', 'Property update failed: ' . $e->getMessage());
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to update property']);
+            }
+        }
+
+        // If status provided -> insert into property status history table
+        if ($status !== null) {
+            $oldStatus = $property['New_Status'] ?? $property['status'] ?? '';
+            if ($status !== $oldStatus) {
+                $statusModel = new PropertyStatusHistoryModel();
+                try {
+                    $statusModel->insert([
+                        'PropertyID' => $propertyID,
+                        'Old_Status' => $oldStatus,
+                        'New_Status' => $status,
+                        'Date'       => date('Y-m-d H:i:s')
+                    ]);
+                } catch (\Exception $e) {
+                    log_message('error', 'Failed to insert propertyStatusHistory: ' . $e->getMessage());
+                    // do not fail the whole request for history insertion error
+                }
+            }
+        }
+
+        // Handle uploads: accept single "image" or multiple "images[]"
+        $uploadedImageUrls = [];
+        $imgModel = new PropertyImageModel();
+        $uploadDir = FCPATH . 'uploads/properties/';
+
+        // Ensure upload directory exists
+        if (!is_dir($uploadDir)) {
+            if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+                log_message('error', 'Failed to create uploads directory: ' . $uploadDir);
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to create upload directory']);
+            }
+        }
+
+        // multiple files from input name="images[]"
+        $files = $this->request->getFiles();
+        // gather either "images" array or single "image"
+        if (isset($files['images']) && is_array($files['images'])) {
+            foreach ($files['images'] as $file) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    try {
+                        $newName = $file->getRandomName();
+                        $file->move($uploadDir, $newName);
+                        $imageUrl = base_url('uploads/properties/' . $newName);
+                        $uploadedImageUrls[] = $imageUrl;
+                        // insert into gallery table
+                        $imgModel->insert([
+                            'PropertyID' => $propertyID,
+                            'Image' => $newName
+                        ]);
+                    } catch (\Exception $e) {
+                        log_message('error', 'Failed to move/insert image: ' . $e->getMessage());
+                        // continue processing other images
+                    }
+                }
+            }
+        } elseif (isset($files['image']) && $files['image']->isValid() && !$files['image']->hasMoved()) {
+            // single file scenario
+            $file = $files['image'];
+            try {
+                $newName = $file->getRandomName();
+                $file->move($uploadDir, $newName);
+                $imageUrl = base_url('uploads/properties/' . $newName);
+                $uploadedImageUrls[] = $imageUrl;
+                $imgModel->insert([
+                    'PropertyID' => $propertyID,
+                    'Image' => $newName
+                ]);
+            } catch (\Exception $e) {
+                log_message('error', 'Single image upload failed: ' . $e->getMessage());
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to save uploaded image']);
+            }
+        }
+
+        // Build response
+        $result = ['success' => true, 'updated' => true];
+        if (!empty($uploadedImageUrls)) $result['imageUrls'] = $uploadedImageUrls;
+
+        return $this->response->setJSON($result);
+    }
+
+
+     public function getUser($id = null)
+    {
+        if (empty($id)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'User id required']);
+        }
+
+        $userModel = new UsersModel();
+        $user = $userModel->find($id);
+
+        if (!$user) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'User not found']);
+        }
+
+        // Limit fields returned for privacy. Add/remove fields as appropriate.
+        $data = [
+            'UserID'    => $user['UserID'] ?? null,
+            'FirstName' => $user['FirstName'] ?? '',
+            'LastName'  => $user['LastName'] ?? '',
+            'Email'     => $user['Email'] ?? '',
+            'phone'     => $user['phoneNumber'] ?? ($user['phone'] ?? ''),
+            'Role'      => $user['Role'] ?? '',
+        ];
+
+        return $this->response->setJSON($data);
     }
 }

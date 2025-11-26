@@ -254,7 +254,8 @@
                                     <i class="bi bi-person-badge text-primary"></i>
                                     <div>
                                         <small class="text-muted d-block">Agent</small>
-                                        <strong id="bookingPropertyAgent"></strong>
+                                        <strong id="bookingPropertyAgent">—</strong>
+                                        
                                     </div>
                                 </div>
                             </div>
@@ -370,11 +371,20 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    const propertiesUrl = "<?= base_url('/properties/all') ?>";
-    const propertiesViewUrl = "<?= base_url('/properties/view') ?>";
 
+<script>
+  // Use site_url so index.php (index_page) is included when needed
+  window.getUserUrlBase    = <?= json_encode(site_url('users/getUser')) ?>;   // used as `${window.getUserUrlBase}/{id}`
+  window.propertiesUrl     = <?= json_encode(site_url('properties/all')) ?>;
+  window.propertiesViewUrl = <?= json_encode(site_url('properties/view')) ?>; // used as `${propertiesViewUrl}/{id}`
+  window.bookingCreateUrl  = <?= json_encode(site_url('bookings/create')) ?>;
+  window.bookingCancelUrl  = <?= json_encode(site_url('bookings/cancel')) ?>;
+  window.myBookingsUrl     = <?= json_encode(site_url('bookings/mine')) ?>;
+  // If CSRF is enabled in CI:
+  window.csrfName = <?= json_encode(csrf_token()) ?>;
+  window.csrfHash = <?= json_encode(csrf_hash()) ?>;
 </script>
+
 
 
 <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js") ?>"></script>

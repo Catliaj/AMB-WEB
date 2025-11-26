@@ -9,6 +9,9 @@ use App\Models\MessageModel;
 use App\Models\PropertyModel;
 use App\Models\UserTokenModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use App\Models\BookingModel;
+use App\Models\PropertyImageModel;
+
 
 
 class UserController extends BaseController
@@ -345,16 +348,194 @@ class UserController extends BaseController
         return redirect()->to('/');
     }
 
-  
+        // app/Controllers/BookingController.php  (or update UserController::create)
+    public function create()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Client') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
 
+        // Robust input parsing: prefer JSON if Content-Type indicates JSON,
+        // otherwise use getPost() (form-encoded or multipart/form-data).
+        $contentType = $this->request->getHeaderLine('Content-Type');
+        $input = [];
 
+        if (strpos($contentType, 'application/json') !== false) {
+            // safe JSON parse (getJSON throws on invalid JSON -> catch it)
+            try {
+                $input = $this->request->getJSON(true) ?? [];
+            } catch (\Throwable $e) {
+                log_message('warning', 'Invalid JSON in bookings/create: ' . $e->getMessage());
+                // fallback to raw body attempt
+                $raw = $this->request->getBody();
+                $json = json_decode($raw, true);
+                $input = (json_last_error() === JSON_ERROR_NONE) ? $json : [];
+            }
+        } else {
+            // form-encoded or multipart
+            $post = $this->request->getPost(); // returns array of POST values
+            if (!empty($post)) {
+                $input = $post;
+            } else {
+                // last fallback: parse raw body (e.g., some clients send urlencoded in raw body)
+                $raw = $this->request->getBody();
+                parse_str($raw, $parsed);
+                $input = !empty($parsed) ? $parsed : [];
+            }
+        }
 
+        // Now validate required fields
+        $propertyID = $input['property_id'] ?? $input['propertyID'] ?? null;
+        $bookingDate = $input['booking_date'] ?? $input['bookingDate'] ?? null;
+        $purpose = $input['booking_purpose'] ?? $input['purpose'] ?? null;
+        $notes = $input['booking_notes'] ?? $input['notes'] ?? null;
 
+        if (empty($propertyID) || empty($bookingDate)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'property_id and booking_date are required']);
+        }
 
- 
+        // Save booking using your BookingModel
+        $bookingModel = new \App\Models\BookingModel();
+        $now = date('Y-m-d H:i:s');
+        $data = [
+            'userID'     => $session->get('UserID'),
+            'propertyID' => $propertyID,
+            'bookingDate'=> $bookingDate,
+            'status'     => 'Pending',
+            'Reason'     => $purpose,
+            'Notes'      => $notes,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ];
 
-    
+        try {
+            $insertId = $bookingModel->insert($data);
+            if ($insertId === false) {
+                $errors = method_exists($bookingModel, 'errors') ? $bookingModel->errors() : null;
+                log_message('error', 'Booking insert failed: ' . json_encode($errors));
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to create booking', 'details' => $errors]);
+            }
 
+            return $this->response->setJSON(['success' => true, 'bookingID' => $insertId, 'status' => 'Pending']);
+        } catch (\Throwable $e) {
+            log_message('error', 'Booking create exception: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error while creating booking']);
+        }
+    }
+
+     public function mine()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Client') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        $userId = $session->get('UserID');
+
+        $bookingModel = new BookingModel();
+        // select booking fields and joined property data
+        $bookings = $bookingModel
+            ->select('
+                booking.bookingID,
+                booking.bookingDate,
+                booking.status AS BookingStatus,
+                booking.Reason,
+                booking.Notes,
+                property.PropertyID,
+                property.Title AS PropertyTitle,
+                property.Location AS PropertyLocation,
+                property.Price AS PropertyPrice
+            ')
+            ->join('property', 'property.PropertyID = booking.propertyID', 'left')
+            ->where('booking.userID', $userId)
+            ->orderBy('booking.bookingDate', 'DESC')
+            ->findAll();
+
+        // attach images array for each property (optional / lightweight)
+        $imgModel = new PropertyImageModel();
+        foreach ($bookings as &$b) {
+            $propId = $b['PropertyID'] ?? null;
+            $images = [];
+            if ($propId) {
+                $imgs = $imgModel->where('PropertyID', $propId)->findAll();
+                if (!empty($imgs)) {
+                    foreach ($imgs as $i) {
+                        $images[] = base_url('uploads/properties/' . ($i['Image'] ?? 'no-image.jpg'));
+                    }
+                } else {
+                    // fallback: no images in gallery
+                    $images[] = base_url('uploads/properties/no-image.jpg');
+                }
+            }
+            $b['Images'] = $images;
+        }
+        unset($b);
+
+        return $this->response->setJSON($bookings);
+    }
+
+    public function cancel()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Client') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        // Parse input safely for form-encoded or JSON
+        $contentType = $this->request->getHeaderLine('Content-Type');
+        $input = [];
+        if (strpos($contentType, 'application/json') !== false) {
+            try {
+                $input = $this->request->getJSON(true) ?? [];
+            } catch (\Throwable $e) {
+                $input = [];
+            }
+        } else {
+            $input = $this->request->getPost() ?? [];
+            if (empty($input)) {
+                // fallback parse raw body
+                parse_str($this->request->getBody(), $input);
+            }
+        }
+
+        $bookingId = $input['booking_id'] ?? $input['bookingID'] ?? null;
+        $status = $input['status'] ?? 'Cancelled';
+
+        if (empty($bookingId)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'booking_id is required']);
+        }
+
+        $bookingModel = new \App\Models\BookingModel();
+        $booking = $bookingModel->find($bookingId);
+        if (!$booking) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'Booking not found']);
+        }
+
+        // Ownership check
+        $userId = $session->get('UserID');
+        if (isset($booking['userID']) && $booking['userID'] != $userId) {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'You do not own this booking']);
+        }
+
+        try {
+            $now = date('Y-m-d H:i:s');
+            $updated = $bookingModel->update($bookingId, [
+                'status' => $status,
+                'updated_at' => $now
+            ]);
+
+            if ($updated === false) {
+                $errors = method_exists($bookingModel, 'errors') ? $bookingModel->errors() : null;
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to update booking', 'details' => $errors]);
+            }
+
+            return $this->response->setJSON(['success' => true, 'bookingID' => $bookingId, 'status' => $status]);
+        } catch (\Exception $e) {
+            log_message('error', 'Booking cancel failed: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+        }
+    }
 
 
 }
