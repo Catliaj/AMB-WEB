@@ -92,21 +92,6 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="stat-icon me-3">
-                                    <i class="bi bi-check-circle"></i>
-                                </div>
-                                <div>
-                                    <p class="text-muted small mb-0">Scheduled</p>
-                                    <h3 id="scheduledReservationsCount" class="h4 mb-0">0</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="stat-icon me-3">
                                     <i class="bi bi-clock"></i>
                                 </div>
                                 <div>
@@ -185,6 +170,59 @@
   </div>
 </div>
 
+<!-- Confirm Contract Modal (client) -->
+<div class="modal fade" id="confirmContractModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Contract</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label"><strong>Property Price</strong></label>
+                    <div id="contractPropertyPrice">—</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Client Age</strong></label>
+                    <div id="contractClientAge">—</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Payment Mode</strong></label>
+                    <div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="contractMode" id="modePagibig" value="pagibig">
+                            <label class="form-check-label" for="modePagibig">Pagibig (max age 60)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="contractMode" id="modeBanko" value="banko">
+                            <label class="form-check-label" for="modeBanko">Banko (max age 30)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="contractMode" id="modeFull" value="full">
+                            <label class="form-check-label" for="modeFull">Full Payment</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Computed Monthly</strong></label>
+                    <div id="contractMonthly">—</div>
+                </div>
+
+                <div id="contractErrors" class="text-danger small mb-2" style="display:none;"></div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="confirmContractBtn" class="btn btn-primary">Confirm Contract</button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <!-- Chat Floating Action Button -->
     <a href="/users/chat" class="chat-fab" id="chatButton">
         <i class="bi bi-chat-dots-fill fs-4"></i>
@@ -202,6 +240,9 @@
         window.myBookingsUrl = <?= json_encode(site_url('bookings/mine')) ?>;
         window.bookingCancelUrl = <?= json_encode(site_url('bookings/cancel')) ?>;
           window.getUserUrlBase = <?= json_encode(site_url('users/getUser')) ?>;
+                // expose current user id and birthdate for client-side age lookup
+                window.currentUserId = <?= json_encode($currentUserId ?? null) ?>;
+                window.currentUserBirthdate = <?= json_encode($user['Birthdate'] ?? $user['birthdate'] ?? '') ?>;
         window.csrfName = <?= json_encode(csrf_token()) ?>;
         window.csrfHash = <?= json_encode(csrf_hash()) ?>;
     // Reservations page: show pending/confirmed/reserved
