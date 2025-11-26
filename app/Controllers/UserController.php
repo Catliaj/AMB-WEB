@@ -425,6 +425,16 @@ class UserController extends BaseController
             return $this->response->setStatusCode(400)->setJSON(['error' => 'property_id is required']);
         }
 
+        // Determine default status based on purpose: Viewing bookings should appear on bookings page,
+        // Reserve/Reservation should appear on reservations page (Pending)
+        $purposeNorm = strtolower(trim((string)$purpose ?? ''));
+        if (in_array($purposeNorm, ['viewing','view'])) {
+            $status = 'Viewing';
+        } else {
+            // default to Pending for reservations or unknown purposes
+            $status = 'Pending';
+        }
+
         // Save booking using your BookingModel
         $bookingModel = new \App\Models\BookingModel();
         $now = date('Y-m-d H:i:s');
@@ -433,7 +443,7 @@ class UserController extends BaseController
             'propertyID' => $propertyID,
             // Allow NULL bookingDate for client-created bookings; agents will set the date later
             'bookingDate'=> !empty($bookingDate) ? $bookingDate : null,
-            'status'     => 'Pending',
+            'status'     => $status,
             'Reason'     => $purpose,
             'Notes'      => $notes,
             'created_at' => $now,
