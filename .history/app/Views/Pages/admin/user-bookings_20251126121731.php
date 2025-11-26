@@ -28,8 +28,7 @@
     }
     .table-container {
       width: 100%;
-      overflow: auto;
-      max-height: 600px;
+      overflow-x: auto;
     }
 
     /* Modal Styles */

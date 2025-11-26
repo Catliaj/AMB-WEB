@@ -379,23 +379,23 @@
       } catch(e){ console.warn('reports drag init', e); }
     })();
 
-    // Sync report-preview height with chart-section height
+    // Sync report-preview height with last chart height
     (function(){
       try {
-        const chartSection = document.querySelector('.chart-section');
+        const lastChart = document.querySelector('.chart-section .chart-card:last-child');
         const reportPreview = document.querySelector('.report-preview');
-        if (!chartSection || !reportPreview) return;
+        if (!lastChart || !reportPreview) return;
 
         const syncHeight = () => {
-          reportPreview.style.height = chartSection.offsetHeight + 'px';
+          reportPreview.style.height = lastChart.offsetHeight + 'px';
         };
 
         syncHeight();
         window.addEventListener('resize', syncHeight);
 
-        // Observe changes to chart-section height
+        // Observe changes to last chart height
         const resizeObserver = new ResizeObserver(syncHeight);
-        resizeObserver.observe(chartSection);
+        resizeObserver.observe(lastChart);
       } catch(e){ console.warn('height sync init', e); }
     })();
   </script>

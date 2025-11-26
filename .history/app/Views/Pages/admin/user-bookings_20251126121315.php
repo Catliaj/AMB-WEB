@@ -28,8 +28,7 @@
     }
     .table-container {
       width: 100%;
-      overflow: auto;
-      max-height: 600px;
+      overflow-x: auto;
     }
 
     /* Modal Styles */
@@ -51,14 +50,14 @@
       to { opacity: 1; }
     }
     .modal-content {
-      background-color: var(--card);
-      color: var(--text);
+      background-color: var(--bg-color);
+      color: var(--text-color);
       padding: 0;
       border-radius: 12px;
       width: 90%;
       max-width: 500px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--divider);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      border: 1px solid var(--border-color, #ddd);
       animation: slideIn 0.3s ease-out;
     }
     @keyframes slideIn {
@@ -70,9 +69,9 @@
       justify-content: space-between;
       align-items: center;
       padding: 20px 20px 15px 20px;
-      border-bottom: 1px solid var(--divider);
-      background: linear-gradient(90deg, var(--accent1), var(--accent2));
-      color: #fff;
+      border-bottom: 1px solid var(--border-color, #eee);
+      background: linear-gradient(135deg, var(--primary-color, #007bff) 0%, var(--secondary-color, #6c757d) 100%);
+      color: white;
       border-radius: 12px 12px 0 0;
     }
     .modal-header h2 {
@@ -83,7 +82,7 @@
     .close {
       cursor: pointer;
       font-size: 1.8em;
-      color: #fff;
+      color: white;
       transition: color 0.2s;
     }
     .close:hover {
@@ -103,28 +102,23 @@
       display: block;
       margin-bottom: 5px;
       font-weight: 500;
-      color: var(--text);
     }
     .form-group select {
       width: 100%;
       padding: 8px 12px;
-      border: 1px solid var(--divider);
+      border: 1px solid var(--border-color, #ddd);
       border-radius: 6px;
-      background-color: var(--card);
-      color: var(--text);
+      background-color: var(--bg-color);
+      color: var(--text-color);
       font-size: 0.9em;
-      outline: none;
-    }
-    .form-group select:focus {
-      border-color: var(--accent2);
     }
     .modal-footer {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
       padding: 15px 20px 20px 20px;
-      border-top: 1px solid var(--divider);
-      background-color: var(--panel);
+      border-top: 1px solid var(--border-color, #eee);
+      background-color: var(--bg-secondary, #f8f9fa);
     }
     .btn {
       padding: 10px 20px;
@@ -134,24 +128,22 @@
       font-size: 0.9em;
       font-weight: 500;
       transition: all 0.2s;
-      font-family: inherit;
     }
     .btn:hover {
       transform: translateY(-1px);
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     .btn-primary {
-      background: linear-gradient(90deg, var(--accent1), var(--accent2));
-      color: #fff;
+      background-color: var(--primary-color, #007bff);
+      color: white;
     }
     .btn-danger {
-      background: var(--accent3);
-      color: #fff;
+      background-color: #dc3545;
+      color: white;
     }
     .btn-secondary {
-      background: var(--panel);
-      color: var(--text);
-      border: 1px solid var(--divider);
+      background-color: var(--secondary-color, #6c757d);
+      color: white;
     }
   </style>
 

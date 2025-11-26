@@ -63,7 +63,11 @@
             <input type="text" id="messageSearch" placeholder="Search messages...">
           </div>
         </div>
-        <div class="chat-messages" id="chatMessages" style="max-height: 60vh; overflow-y: auto;"></div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input" id="chatInputContainer">
+          <input type="text" id="adminMessage" placeholder="Type message..." disabled>
+          <button class="btn primary" id="sendBtn" disabled><i data-lucide="send"></i> Send</button>
+        </div>
       </div>
 
       <div class="chat-info" id="chatInfo">
@@ -77,6 +81,8 @@
         <hr>
         <button class="btn primary" onclick="exportChat('pdf')"><i data-lucide='file-text'></i> Export as PDF</button>
         <button class="btn" onclick="exportChat('txt')"><i data-lucide='download'></i> Export as Text</button>
+        <hr>
+        <button class="btn" id="toggleChat"><i data-lucide="lock"></i> Allow Admin to Chat</button>
       </div>
     </div>
   </main>
@@ -103,14 +109,6 @@
             ->get()->getResultArray();
 
         $messageData = [];
-        $property = 'Property Inquiry';
-        if (!empty($messages)) {
-            // Try to extract property from first message
-            $firstMsg = $messages[0]['messageContent'];
-            if (preg_match('/Hi! I am interested in your property: (.+)/', $firstMsg, $matches)) {
-                $property = $matches[1];
-            }
-        }
         foreach ($messages as $msg) {
             $messageData[] = [
                 'sender' => $msg['senderRole'],
@@ -123,7 +121,7 @@
             'id' => 'CHAT' . str_pad($session['chatSessionID'], 3, '0', STR_PAD_LEFT),
             'agent' => $session['agentFirst'] . ' ' . $session['agentLast'],
             'client' => $session['clientFirst'] . ' ' . $session['clientLast'],
-            'property' => $property,
+            'property' => 'Property Inquiry', // Placeholder since not stored
             'date' => date('Y-m-d', strtotime($session['startTime'])),
             'status' => $session['endTime'] ? 'Closed' : 'Active',
             'messages' => $messageData
@@ -136,9 +134,13 @@
     const chatList = document.getElementById('chatList');
     const chatMessages = document.getElementById('chatMessages');
     const chatTitle = document.getElementById('chatTitle');
+    const adminMsg = document.getElementById('adminMessage');
+    const sendBtn = document.getElementById('sendBtn');
+    const toggleBtn = document.getElementById('toggleChat');
     const searchInput = document.getElementById('messageSearch');
 
     let selectedChat = null;
+    let adminCanChat = false;
 
     function renderChatList() {
       chatList.innerHTML = "";
@@ -185,6 +187,22 @@
       document.getElementById('infoStatus').textContent = selectedChat.status;
     }
 
+    sendBtn.onclick = () => {
+      if (!adminCanChat || !adminMsg.value.trim()) return;
+      selectedChat.messages.push({ sender: "Admin", text: adminMsg.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) });
+      adminMsg.value = "";
+      renderMessages(searchInput.value);
+    };
+
+    toggleBtn.onclick = () => {
+      adminCanChat = !adminCanChat;
+      adminMsg.disabled = !adminCanChat;
+      sendBtn.disabled = !adminCanChat;
+      toggleBtn.innerHTML = adminCanChat
+        ? "<i data-lucide='unlock'></i> Admin Chat Enabled"
+        : "<i data-lucide='lock'></i> Admin Read-Only";
+      lucide.createIcons();
+    };
 
     searchInput.addEventListener('input', e => {
       if (selectedChat) renderMessages(e.target.value);

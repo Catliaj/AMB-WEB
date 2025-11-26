@@ -63,7 +63,7 @@
             <input type="text" id="messageSearch" placeholder="Search messages...">
           </div>
         </div>
-        <div class="chat-messages" id="chatMessages" style="max-height: 60vh; overflow-y: auto;"></div>
+        <div class="chat-messages" id="chatMessages"></div>
       </div>
 
       <div class="chat-info" id="chatInfo">
@@ -103,14 +103,6 @@
             ->get()->getResultArray();
 
         $messageData = [];
-        $property = 'Property Inquiry';
-        if (!empty($messages)) {
-            // Try to extract property from first message
-            $firstMsg = $messages[0]['messageContent'];
-            if (preg_match('/Hi! I am interested in your property: (.+)/', $firstMsg, $matches)) {
-                $property = $matches[1];
-            }
-        }
         foreach ($messages as $msg) {
             $messageData[] = [
                 'sender' => $msg['senderRole'],
@@ -123,7 +115,7 @@
             'id' => 'CHAT' . str_pad($session['chatSessionID'], 3, '0', STR_PAD_LEFT),
             'agent' => $session['agentFirst'] . ' ' . $session['agentLast'],
             'client' => $session['clientFirst'] . ' ' . $session['clientLast'],
-            'property' => $property,
+            'property' => 'Property Inquiry', // Placeholder since not stored
             'date' => date('Y-m-d', strtotime($session['startTime'])),
             'status' => $session['endTime'] ? 'Closed' : 'Active',
             'messages' => $messageData

@@ -28,8 +28,7 @@
     }
     .table-container {
       width: 100%;
-      overflow: auto;
-      max-height: 600px;
+      overflow-x: auto;
     }
 
     /* Modal Styles */
@@ -41,117 +40,60 @@
       top: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0,0,0,0.7);
+      background-color: rgba(0,0,0,0.5);
       justify-content: center;
       align-items: center;
-      animation: fadeIn 0.3s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
     }
     .modal-content {
-      background-color: var(--card);
-      color: var(--text);
-      padding: 0;
-      border-radius: 12px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      border-radius: 8px;
       width: 90%;
       max-width: 500px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--divider);
-      animation: slideIn 0.3s ease-out;
-    }
-    @keyframes slideIn {
-      from { transform: translateY(-50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 20px 15px 20px;
-      border-bottom: 1px solid var(--divider);
-      background: linear-gradient(90deg, var(--accent1), var(--accent2));
-      color: #fff;
-      border-radius: 12px 12px 0 0;
+      margin-bottom: 15px;
     }
     .modal-header h2 {
       margin: 0;
-      font-size: 1.4em;
-      font-weight: 600;
+      font-size: 1.2em;
     }
     .close {
       cursor: pointer;
-      font-size: 1.8em;
-      color: #fff;
-      transition: color 0.2s;
-    }
-    .close:hover {
-      color: #ccc;
+      font-size: 1.5em;
+      color: var(--text-color);
     }
     .modal-body {
-      padding: 20px;
-      line-height: 1.6;
-    }
-    .modal-body p {
-      margin: 8px 0;
-    }
-    .form-group {
       margin-bottom: 15px;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: var(--text);
-    }
-    .form-group select {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid var(--divider);
-      border-radius: 6px;
-      background-color: var(--card);
-      color: var(--text);
-      font-size: 0.9em;
-      outline: none;
-    }
-    .form-group select:focus {
-      border-color: var(--accent2);
     }
     .modal-footer {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-      padding: 15px 20px 20px 20px;
-      border-top: 1px solid var(--divider);
-      background-color: var(--panel);
     }
     .btn {
-      padding: 10px 20px;
+      padding: 8px 16px;
       border: none;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       font-size: 0.9em;
-      font-weight: 500;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     .btn-primary {
-      background: linear-gradient(90deg, var(--accent1), var(--accent2));
-      color: #fff;
+      background-color: var(--primary-color);
+      color: white;
     }
     .btn-danger {
-      background: var(--accent3);
-      color: #fff;
+      background-color: #dc3545;
+      color: white;
     }
     .btn-secondary {
-      background: var(--panel);
-      color: var(--text);
-      border: 1px solid var(--divider);
+      background-color: var(--secondary-color);
+      color: var(--text-color);
     }
   </style>
 
@@ -228,64 +170,21 @@
   <script>
    lucide.createIcons();
 
-   let currentBookingId = null;
-
-   function openModal(modalId) {
-     document.getElementById(modalId).style.display = 'flex';
-   }
-
-   function closeModal(modalId) {
-     document.getElementById(modalId).style.display = 'none';
-   }
-
-   // Close modal when clicking outside
-   window.onclick = function(event) {
-     if (event.target.classList.contains('modal')) {
-       event.target.style.display = 'none';
-     }
-   }
-
    function viewBooking(id) {
-     const booking = bookings.find(b => b.bookingID == id);
-     if (booking) {
-       const formattedDate = new Date(booking.BookingDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-       document.getElementById('viewModalBody').innerHTML = `
-         <p><strong>Booking ID:</strong> ${booking.bookingID}</p>
-         <p><strong>Client Name:</strong> ${booking.ClientName}</p>
-         <p><strong>Property:</strong> ${booking.PropertyTitle}</p>
-         <p><strong>Date:</strong> ${formattedDate}</p>
-         <p><strong>Status:</strong> ${booking.Status}</p>
-       `;
-       openModal('viewModal');
-     }
+      alert('View booking details for ID: ' + id);
+      // Implement view logic here
    }
 
    function editBooking(id) {
-     const booking = bookings.find(b => b.bookingID == id);
-     if (booking) {
-       currentBookingId = id;
-       document.getElementById('editStatus').value = booking.Status;
-       openModal('editModal');
-     }
-   }
-
-   function saveEdit() {
-     // Implement save logic here, e.g., AJAX to update
-     alert('Booking updated for ID: ' + currentBookingId);
-     closeModal('editModal');
-     // Reload or update table
+      alert('Edit booking for ID: ' + id);
+      // Implement edit logic here
    }
 
    function deleteBooking(id) {
-     currentBookingId = id;
-     openModal('deleteModal');
-   }
-
-   function confirmDelete() {
-     // Implement delete logic here
-     alert('Booking deleted for ID: ' + currentBookingId);
-     closeModal('deleteModal');
-     // Reload or update table
+      if (confirm('Are you sure you want to delete this booking?')) {
+        alert('Delete booking ID: ' + id);
+        // Implement delete logic here
+      }
    }
 
     const tableBody = document.querySelector('#bookingTable tbody');

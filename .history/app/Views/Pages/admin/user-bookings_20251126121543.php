@@ -28,8 +28,7 @@
     }
     .table-container {
       width: 100%;
-      overflow: auto;
-      max-height: 600px;
+      overflow-x: auto;
     }
 
     /* Modal Styles */
@@ -41,7 +40,7 @@
       top: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0,0,0,0.7);
+      background-color: var(--bg);
       justify-content: center;
       align-items: center;
       animation: fadeIn 0.3s ease-in-out;

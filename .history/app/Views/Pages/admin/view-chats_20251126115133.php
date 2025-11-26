@@ -63,7 +63,7 @@
             <input type="text" id="messageSearch" placeholder="Search messages...">
           </div>
         </div>
-        <div class="chat-messages" id="chatMessages" style="max-height: 60vh; overflow-y: auto;"></div>
+        <div class="chat-messages" id="chatMessages"></div>
       </div>
 
       <div class="chat-info" id="chatInfo">
