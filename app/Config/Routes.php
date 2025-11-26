@@ -85,7 +85,7 @@ $routes->get('/admin/adminHomepage', 'AdminController::adminDashboard');
 $routes->get('/admin/Reports', 'AdminController::generateReports');
 $routes->get('/admin/ManageProperties', 'AdminController::manageProperties');
 $routes->get('/admin/manageUsers', 'AdminController::manageUsers');
-$routes->get('/admin/userBookings', 'AdminController::userBooking');
+// userBookings removed: route deprecated and page deleted
 // Fetch booking details (JSON) for Admin detail popups
 $routes->get('/admin/booking/(:num)', 'AdminController::getBookingDetails/$1');
 // Removed admin chat viewing for privacy reasons
@@ -120,6 +120,11 @@ $routes->post('/users/request-otp', 'UserController::requestOtp');
 $routes->get('/verify-email', 'UserController::verifyEmail');
 // Change password endpoint (used by profile Security tab)
 $routes->post('/users/change-password', 'UserController::changePassword');
+// Server-side exports for admin reports (CSV / PDF)
+$routes->get('/admin/reports/export.csv', 'AdminController::exportReportsCsv');
+$routes->get('/admin/reports/export.pdf', 'AdminController::exportReportsPdf');
+// Reports data (JSON) for admin UI
+$routes->get('/admin/reports/data', 'AdminController::getReportsData');
 
 
 /*

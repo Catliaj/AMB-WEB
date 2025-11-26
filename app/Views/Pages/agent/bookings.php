@@ -88,6 +88,8 @@
                       <i class="bi bi-eye"></i>
                     </button>
 
+                    
+
                     <?php if ($hasId && $isPending): ?>
                       <!-- Only pending bookings have Approve / Reject -->
                       <button class="btn btn-sm btn-outline-success me-1 btn-approve" type="button" title="Confirm">
@@ -134,12 +136,14 @@
     </div>
   </div>
 
+  
+
   <!-- Scripts -->
   <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
-   window.updateBookingStatusUrl = <?= json_encode(site_url("users/updateBookingStatus")) ?>;
+  window.updateBookingStatusUrl = <?= json_encode(site_url("users/updateBookingStatus")) ?>;
   window.getBookingUrl = <?= json_encode(site_url("users/getBooking")) ?>;
 
     const Toast = Swal.mixin({
@@ -201,6 +205,8 @@
 
       new bootstrap.Modal(document.getElementById('viewModal')).show();
     }
+
+    
 
     async function approveBooking(btn) {
       const tr = btn.closest('tr');

@@ -146,7 +146,7 @@
       <a href="/admin/adminHomepage" ><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="/admin/manageUsers" class="active"><i data-lucide="users"></i> Manage Users</a>
       <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
-      <a href="/admin/userBookings"><i data-lucide="calendar"></i> User Bookings</a>
+      <!-- User Bookings removed -->
       <!-- View Chats removed for privacy -->
       <a href="/admin/Reports"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
     </nav>

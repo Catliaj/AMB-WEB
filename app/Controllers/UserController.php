@@ -446,7 +446,7 @@ class UserController extends BaseController
             ->select('
                 booking.bookingID,
                 booking.bookingDate,
-                booking.status AS BookingStatus,
+                booking.Status AS BookingStatus,
                 booking.Reason,
                 booking.Notes,
                 property.PropertyID,
@@ -456,6 +456,7 @@ class UserController extends BaseController
             ')
             ->join('property', 'property.PropertyID = booking.propertyID', 'left')
             ->where('booking.userID', $userId)
+            ->where('booking.status', 'Confirmed')
             ->orderBy('booking.bookingDate', 'DESC')
             ->findAll();
 
@@ -476,6 +477,31 @@ class UserController extends BaseController
                 }
             }
             $b['Images'] = $images;
+        }
+        unset($b);
+
+        // Attach DB-backed rating for each booking if a reviews table exists.
+        // This is done in a safe try/catch so apps without a reviews table keep working.
+        $db = \Config\Database::connect();
+        foreach ($bookings as &$b) {
+            $b['Rating'] = null;
+            try {
+                // Attempt to read the latest review for this booking (if table exists)
+                $review = $db->table('reviews')
+                    ->select('rating')
+                    ->where('bookingID', $b['bookingID'])
+                    ->orderBy('created_at', 'DESC')
+                    ->limit(1)
+                    ->get()
+                    ->getRowArray();
+
+                if ($review && array_key_exists('rating', $review)) {
+                    $b['Rating'] = $review['rating'];
+                }
+            } catch (\Throwable $e) {
+                // Table doesn't exist or other DB error — leave Rating as null
+                $b['Rating'] = null;
+            }
         }
         unset($b);
 
