@@ -13,6 +13,72 @@
 
   <link rel="stylesheet" href="admin-style.css" />
 
+  <style>
+    /* Page-scoped layout and card styles for Reports page
+       This provides a self-contained layout so the page looks correct
+       even if the global `admin-style.css` is minimal. */
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+    body { display: flex; background: #0f1112; color: #e6e6e6; }
+
+    /* Sidebar */
+    aside.sidebar { width: 230px; background: #0b0c0d; padding: 22px; display:flex; flex-direction:column; gap:18px; min-height:100vh; position:fixed; left:0; top:0; box-shadow: 2px 0 8px rgba(0,0,0,0.4); z-index:40; }
+    aside.sidebar img { width:120px; display:block; margin:0 auto 6px; }
+    aside.sidebar .nav { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+    aside.sidebar .nav a { color: #cbd5e1; text-decoration:none; padding:10px 12px; border-radius:8px; display:flex; align-items:center; gap:10px; font-weight:500; }
+    aside.sidebar .nav a:hover { background: rgba(255,255,255,0.03); }
+    aside.sidebar .nav a.active { background: linear-gradient(90deg,#438f41,#2b74cc); color:#fff; }
+    .profile-box { margin-top:auto; display:flex; align-items:center; gap:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.03); }
+
+    /* Main content */
+    main.main { margin-left: 250px; padding: 28px 32px; flex:1; min-height:100vh; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
+    .left-header { display:flex; align-items:center; gap:12px; }
+    header h1 { font-size:20px; margin:0; color:#fff; display:flex; gap:10px; align-items:center; }
+
+    /* basic button styles (page-local) */
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:inherit; cursor:pointer; }
+    .btn.primary { background: linear-gradient(90deg,#438f41,#2b74cc); color:#fff; border:0; }
+    .btn.secondary { background:transparent; color: #e6e6e6; border:1px solid rgba(255,255,255,0.06); }
+
+    /* Summary card */
+    .summary-wrapper { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding: 18px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.28); margin-bottom: 20px; }
+    .summary-wrapper h2 { margin: 0 0 6px 0; font-size: 16px; color: #fff; }
+    .summary-wrapper p.summary-note { margin: 0 0 12px 0; color: #9ca3af; font-size: 13px; }
+    .summary-cards { display:flex; gap:16px; flex-wrap:wrap; }
+    .summary-card { background: rgba(255,255,255,0.02); padding:14px; border-radius:10px; min-width:180px; flex:1 1 180px; border:1px solid rgba(255,255,255,0.02); }
+    .summary-card h2 { font-size:14px; margin:0 0 6px 0; color:#cbd5e1; }
+    .summary-card .value { font-size:20px; font-weight:700; color:#fff; }
+    .summary-card .stat-desc { font-size:12px; color:#9ca3af; margin-top:8px; }
+
+    /* Filters */
+    .filters { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+    .filters input, .filters select { padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:inherit; }
+
+    /* Report layout: left = table preview, right = charts */
+    .report-layout { display:grid; grid-template-columns: 1fr 520px; gap:20px; align-items:start; }
+    .report-preview { background: rgba(255,255,255,0.02); padding:16px; border-radius:12px; }
+    .report-preview h3 { margin:0 0 10px 0; font-size:15px; color:#fff; }
+    table { width:100%; border-collapse:collapse; background:transparent; color:inherit; }
+    thead th { text-align:left; font-size:12px; color:#9ca3af; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.03); }
+    tbody td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.02); }
+    tbody tr:hover { background: rgba(255,255,255,0.01); }
+
+    /* Chart section */
+    .chart-section { display:flex; flex-direction:column; gap:14px; }
+    .chart-card { background: rgba(255,255,255,0.02); padding:12px; border-radius:12px; min-height:160px; display:flex; flex-direction:column; gap:10px; }
+    .chart-card h3 { margin:0; font-size:14px; color:#fff; display:flex; align-items:center; gap:8px; }
+    .chart-container { flex:1; min-height:120px; display:block; }
+
+    /* Responsive adjustments */
+    @media (max-width: 1100px) { .report-layout { grid-template-columns: 1fr 420px; } }
+    @media (max-width: 900px) { aside.sidebar { position:fixed; transform:translateX(-100%); transition:transform .25s ease; } aside.sidebar.show { transform:translateX(0); } main.main { margin-left:0; padding:18px; } }
+    @media (max-width: 700px) { .report-layout { grid-template-columns: 1fr; } .summary-cards{ flex-direction:column; } .chart-section { flex-direction:column; } }
+
+  </style>
+
 </head>
 
   <script>
@@ -55,10 +121,14 @@
         <button id="toggleSidebar" class="btn"><i data-lucide="menu"></i></button>
         <h1><i data-lucide="bar-chart-2"></i> Generate Reports</h1>
       </div>
-      <div class="controls">
-        <button class="btn primary" id="generateReportBtn"><i data-lucide="refresh-ccw"></i></button>
-        <button class="btn" id="exportPdf"><i data-lucide="file-down"></i></button>
-        <button class="btn" id="exportExcel"><i data-lucide="file-spreadsheet"></i></button>
+
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="controls-help">Actions: Generate updates the table; Export downloads the current filtered report.</div>
+        <div class="controls">
+          <button class="btn primary" id="generateReportBtn"><i data-lucide="refresh-ccw"></i> Generate</button>
+          <button class="btn secondary" id="exportPdf"><i data-lucide="file-down"></i> PDF</button>
+          <button class="btn secondary" id="exportExcel"><i data-lucide="file-spreadsheet"></i> Excel</button>
+        </div>
       </div>
     </header>
 
@@ -85,20 +155,27 @@
       </select>
     </div>
 
-    <div class="summary-cards">
-      <div class="summary-card">
-        <h2>Total Sales</h2>
-        <div class="value" id="totalSales">₱1,250,000</div>
+    <section class="summary-wrapper">
+      <h2>Summary</h2>
+      <p class="summary-note">Overview of key metrics for the selected filters and date range.</p>
+      <div class="summary-cards">
+        <div class="summary-card">
+          <h2>Total Sales</h2>
+          <div class="value" id="totalSales">₱1,250,000</div>
+          <p class="stat-desc">Sum of all confirmed sales in the selected period.</p>
+        </div>
+        <div class="summary-card">
+          <h2>Total Properties</h2>
+          <div class="value" id="totalProperties">128</div>
+          <p class="stat-desc">Number of properties available or listed in the selected filters.</p>
+        </div>
+        <div class="summary-card">
+          <h2>Active Users</h2>
+          <div class="value" id="activeUsers">86</div>
+          <p class="stat-desc">Users who have an active booking or activity within the date range.</p>
+        </div>
       </div>
-      <div class="summary-card">
-        <h2>Total Properties</h2>
-        <div class="value" id="totalProperties">128</div>
-      </div>
-      <div class="summary-card">
-        <h2>Active Users</h2>
-        <div class="value" id="activeUsers">86</div>
-      </div>
-    </div>
+    </section>
 
     <div class="report-layout">
       <div class="report-preview">
@@ -171,6 +248,20 @@
       });
     }
 
+    function updateSummaryMetrics(filtered) {
+      // Total sales
+      const total = filtered.reduce((sum, r) => sum + (Number(r.sales) || 0), 0);
+      document.getElementById('totalSales').textContent = '₱' + total.toLocaleString();
+
+      // Total unique properties
+      const props = new Set(filtered.map(r => r.property));
+      document.getElementById('totalProperties').textContent = props.size;
+
+      // Active users — derive from unique agents involved in filtered results
+      const agents = new Set(filtered.map(r => r.agent));
+      document.getElementById('activeUsers').textContent = agents.size;
+    }
+
     function filterReports() {
       const property = document.getElementById("propertyFilter").value;
       const agent = document.getElementById("agentFilter").value;
@@ -207,7 +298,10 @@
       const filtered = filterReports();
       populateTable(filtered);
       updateCharts(filtered);
-      alert("Report updated based on filters!");
+      updateSummaryMetrics(filtered);
+      // brief non-blocking notification
+      const prev = document.getElementById('generateReportBtn');
+      if (prev) prev.setAttribute('aria-live','polite');
     });
 
     document.getElementById("exportExcel").addEventListener("click", () => {
@@ -267,6 +361,8 @@
     });
 
     populateTable(reportData);
+    // initialize summary metrics and charts with full dataset
+    updateSummaryMetrics(reportData);
     (function(){
       try {
         const charts = {};
