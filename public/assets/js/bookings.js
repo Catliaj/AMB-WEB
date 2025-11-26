@@ -25,12 +25,18 @@
         if (mode === 'reservations') {
           filtered = data.filter(b => {
             const s = String(b.BookingStatus || b.status || '').toLowerCase();
+            const reason = String(b.Reason || b.reason || '').toLowerCase();
+            // Exclude any bookings that are viewing-purpose (even if status is 'pending')
+            if (reason.includes('view')) return false;
             return s === 'pending' || s === 'confirmed' || s === 'reserved';
           });
         } else {
-          // bookings page shows cancelled or viewing (or other non-active statuses)
+          // bookings page shows cancelled, viewing, or other non-active statuses
+          // include pending bookings that were created for "viewing" purpose
           filtered = data.filter(b => {
             const s = String(b.BookingStatus || b.status || '').toLowerCase();
+            const reason = String(b.Reason || b.reason || '').toLowerCase();
+            if (s === 'pending' && reason.includes('view')) return true;
             return s === 'cancelled' || s === 'rejected' || s === 'viewing' || s === 'completed';
           });
         }
@@ -83,11 +89,20 @@
     const badgeClass = statusClass(status);
     const notes = b.Notes || b.Notes === 0 ? escapeHtml(b.Notes) : '';
 
+    // Build a safe absolute image URL (preserve absolute URLs from backend)
+    let imgUrl = '';
+    try {
+      if (/^https?:\/\//i.test(img)) imgUrl = img;
+      else imgUrl = (window.location.origin.replace(/\/$/, '') + '/' + String(img).replace(/^\/+/, ''));
+    } catch (e) {
+      imgUrl = img;
+    }
+
     return `
       <div class="card mb-3">
         <div class="row g-0 align-items-center">
           <div class="col-auto" style="width:140px;">
-            <img src="${escapeHtml(img)}" class="img-fluid rounded-start" style="height:100%; object-fit:cover;" alt="Property image">
+            <img src="${escapeHtml(imgUrl)}" class="img-fluid rounded-start" style="height:100%; object-fit:cover;" alt="Property image">
           </div>
           <div class="col">
             <div class="card-body">
@@ -101,9 +116,7 @@
           </div>
           <div class="col-auto pe-3">
                 <div class="d-flex flex-column gap-2">
-                  <button class="btn btn-sm btn-outline-primary btn-view-booking" data-id="${b.bookingID}">Details</button>
-                  ${ (['pending','confirmed'].includes(String(status).toLowerCase())) ? `<button class="btn btn-sm btn-danger btn-cancel-booking" data-id="${b.bookingID}">Cancel</button>` : '' }
-                  ${ (String(status).toLowerCase() === 'confirmed') ? `<button class="btn btn-sm btn-success btn-confirm-contract" data-id="${b.bookingID}" data-price="${b.PropertyPrice || b.Price || 0}">Confirm Contract</button>` : '' }
+                  <button class="btn btn-sm btn-outline-primary btn-view-booking" data-id="${escapeHtml(b.bookingID)}">Details</button>
                 </div>
           </div>
         </div>
@@ -143,25 +156,34 @@
     }
   }
 function populateBookingModal(b) {
+  // helper: safely set textContent if element exists
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = value ?? '';
+  };
+
   // basic fields
-  document.getElementById('bookingModalTitle').textContent = 'Booking #' + (b.bookingID || '');
-  document.getElementById('bookingModalPropertyTitle').textContent = b.PropertyTitle || b.Title || 'Property';
-  document.getElementById('bookingModalLocation').textContent = b.PropertyLocation || b.Location || '';
+  setText('bookingModalTitle', 'Booking #' + (b.bookingID || ''));
+  setText('bookingModalPropertyTitle', b.PropertyTitle || b.Title || 'Property');
+  setText('bookingModalLocation', b.PropertyLocation || b.Location || '');
 
   const status = b.BookingStatus || b.status || 'Pending';
   // Map confirmed -> Scheduled for UI label
   const statusDisplay = String(status || '').toLowerCase() === 'confirmed' ? 'Scheduled' : (status ? String(status).charAt(0).toUpperCase() + String(status).slice(1) : 'Pending');
   const statusEl = document.getElementById('bookingModalStatus');
-  statusEl.textContent = statusDisplay;
-  statusEl.className = 'badge ' + statusClass(status);
+  if (statusEl) {
+    statusEl.textContent = statusDisplay;
+    statusEl.className = 'badge ' + statusClass(status);
+  }
 
   // image and price
   const img = (b.Images && b.Images[0]) ? b.Images[0] : (b.Image ? b.Image : 'uploads/properties/no-image.jpg');
   const imgEl = document.getElementById('bookingModalImage');
   if (imgEl) imgEl.src = img;
 
-  document.getElementById('bookingModalPrice').textContent = b.PropertyPrice ? `₱${Number(b.PropertyPrice).toLocaleString()}` : (b.Price ? `₱${Number(b.Price).toLocaleString()}` : '—');
-  document.getElementById('bookingModalNotes').textContent = b.Notes || b.Reason || 'No notes provided.';
+  setText('bookingModalPrice', b.PropertyPrice ? `₱${Number(b.PropertyPrice).toLocaleString()}` : (b.Price ? `₱${Number(b.Price).toLocaleString()}` : '—'));
+  setText('bookingModalNotes', b.Notes || b.Reason || 'No notes provided.');
 
   // --- AGENT INFO: prefer server-provided fields if present ---
   // server keys: agent_id, agent_name, agent_phone, agent_email
@@ -178,7 +200,6 @@ function populateBookingModal(b) {
   const phoneEl = document.getElementById('bookingModalAgentPhone');
   if (phoneEl) {
     if (agentPhone) {
-      // clickable tel link
       phoneEl.innerHTML = `<a href="tel:${escapeHtml(agentPhone)}" class="text-decoration-none">${escapeHtml(agentPhone)}</a>`;
     } else {
       phoneEl.textContent = '—';
@@ -200,13 +221,15 @@ function populateBookingModal(b) {
 
   // show/hide cancel button depending on status
   const cancelBtn = document.getElementById('modalCancelBookingBtn');
-  if (['pending','confirmed'].includes(String(status).toLowerCase())) {
-    cancelBtn.style.display = '';
-    cancelBtn.dataset.id = b.bookingID;
-    cancelBtn.onclick = onCancelBooking;
-  } else {
-    cancelBtn.style.display = 'none';
-    cancelBtn.onclick = null;
+  if (cancelBtn) {
+    if (['pending','confirmed'].includes(String(status).toLowerCase())) {
+      cancelBtn.style.display = '';
+      cancelBtn.dataset.id = b.bookingID;
+      cancelBtn.onclick = onCancelBooking;
+    } else {
+      cancelBtn.style.display = 'none';
+      cancelBtn.onclick = null;
+    }
   }
 
   // contact agent button action:
@@ -229,16 +252,48 @@ function populateBookingModal(b) {
     };
   }
 
-  // view property button
-  const viewPropBtn = document.getElementById('modalViewPropertyBtn');
-  if (viewPropBtn) {
-    viewPropBtn.onclick = () => {
-      if (b.PropertyID) {
-        window.location.href = '/properties/view/' + encodeURIComponent(b.PropertyID);
-      } else {
-        bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal'))?.hide();
+  // details button: fetch and show inline property details where possible, otherwise open property page
+  const detailsBtn = document.getElementById('modalDetailsBtn');
+  if (detailsBtn) {
+    detailsBtn.onclick = async () => {
+      const bookingModalEl = document.getElementById('bookingDetailModal');
+      // try to keep the modal open and inject property summary into the history area
+      const propId = b.PropertyID || b.property_id || b.PropertyId || b.PropertyId;
+      if (!propId) {
         window.location.href = '/users/clientbrowse';
+        return;
       }
+
+      // If a JSON endpoint base is exposed, try fetching property JSON and render summary
+      if (window.getPropertyJsonUrlBase) {
+        try {
+          const res = await fetch(`${window.getPropertyJsonUrlBase}/${encodeURIComponent(propId)}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+          if (res.ok) {
+            const p = await res.json();
+            const historyEl = document.getElementById('bookingModalHistory');
+            if (historyEl) {
+              historyEl.innerHTML = `
+                <div class="mt-3">
+                  <h6 class="mb-1">Property Details</h6>
+                  <p class="small text-muted mb-1">${escapeHtml(p.Title || p.PropertyTitle || p.name || '')}</p>
+                  <p class="small text-muted mb-0">Price: ${p.Price ? '₱' + Number(p.Price).toLocaleString() : '—'}</p>
+                </div>
+              `;
+            }
+            return;
+          }
+        } catch (err) {
+          // ignore and fallback to page redirect
+          console.warn('property json fetch failed', err);
+        }
+      }
+
+      // fallback: open property page
+      try {
+        // close booking modal then redirect to property view page
+        bootstrap.Modal.getInstance(bookingModalEl)?.hide();
+      } catch (e) { /* ignore */ }
+      window.location.href = `/properties/view/${encodeURIComponent(propId)}`;
     };
   }
 }
@@ -301,29 +356,37 @@ function populateBookingModal(b) {
     const modalEl = document.getElementById('confirmContractModal');
     const modal = new bootstrap.Modal(modalEl);
 
-    // fetch client age using currentUserId and getUserUrlBase
-    let age = null;
-    try {
-      const uid = window.currentUserId;
-      if (uid && window.getUserUrlBase) {
-        const res = await fetch(`${window.getUserUrlBase}/${encodeURIComponent(uid)}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        if (res.ok) {
-          const u = await res.json();
-          const birth = u.Birthdate ?? u.birthdate ?? u.BirthDate ?? u.Birthdate ?? null;
-          if (birth) {
-            const dob = new Date(birth);
-            const now = new Date();
-            age = now.getFullYear() - dob.getFullYear();
-            const m = now.getMonth() - dob.getMonth();
-            if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
-          }
-        }
+    // helper: fetch user's birthdate and compute age (returns number or null)
+    async function getClientAge(userId) {
+      if (!userId || !window.getUserUrlBase) return null;
+      try {
+        const res = await fetch(`${window.getUserUrlBase}/${encodeURIComponent(userId)}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+          if (!res.ok) return null;
+          // attempt parse json
+          let u = null;
+          try { u = await res.json(); } catch(e) { return null; }
+          // try multiple possible birthdate keys
+          const birth = u?.Birthdate ?? u?.birthdate ?? u?.BirthDate ?? u?.DOB ?? u?.dob ?? u?.birthday ?? null;
+          if (!birth) return null;
+          const dob = new Date(birth);
+          if (isNaN(dob.getTime())) return null;
+          const now = new Date();
+          let ageCalc = now.getFullYear() - dob.getFullYear();
+          const m = now.getMonth() - dob.getMonth();
+          if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) ageCalc--;
+          return ageCalc;
+      } catch (err) {
+        console.warn('getClientAge error', err);
+        return null;
       }
-    } catch (err) {
-      console.warn('Failed to fetch user for age', err);
     }
 
-    document.getElementById('contractClientAge').textContent = age !== null ? String(age) : '—';
+    // fetch age once and compute live when mode changes
+    let age = null;
+    const uid = window.currentUserId;
+    age = await getClientAge(uid);
+    const ageEl = document.getElementById('contractClientAge');
+    ageEl.textContent = age !== null ? String(age) : '—';
 
     // attach compute handler
     const radios = Array.from(document.querySelectorAll('input[name="contractMode"]'));
@@ -345,6 +408,7 @@ function populateBookingModal(b) {
       if (age === null) {
         errorsEl.textContent = 'Unable to determine age. Please update your profile birthdate.';
         errorsEl.style.display = '';
+        document.getElementById('contractMonthly').textContent = '—';
         return;
       }
 
@@ -363,10 +427,14 @@ function populateBookingModal(b) {
       }
 
       const perMonth = Number(price) / months;
-      document.getElementById('contractMonthly').textContent = `₱${perMonth.toFixed(2).toLocaleString ? Number(perMonth.toFixed(2)).toLocaleString() : perMonth.toFixed(2)}`;
+      // format number with grouping
+      const perText = `₱${perMonth.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+      document.getElementById('contractMonthly').textContent = perText;
     }
 
     radios.forEach(r => r.addEventListener('change', compute));
+    // run compute once to initialize displayed value if a radio is pre-selected
+    compute();
 
     // Confirm button handler (client-side only for now)
     const confirmBtn = document.getElementById('confirmContractBtn');
