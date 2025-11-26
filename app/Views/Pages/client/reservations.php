@@ -92,6 +92,21 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="stat-icon me-3">
+                                    <i class="bi bi-check-circle"></i>
+                                </div>
+                                <div>
+                                    <p class="text-muted small mb-0">Scheduled</p>
+                                    <h3 id="scheduledReservationsCount" class="h4 mb-0">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon me-3">
                                     <i class="bi bi-clock"></i>
                                 </div>
                                 <div>
@@ -240,9 +255,8 @@
         window.myBookingsUrl = <?= json_encode(site_url('bookings/mine')) ?>;
         window.bookingCancelUrl = <?= json_encode(site_url('bookings/cancel')) ?>;
           window.getUserUrlBase = <?= json_encode(site_url('users/getUser')) ?>;
-                // expose current user id and birthdate for client-side age lookup
+                // expose current user id for client-side age lookup
                 window.currentUserId = <?= json_encode($currentUserId ?? null) ?>;
-                window.currentUserBirthdate = <?= json_encode($user['Birthdate'] ?? $user['birthdate'] ?? '') ?>;
         window.csrfName = <?= json_encode(csrf_token()) ?>;
         window.csrfHash = <?= json_encode(csrf_hash()) ?>;
     // Reservations page: show pending/confirmed/reserved

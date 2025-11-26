@@ -569,6 +569,102 @@ class UserController extends BaseController
     }
 
     /**
+     * Client proposes a contract for a booking (persist proposal).
+     * POST: booking_id, mode, monthly
+     */
+    public function proposeContract()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Client') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        $post = $this->request->getPost();
+        if (empty($post)) {
+            parse_str($this->request->getBody(), $post);
+        }
+
+        $bookingID = $post['booking_id'] ?? $post['bookingID'] ?? null;
+        $mode = $post['mode'] ?? null;
+        $monthly = $post['monthly'] ?? null;
+
+        if (empty($bookingID) || empty($mode)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'booking_id and mode are required']);
+        }
+
+        $contractModel = new \App\Models\ContractModel();
+        $now = date('Y-m-d H:i:s');
+        $data = [
+            'bookingID' => $bookingID,
+            'mode' => $mode,
+            'monthly' => $monthly ?? null,
+            'proposedBy' => $session->get('UserID'),
+            'status' => 'proposed',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ];
+
+        try {
+            $id = $contractModel->insert($data);
+            if ($id === false) {
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to save contract proposal']);
+            }
+
+            return $this->response->setJSON(['success' => true, 'contractID' => $contractModel->getInsertID()]);
+        } catch (\Throwable $e) {
+            log_message('error', 'proposeContract failed: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+        }
+    }
+
+    /**
+     * Agent confirms a contract proposal.
+     * POST: contract_id
+     */
+    public function confirmContract()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Agent') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        $post = $this->request->getPost();
+        if (empty($post)) {
+            parse_str($this->request->getBody(), $post);
+        }
+
+        $contractID = $post['contract_id'] ?? $post['contractID'] ?? null;
+        if (empty($contractID)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'contract_id is required']);
+        }
+
+        $contractModel = new \App\Models\ContractModel();
+        $contract = $contractModel->find($contractID);
+        if (!$contract) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'Contract not found']);
+        }
+
+        try {
+            $now = date('Y-m-d H:i:s');
+            $updated = $contractModel->update($contractID, [
+                'status' => 'confirmed',
+                'confirmedBy' => $session->get('UserID'),
+                'confirmed_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            if ($updated === false) {
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to confirm contract']);
+            }
+
+            return $this->response->setJSON(['success' => true]);
+        } catch (\Throwable $e) {
+            log_message('error', 'confirmContract failed: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+        }
+    }
+
+    /**
      * Change password for logged-in user
      * Expects JSON { current_password, new_password, confirm_password }
      */

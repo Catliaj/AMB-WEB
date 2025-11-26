@@ -65,6 +65,7 @@
       // attach listeners for detail buttons
       container.querySelectorAll('.btn-view-booking').forEach(btn => btn.addEventListener('click', onViewBooking));
       container.querySelectorAll('.btn-cancel-booking').forEach(btn => btn.addEventListener('click', onCancelBooking));
+      container.querySelectorAll('.btn-confirm-contract').forEach(btn => btn.addEventListener('click', onConfirmContract));
     } catch (err) {
       console.error('loadMyBookings error', err);
       container.innerHTML = `<div class="text-center text-danger py-4">Unable to load bookings. Please refresh the page.</div>`;
@@ -99,10 +100,11 @@
             </div>
           </div>
           <div class="col-auto pe-3">
-            <div class="d-flex flex-column gap-2">
-              <button class="btn btn-sm btn-outline-primary btn-view-booking" data-id="${b.bookingID}">Details</button>
-              ${ (['pending','confirmed'].includes(String(status).toLowerCase())) ? `<button class="btn btn-sm btn-danger btn-cancel-booking" data-id="${b.bookingID}">Cancel</button>` : '' }
-            </div>
+                <div class="d-flex flex-column gap-2">
+                  <button class="btn btn-sm btn-outline-primary btn-view-booking" data-id="${b.bookingID}">Details</button>
+                  ${ (['pending','confirmed'].includes(String(status).toLowerCase())) ? `<button class="btn btn-sm btn-danger btn-cancel-booking" data-id="${b.bookingID}">Cancel</button>` : '' }
+                  ${ (String(status).toLowerCase() === 'confirmed') ? `<button class="btn btn-sm btn-success btn-confirm-contract" data-id="${b.bookingID}" data-price="${b.PropertyPrice || b.Price || 0}">Confirm Contract</button>` : '' }
+                </div>
           </div>
         </div>
       </div>
@@ -281,6 +283,157 @@ function populateBookingModal(b) {
       console.error('Cancel booking failed', err);
       Swal.fire({ icon: 'error', title: 'Failed', text: err.message || 'Unable to cancel booking.' });
     }
+  }
+
+  // Confirm contract flow (client-side)
+  async function onConfirmContract(e) {
+    const bookingID = e.currentTarget?.dataset?.id;
+    const price = Number(e.currentTarget?.dataset?.price || 0);
+    if (!bookingID) return;
+
+    // populate modal
+    document.getElementById('contractPropertyPrice').textContent = price ? `₱${Number(price).toLocaleString()}` : '—';
+    document.getElementById('contractMonthly').textContent = '—';
+    document.getElementById('contractErrors').style.display = 'none';
+    document.getElementById('contractClientAge').textContent = '…';
+
+    // open modal
+    const modalEl = document.getElementById('confirmContractModal');
+    const modal = new bootstrap.Modal(modalEl);
+
+    // fetch client age using currentUserId and getUserUrlBase
+    let age = null;
+    try {
+      const uid = window.currentUserId;
+      if (uid && window.getUserUrlBase) {
+        const res = await fetch(`${window.getUserUrlBase}/${encodeURIComponent(uid)}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (res.ok) {
+          const u = await res.json();
+          const birth = u.Birthdate ?? u.birthdate ?? u.BirthDate ?? u.Birthdate ?? null;
+          if (birth) {
+            const dob = new Date(birth);
+            const now = new Date();
+            age = now.getFullYear() - dob.getFullYear();
+            const m = now.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch user for age', err);
+    }
+
+    document.getElementById('contractClientAge').textContent = age !== null ? String(age) : '—';
+
+    // attach compute handler
+    const radios = Array.from(document.querySelectorAll('input[name="contractMode"]'));
+    function compute() {
+      const sel = radios.find(r => r.checked)?.value || null;
+      const errorsEl = document.getElementById('contractErrors');
+      errorsEl.style.display = 'none';
+      if (!sel) {
+        document.getElementById('contractMonthly').textContent = '—';
+        return;
+      }
+
+      if (sel === 'full') {
+        document.getElementById('contractMonthly').textContent = `₱${Number(price).toLocaleString()}`;
+        return;
+      }
+
+      const maxYears = sel === 'pagibig' ? 60 : (sel === 'banko' ? 30 : 0);
+      if (age === null) {
+        errorsEl.textContent = 'Unable to determine age. Please update your profile birthdate.';
+        errorsEl.style.display = '';
+        return;
+      }
+
+      const years = maxYears - Number(age);
+      if (years <= 0) {
+        errorsEl.textContent = `Not eligible for ${sel} (age exceeds maximum).`;
+        errorsEl.style.display = '';
+        document.getElementById('contractMonthly').textContent = '—';
+        return;
+      }
+
+      const months = years * 12;
+      if (months <= 0) {
+        document.getElementById('contractMonthly').textContent = '—';
+        return;
+      }
+
+      const perMonth = Number(price) / months;
+      document.getElementById('contractMonthly').textContent = `₱${perMonth.toFixed(2).toLocaleString ? Number(perMonth.toFixed(2)).toLocaleString() : perMonth.toFixed(2)}`;
+    }
+
+    radios.forEach(r => r.addEventListener('change', compute));
+
+    // Confirm button handler (client-side only for now)
+    const confirmBtn = document.getElementById('confirmContractBtn');
+    const onConfirm = async () => {
+      const sel = radios.find(r => r.checked)?.value || null;
+      if (!sel) {
+        const errorsEl = document.getElementById('contractErrors');
+        errorsEl.textContent = 'Please choose a payment mode.';
+        errorsEl.style.display = '';
+        return;
+      }
+
+      // compute final per-month again
+      const maxYears = sel === 'pagibig' ? 60 : (sel === 'banko' ? 30 : 0);
+      let perMonth = null;
+      if (sel === 'full') {
+        perMonth = Number(price);
+      } else {
+        const years = maxYears - Number(age || 0);
+        if (years <= 0) {
+          const errorsEl = document.getElementById('contractErrors');
+          errorsEl.textContent = 'Not eligible for this loan mode.';
+          errorsEl.style.display = '';
+          return;
+        }
+        perMonth = Number(price) / (years * 12);
+      }
+
+      // Persist proposal to server so agent can review/confirm
+      try {
+        const params = new URLSearchParams();
+        params.append('booking_id', bookingID);
+        params.append('mode', sel);
+        params.append('monthly', perMonth.toFixed(2));
+        if (window.csrfName && window.csrfHash) params.append(window.csrfName, window.csrfHash);
+
+        const res = await fetch('/index.php/bookings/proposeContract', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString()
+        });
+
+        const json = await res.json().catch(()=>null);
+        if (!res.ok || json?.error) throw new Error(json?.error || 'Failed to persist contract');
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Contract Proposal Sent',
+          html: `<p>Mode: <strong>${sel}</strong></p><p>Monthly: <strong>₱${perMonth.toFixed(2)}</strong></p>`
+        });
+
+        // detach handler to avoid duplicates
+        confirmBtn.removeEventListener('click', onConfirm);
+        radios.forEach(r => r.removeEventListener('change', compute));
+        modal.hide();
+        // refresh bookings to show updated state if any
+        loadMyBookings();
+      } catch (err) {
+        console.error('Persist contract failed', err);
+        Swal.fire({ icon: 'error', title: 'Failed', text: err.message || 'Unable to save contract proposal.' });
+      }
+    };
+
+    confirmBtn.addEventListener('click', onConfirm);
+
+    modal.show();
   }
 
   // utility
