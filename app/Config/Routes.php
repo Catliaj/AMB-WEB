@@ -65,6 +65,9 @@ $routes->get('/users/agentchat', 'AgentController::agentChat');
 $routes->get('/users/agentbookings', 'AgentController::agentBookings');
 $routes->get('/users/logoutagent', 'AgentController::logoutAgent');
 
+// Agent API: fetch bookings for a particular client
+$routes->get('users/clientBookings/(:num)', 'AgentController::clientBookings/$1');
+
 //Agent Property Management Routes
 $routes->get('/users/agentproperties', 'AgentController::agentProperties');
 $routes->get('users/getBooking/(:segment)', 'AgentController::getBooking/$1');         // GET /users/getBooking/{id}

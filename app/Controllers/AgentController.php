@@ -382,6 +382,31 @@ class AgentController extends BaseController
         return $this->response->setJSON(['booking' => $booking]);
     }
 
+    /**
+     * Return bookings for a given client (userID) — used by agent client details view.
+     * GET /users/clientBookings/{userID}
+     */
+    public function clientBookings($userID = null)
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Agent') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        if (empty($userID)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'UserID required']);
+        }
+
+        $bookingModel = new BookingModel();
+        try {
+            $bookings = $bookingModel->getBookingsByUser($userID);
+            return $this->response->setJSON($bookings);
+        } catch (\Throwable $e) {
+            log_message('error', 'clientBookings error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+        }
+    }
+
 
 
 

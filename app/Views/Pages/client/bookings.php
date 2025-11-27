@@ -190,12 +190,13 @@
     </a>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
+    <!-- Load moment before booking scripts that depend on it -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/en-gb.js"></script>
     <script src="<?= base_url("assets/js/client.js")?>"></script>
     <script src="<?= base_url("assets/js/bookings.js")?>"></script>
      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/en-gb.js"></script>
     <script>
         window.bookingCreateUrl = <?= json_encode(site_url('bookings/create')) ?>;
         window.myBookingsUrl = <?= json_encode(site_url('bookings/mine')) ?>;
