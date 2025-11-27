@@ -245,6 +245,36 @@
   </div>
 </div>
 
+    <!-- Sign Contract Modal (signature pad + preview) -->
+    <div class="modal fade" id="signContractModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sign Contract</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="signContractReservationId" value="">
+                    <input type="hidden" id="signContractBookingId" value="">
+                    
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Please sign below:</strong></label>
+                        <div class="border rounded p-2" style="background: white;">
+                            <canvas id="signaturePad" style="border: 1px solid #ddd; cursor: crosshair; width:100%; height:200px; touch-action: none;"></canvas>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="clearSignatureBtn">Clear</button>
+                    </div>
+                    
+                    <div id="signContractErrors" class="text-danger small mb-2" style="display:none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="signContractBtn" class="btn btn-primary">Sign & Generate Contract</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Chat Floating Action Button -->
     <a href="/users/chat" class="chat-fab" id="chatButton">
         <i class="bi bi-chat-dots-fill fs-4"></i>
@@ -255,8 +285,9 @@
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/en-gb.js"></script>
     <script src="<?= base_url("assets/js/client.js")?>"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.9/dist/signature_pad.umd.min.js"></script>
     <script src="<?= base_url("assets/js/bookings.js")?>"></script>
-     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         window.bookingCreateUrl = <?= json_encode(site_url('bookings/create')) ?>;
@@ -267,6 +298,8 @@
         window.getAgeUrlBase = <?= json_encode(site_url('users/getAge')) ?>;
         // expose current user id for client-side age lookup
         window.currentUserId = <?= json_encode($currentUserId ?? null) ?>;
+        // endpoint to sign and generate contract PDF
+        window.signContractUrl = <?= json_encode(site_url('users/signContract')) ?>;
         window.csrfName = <?= json_encode(csrf_token()) ?>;
         window.csrfHash = <?= json_encode(csrf_hash()) ?>;
         // this page shows cancelled/viewing bookings only

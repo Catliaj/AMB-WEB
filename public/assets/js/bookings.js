@@ -535,18 +535,123 @@ function populateBookingModal(b) {
         const json = await res.json().catch(()=>null);
         if (!res.ok || json?.error) throw new Error(json?.error || 'Failed to persist contract');
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Contract Proposal Sent',
-          html: `<p>Mode: <strong>${sel}</strong></p><p>Monthly: <strong>₱${perMonth.toFixed(2)}</strong></p>`
-        });
-
         // detach handler to avoid duplicates
         confirmBtn.removeEventListener('click', onConfirm);
         radios.forEach(r => r.removeEventListener('change', compute));
         modal.hide();
-        // refresh bookings to show updated state if any
-        loadMyBookings();
+
+        // Open signature modal so client can sign and generate final PDF
+        try {
+          const signModalEl = document.getElementById('signContractModal');
+          if (signModalEl) {
+            // set booking/reservation ids for sign handler
+            const resInput = document.getElementById('signContractReservationId');
+            const bookInput = document.getElementById('signContractBookingId');
+            if (resInput) resInput.value = '';
+            if (bookInput) bookInput.value = bookingID;
+
+            // Defer SignaturePad initialization until modal is visible so sizing is correct
+            let signaturePad = null;
+            const signModal = new bootstrap.Modal(signModalEl);
+
+            // One-time handler to init canvas after modal is shown
+            const onShown = () => {
+              try {
+                const canvas = document.getElementById('signaturePad');
+                if (!canvas) return;
+
+                // Ensure canvas is sized to its CSS layout size using devicePixelRatio
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                // use clientWidth/clientHeight which are meaningful when visible
+                const w = Math.max(300, canvas.clientWidth || 600);
+                const h = Math.max(120, canvas.clientHeight || 200);
+                canvas.width = Math.floor(w * ratio);
+                canvas.height = Math.floor(h * ratio);
+                const ctx = canvas.getContext('2d');
+                ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+                signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgba(255,255,255,0)' });
+
+                const clearBtn = document.getElementById('clearSignatureBtn');
+                if (clearBtn) clearBtn.onclick = () => signaturePad.clear();
+
+                // prepare sign button handler (replace to avoid double binds)
+                const signBtn = document.getElementById('signContractBtn');
+                if (signBtn) {
+                  const newBtn = signBtn.cloneNode(true);
+                  signBtn.parentNode.replaceChild(newBtn, signBtn);
+                  newBtn.addEventListener('click', async () => {
+                    const errorsEl = document.getElementById('signContractErrors');
+                    if (errorsEl) { errorsEl.style.display = 'none'; errorsEl.textContent = ''; }
+                    if (!signaturePad || signaturePad.isEmpty()) {
+                      if (errorsEl) { errorsEl.textContent = 'Please provide your signature before continuing.'; errorsEl.style.display = ''; }
+                      return;
+                    }
+
+                    const sigData = signaturePad.toDataURL();
+                    try {
+                      const params = new URLSearchParams();
+                      params.append('booking_id', bookingID);
+                      params.append('signature', sigData);
+                      if (window.csrfName && window.csrfHash) params.append(window.csrfName, window.csrfHash);
+
+                      const r = await fetch(window.signContractUrl || '/index.php/users/signContract', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params.toString()
+                      });
+
+                      const resp = await r.json().catch(()=>null);
+                      if (!r.ok || resp?.error) throw new Error(resp?.error || 'Failed to sign/ generate contract');
+
+                      if (resp?.pdf_url) try { window.open(resp.pdf_url, '_blank'); } catch (e) {}
+
+                      Swal.fire({ icon: 'success', title: 'Contract Submitted', text: 'Contract generated and submitted. Awaiting admin confirmation.' });
+                      bootstrap.Modal.getInstance(document.getElementById('signContractModal'))?.hide();
+                      loadMyBookings();
+                    } catch (err) {
+                      console.error('Sign contract failed', err);
+                      if (errorsEl) { errorsEl.textContent = err.message || 'Unable to generate contract.'; errorsEl.style.display = ''; }
+                    }
+                  });
+                }
+
+                // remove this handler after initialization
+                signModalEl.removeEventListener('shown.bs.modal', onShown);
+              } catch (err) {
+                console.warn('SignaturePad init failed', err);
+              }
+            };
+
+            // cleanup on hide
+            const onHidden = () => {
+              try {
+                if (signaturePad) {
+                  signaturePad.off && signaturePad.off();
+                }
+                signaturePad = null;
+                // reset canvas size placeholder so next show re-inits fresh
+                const c = document.getElementById('signaturePad');
+                if (c) {
+                  c.width = 0; c.height = 0; const ctx = c.getContext && c.getContext('2d'); if (ctx) ctx.clearRect(0,0,c.width,c.height);
+                }
+                signModalEl.removeEventListener('hidden.bs.modal', onHidden);
+              } catch (e) { /* ignore */ }
+            };
+
+            signModalEl.addEventListener('shown.bs.modal', onShown);
+            signModalEl.addEventListener('hidden.bs.modal', onHidden);
+
+            signModal.show();
+          } else {
+            // fallback: show simple confirmation
+            Swal.fire({ icon: 'success', title: 'Contract Proposal Sent', html: `<p>Mode: <strong>${sel}</strong></p><p>Monthly: <strong>₱${perMonth.toFixed(2)}</strong></p>` });
+          }
+        } catch (err) {
+          console.warn('Opening sign modal failed', err);
+          Swal.fire({ icon: 'success', title: 'Contract Proposal Sent', html: `<p>Mode: <strong>${sel}</strong></p><p>Monthly: <strong>₱${perMonth.toFixed(2)}</strong></p>` });
+        }
       } catch (err) {
         console.error('Persist contract failed', err);
         Swal.fire({ icon: 'error', title: 'Failed', text: err.message || 'Unable to save contract proposal.' });

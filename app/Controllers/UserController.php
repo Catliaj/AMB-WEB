@@ -12,6 +12,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\BookingModel;
 use App\Models\PropertyImageModel;
 use Dompdf\Dompdf;
+use setasign\Fpdi\Fpdi;
 
 
 
@@ -1164,16 +1165,46 @@ class UserController extends BaseController
         }
 
         $reservationId = $post['reservation_id'] ?? $post['reservationID'] ?? null;
+        $bookingId = $post['booking_id'] ?? $post['bookingID'] ?? null;
         $signature = $post['signature'] ?? null;
 
-        if (empty($reservationId) || empty($signature)) {
-            return $this->response->setStatusCode(400)->setJSON(['error' => 'reservation_id and signature are required']);
+        if (empty($reservationId) && empty($bookingId)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'reservation_id or booking_id is required']);
+        }
+        if (empty($signature)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'signature is required']);
         }
 
         $db = \Config\Database::connect();
-        $reservation = $db->table('houserreservation')->where('reservationID', $reservationId)->get()->getRowArray();
+        $reservation = null;
+        if (!empty($reservationId)) {
+            $reservation = $db->table('houserreservation')->where('reservationID', $reservationId)->get()->getRowArray();
+        } elseif (!empty($bookingId)) {
+            $reservation = $db->table('houserreservation')->where('bookingID', $bookingId)->get()->getRowArray();
+            if (!$reservation) {
+                // create a reservation record for this booking
+                $insertData = [
+                    'bookingID' => $bookingId,
+                    'DownPayment' => 0,
+                    'Term_Months' => null,
+                    'Monthly_Amortization' => null,
+                    'Status' => 'PendingConfirmation',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+                $db->table('houserreservation')->insert($insertData);
+                $newId = $db->insertID();
+                if ($newId) {
+                    $reservation = $db->table('houserreservation')->where('reservationID', $newId)->get()->getRowArray();
+                    $reservationId = $newId;
+                }
+            } else {
+                $reservationId = $reservation['reservationID'] ?? $reservation['ReservationID'] ?? $reservationId;
+            }
+        }
+
         if (!$reservation) {
-            return $this->response->setStatusCode(404)->setJSON(['error' => 'Reservation not found']);
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'Reservation not found or could not be created']);
         }
 
         // Check ownership through booking
@@ -1197,19 +1228,20 @@ class UserController extends BaseController
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
 
-            // Generate PDF contract
+            // Generate PDF contract (saves file and returns url)
             $pdfPath = $this->generateContractPDF($reservation, $booking, $signature);
-            
-            // Mark as completed
+
+            // Mark reservation as pending admin confirmation (do not mark Completed)
             $db->table('houserreservation')->where('reservationID', $reservationId)->update([
-                'Status' => 'Completed',
+                'Status' => 'PendingConfirmation',
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
 
             return $this->response->setJSON([
-                'success' => true, 
-                'message' => 'Contract signed successfully',
-                'pdf_url' => $pdfPath
+                'success' => true,
+                'message' => 'Contract signed and PDF generated. Awaiting admin confirmation.',
+                'pdf_url' => $pdfPath,
+                'reservationID' => $reservationId
             ]);
         } catch (\Throwable $e) {
             log_message('error', 'Sign contract failed: ' . $e->getMessage());
@@ -1330,6 +1362,8 @@ class UserController extends BaseController
      */
     private function generateContractHTML($data)
     {
+
+
         $signatureImg = '<img src="' . $data['signature'] . '" style="max-width: 200px; max-height: 80px;" />';
         
         return '
@@ -1419,12 +1453,222 @@ class UserController extends BaseController
             
             <div class="signature-section">
                 <p><strong>Client Signature:</strong></p>
-                ' . $signatureImg . '
+                        ' . $signatureImg . '
                 <p>' . htmlspecialchars($data['clientFirstName'] . ' ' . $data['clientLastName']) . '</p>
             </div>
         </body>
         </html>';
     }
+
+            /**
+             * Fill existing PDF template (`public/assets/PDFContract.pdf`) with provided form fields and signature image
+             * POST: form fields + signature (base64 data URL)
+             */
+            public function fillTemplatePdf()
+            {
+                $session = session();
+                if (!$session->get('isLoggedIn')) {
+                    return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+                }
+
+                $post = $this->request->getPost();
+                if (empty($post)) {
+                    parse_str($this->request->getBody(), $post);
+                }
+
+                $signatureDataUrl = $post['signature'] ?? null;
+                if (empty($signatureDataUrl)) {
+                    return $this->response->setStatusCode(400)->setJSON(['error' => 'signature is required']);
+                }
+
+                // Decode signature and save PNG
+                $sigDir = WRITEPATH . 'contracts/signatures/';
+                if (!is_dir($sigDir)) mkdir($sigDir, 0755, true);
+                $sigBase64 = preg_replace('#^data:image/[^;]+;base64,#i', '', $signatureDataUrl);
+                $sigBytes = base64_decode($sigBase64);
+                if ($sigBytes === false) {
+                    return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid signature data']);
+                }
+                $sigFilename = 'signature_' . time() . '_' . ($session->get('UserID') ?? 'anon') . '.png';
+                $sigPath = $sigDir . $sigFilename;
+                file_put_contents($sigPath, $sigBytes);
+
+                // Prepare expected fields (these names should match the React form names)
+                $fields = [
+                    'teamLeaderFirstName','teamLeaderLastName',
+                    'clientFirstName','clientLastName',
+                    'streetAddress','city','stateProvince','postalZip',
+                    'termOfContract','startDate','termination',
+                    'monthlyPayment','deposit','furnishings',
+                    'signDay','signMonth','signYear'
+                ];
+
+                $data = [];
+                foreach ($fields as $f) {
+                    $data[$f] = $post[$f] ?? '';
+                }
+
+                // Template path (public assets)
+                // Prefer `assets/PDFContract/Contract-Agreement.pdf` but fall back to existing `assets/PDFContruct/Contract-Agreement.pdf`.
+                $preferred = FCPATH . 'assets/PDFContract/Contract-Agreement.pdf';
+                $fallback = FCPATH . 'assets/PDFContruct/Contract-Agreement.pdf';
+                if (file_exists($preferred)) {
+                    $template = $preferred;
+                } elseif (file_exists($fallback)) {
+                    $template = $fallback;
+                } else {
+                    return $this->response->setStatusCode(500)->setJSON(['error' => 'PDF template not found. Checked: ' . $preferred . ' and ' . $fallback]);
+                }
+
+                try {
+                    $pdf = new Fpdi();
+
+                    $pageCount = $pdf->setSourceFile($template);
+                    $tpl = $pdf->importPage(1);
+
+                    $size = $pdf->getTemplateSize($tpl);
+                    $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                    $pdf->useTemplate($tpl);
+
+                    // Set font and color
+                    $pdf->SetFont('Helvetica', '', 10);
+                    $pdf->SetTextColor(0,0,0);
+
+                    // Example positions (in mm) -- adjust to match your template
+                    // Use precise text boxes (MultiCell) for accurate placement and wrapping
+                    $pdf->SetFont('Helvetica', '', 10);
+                    // Helper: write text inside a box with width (w) and line height (lh)
+                    $writeBox = function($x, $y, $w, $lh, $text) use ($pdf) {
+                        $pdf->SetXY($x, $y);
+                        $pdf->MultiCell($w, $lh, trim($text), 0, 'L');
+                    };
+
+                    // Team leader name box
+                    $writeBox(30, 60, 80, 5, $data['teamLeaderFirstName'] . ' ' . $data['teamLeaderLastName']);
+
+                    // Client name box
+                    $writeBox(30, 70, 80, 5, $data['clientFirstName'] . ' ' . $data['clientLastName']);
+
+                    // Address box (allow wrapping)
+                    $writeBox(30, 80, 120, 5, $data['streetAddress'] . ', ' . $data['city'] . ' ' . $data['postalZip']);
+
+                    // Term and dates (single-line box)
+                    $writeBox(30, 95, 100, 5, $data['termOfContract'] . ' starting ' . $data['startDate']);
+
+                    // Monthly payment (right-aligned in its box)
+                    $pdf->SetXY(140, 120);
+                    $pdf->Cell(50, 5, '₱' . $data['monthlyPayment'], 0, 0, 'R');
+
+                    // Insert signature image (adjust coordinates/width). Use larger width for clarity.
+                    $sigX = 30; $sigY = 200; $sigW = 70;
+                    $pdf->Image($sigPath, $sigX, $sigY, $sigW, 0, 'PNG');
+
+                    $outDir = WRITEPATH . 'contracts/';
+                    if (!is_dir($outDir)) mkdir($outDir, 0755, true);
+                    $outFilename = 'contract_filled_' . time() . '_' . ($session->get('UserID') ?? 'anon') . '.pdf';
+                    $outPath = $outDir . $outFilename;
+                    $pdf->Output($outPath, 'F');
+
+                    $publicUrl = base_url('writable/contracts/' . $outFilename);
+                    return $this->response->setJSON(['success' => true, 'pdf_url' => $publicUrl]);
+                } catch (\Throwable $e) {
+                    log_message('error', 'fillTemplatePdf error: ' . $e->getMessage());
+                    return $this->response->setStatusCode(500)->setJSON(['error' => 'PDF generation failed: ' . $e->getMessage()]);
+                }
+            }
+
+            /**
+             * Debug helper: identical to fillTemplatePdf but skips session auth for testing.
+             * POST to /debug/fillPdfNoAuth with same fields.
+             */
+            public function fillTemplatePdfNoAuth()
+            {
+                $post = $this->request->getPost();
+                if (empty($post)) {
+                    parse_str($this->request->getBody(), $post);
+                }
+
+                $signatureDataUrl = $post['signature'] ?? null;
+                if (empty($signatureDataUrl)) {
+                    return $this->response->setStatusCode(400)->setJSON(['error' => 'signature is required']);
+                }
+
+                // Decode signature and save PNG
+                $sigDir = WRITEPATH . 'contracts/signatures/';
+                if (!is_dir($sigDir)) mkdir($sigDir, 0755, true);
+                $sigBase64 = preg_replace('#^data:image/[^;]+;base64,#i', '', $signatureDataUrl);
+                $sigBytes = base64_decode($sigBase64);
+                if ($sigBytes === false) {
+                    return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid signature data']);
+                }
+                $sigFilename = 'signature_test_' . time() . '.png';
+                $sigPath = $sigDir . $sigFilename;
+                file_put_contents($sigPath, $sigBytes);
+
+                // Minimal fields
+                $data = [];
+                $data['teamLeaderFirstName'] = $post['teamLeaderFirstName'] ?? '';
+                $data['teamLeaderLastName'] = $post['teamLeaderLastName'] ?? '';
+                $data['clientFirstName'] = $post['clientFirstName'] ?? '';
+                $data['clientLastName'] = $post['clientLastName'] ?? '';
+                $data['streetAddress'] = $post['streetAddress'] ?? '';
+                $data['city'] = $post['city'] ?? '';
+                $data['postalZip'] = $post['postalZip'] ?? '';
+                $data['termOfContract'] = $post['termOfContract'] ?? '';
+                $data['startDate'] = $post['startDate'] ?? '';
+                $data['monthlyPayment'] = $post['monthlyPayment'] ?? '';
+
+                // Prefer `assets/PDFContract/Contract-Agreement.pdf` but fall back to `assets/PDFContruct/Contract-Agreement.pdf`.
+                $preferred = FCPATH . 'assets/PDFContract/Contract-Agreement.pdf';
+                $fallback = FCPATH . 'assets/PDFContruct/Contract-Agreement.pdf';
+                if (file_exists($preferred)) {
+                    $template = $preferred;
+                } elseif (file_exists($fallback)) {
+                    $template = $fallback;
+                } else {
+                    return $this->response->setStatusCode(500)->setJSON(['error' => 'PDF template not found. Checked: ' . $preferred . ' and ' . $fallback]);
+                }
+
+                try {
+                    $pdf = new Fpdi();
+                    $tpl = $pdf->importPage(1, '/MediaBox');
+                    $size = $pdf->getTemplateSize($tpl);
+                    $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                    $pdf->useTemplate($tpl);
+
+                    $pdf->SetFont('Helvetica', '', 10);
+                    $pdf->SetTextColor(0,0,0);
+
+                    $pdf->SetFont('Helvetica', '', 10);
+                    $writeBox = function($x, $y, $w, $lh, $text) use ($pdf) {
+                        $pdf->SetXY($x, $y);
+                        $pdf->MultiCell($w, $lh, trim($text), 0, 'L');
+                    };
+
+                    $writeBox(30, 60, 80, 5, $data['teamLeaderFirstName'] . ' ' . $data['teamLeaderLastName']);
+                    $writeBox(30, 70, 80, 5, $data['clientFirstName'] . ' ' . $data['clientLastName']);
+                    $writeBox(30, 80, 120, 5, $data['streetAddress'] . ', ' . $data['city'] . ' ' . $data['postalZip']);
+                    $writeBox(30, 95, 100, 5, $data['termOfContract'] . ' starting ' . $data['startDate']);
+
+                    $pdf->SetXY(140, 120);
+                    $pdf->Cell(50, 5, '₱' . $data['monthlyPayment'], 0, 0, 'R');
+
+                    $sigX = 30; $sigY = 200; $sigW = 70;
+                    $pdf->Image($sigPath, $sigX, $sigY, $sigW, 0, 'PNG');
+
+                    $outDir = WRITEPATH . 'contracts/';
+                    if (!is_dir($outDir)) mkdir($outDir, 0755, true);
+                    $outFilename = 'contract_filled_test_' . time() . '.pdf';
+                    $outPath = $outDir . $outFilename;
+                    $pdf->Output($outPath, 'F');
+
+                    $publicUrl = base_url('writable/contracts/' . $outFilename);
+                    return $this->response->setJSON(['success' => true, 'pdf_url' => $publicUrl, 'sig_path' => $sigPath]);
+                } catch (\Throwable $e) {
+                    log_message('error', 'fillTemplatePdfNoAuth error: ' . $e->getMessage());
+                    return $this->response->setStatusCode(500)->setJSON(['error' => 'PDF generation failed: ' . $e->getMessage()]);
+                }
+            }
 
 
 }

@@ -56,6 +56,10 @@ $routes->post('bookings/cancel', 'UserController::cancel');
 $routes->post('users/reserve', 'UserController::reserve');
 $routes->post('users/selectPayment', 'UserController::selectPayment');
 $routes->post('users/signContract', 'UserController::signContract');
+// Fill provided PDF template with form fields + signature
+$routes->post('users/fillPdf', 'UserController::fillTemplatePdf');
+// Temporary debug route to test PDF fill without authentication (remove in production)
+$routes->post('debug/fillPdfNoAuth', 'UserController::fillTemplatePdfNoAuth');
 // Contract proposals + confirmations (used by client + agent flows)
 $routes->post('bookings/proposeContract', 'UserController::proposeContract');
 $routes->post('bookings/confirmContract', 'UserController::confirmContract');
