@@ -353,6 +353,7 @@
         window.selectPaymentUrl = <?= json_encode(site_url('users/selectPayment')) ?>;
         window.signContractUrl = <?= json_encode(site_url('users/signContract')) ?>;
         window.getUserUrlBase = <?= json_encode(site_url('users/getUser')) ?>;
+        window.getAgeUrlBase = <?= json_encode(site_url('users/getAge')) ?>;
         // expose current user id for client-side age lookup
         window.currentUserId = <?= json_encode($currentUserId ?? null) ?>;
         window.csrfName = <?= json_encode(csrf_token()) ?>;

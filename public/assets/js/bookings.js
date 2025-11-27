@@ -399,23 +399,36 @@ function populateBookingModal(b) {
 
     // helper: fetch user's birthdate and compute age (returns number or null)
     async function getClientAge(userId) {
-      if (!userId || !window.getUserUrlBase) return null;
+      if (!userId) return null;
       try {
-        const res = await fetch(`${window.getUserUrlBase}/${encodeURIComponent(userId)}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-          if (!res.ok) return null;
-          // attempt parse json
-          let u = null;
-          try { u = await res.json(); } catch(e) { return null; }
-          // try multiple possible birthdate keys
-          const birth = u?.Birthdate ?? u?.birthdate ?? u?.BirthDate ?? u?.DOB ?? u?.dob ?? u?.birthday ?? null;
-          if (!birth) return null;
-          const dob = new Date(birth);
-          if (isNaN(dob.getTime())) return null;
-          const now = new Date();
-          let ageCalc = now.getFullYear() - dob.getFullYear();
-          const m = now.getMonth() - dob.getMonth();
-          if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) ageCalc--;
-          return ageCalc;
+        // Prefer a dedicated getAge endpoint if the view exposes it.
+        let ageUrl = null;
+        if (window.getAgeUrlBase) {
+          ageUrl = window.getAgeUrlBase;
+        } else if (window.getUserUrlBase && String(window.getUserUrlBase).includes('getUser')) {
+          try { ageUrl = String(window.getUserUrlBase).replace(/getUser\/?$/, 'getAge'); } catch(e) { ageUrl = null; }
+        }
+        if (!ageUrl) ageUrl = '/index.php/users/getAge';
+
+        const res = await fetch(`${ageUrl}/${encodeURIComponent(userId)}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) return null;
+        let json = null;
+        try { json = await res.json(); } catch(e) { return null; }
+        // server returns { age: number, birthdate: 'YYYY-MM-DD' }
+        if (json && (typeof json.age === 'number' || !isNaN(Number(json.age)))) {
+          return Number(json.age);
+        }
+
+        // fallback: attempt to compute from returned birthdate if provided
+        const birth = json?.birthdate ?? json?.Birthdate ?? null;
+        if (!birth) return null;
+        const dob = new Date(birth);
+        if (isNaN(dob.getTime())) return null;
+        const now = new Date();
+        let ageCalc = now.getFullYear() - dob.getFullYear();
+        const m = now.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) ageCalc--;
+        return ageCalc;
       } catch (err) {
         console.warn('getClientAge error', err);
         return null;

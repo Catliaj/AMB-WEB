@@ -935,3 +935,54 @@ async function viewBookingDetails(id) {
 window.openPropertyDetails = openPropertyDetails;
 window.updatePropertyModal = updatePropertyModal;
 window.bookPropertyDirectly = bookPropertyDirectly;
+
+// Modal stacking manager: ensure newly opened modals sit above existing ones
+(function manageModalStacking(){
+    document.addEventListener('shown.bs.modal', (e) => {
+        try {
+            const modal = e.target;
+            if (!modal || !modal.classList || !modal.classList.contains('modal')) return;
+            // Move modal to document.body to avoid stacking context issues
+            if (modal.parentElement !== document.body) document.body.appendChild(modal);
+
+            // Find all visible modals and assign increasing z-index
+            const openModals = Array.from(document.querySelectorAll('.modal.show'));
+            openModals.forEach((m, idx) => {
+                const z = 1050 + (idx + 1) * 20; // 1070, 1090, ...
+                m.style.zIndex = z;
+            });
+
+            // Ensure backdrops are placed below their corresponding modal
+            const backdrops = Array.from(document.querySelectorAll('.modal-backdrop'));
+            backdrops.forEach((b, idx) => {
+                const z = 1040 + (idx + 1) * 20; // slightly below modal
+                b.style.zIndex = z;
+            });
+
+            modal.classList.add('modal-front');
+        } catch (err) {
+            console.warn('manageModalStacking show handler error', err);
+        }
+    });
+
+    document.addEventListener('hidden.bs.modal', (e) => {
+        try {
+            const modal = e.target;
+            if (!modal) return;
+            modal.style.zIndex = '';
+            modal.classList.remove('modal-front');
+
+            // Recompute for remaining open modals
+            const openModals = Array.from(document.querySelectorAll('.modal.show'));
+            if (openModals.length === 0) {
+                // reset backdrops
+                document.querySelectorAll('.modal-backdrop').forEach(b => b.style.zIndex = '');
+            } else {
+                openModals.forEach((m, idx) => m.style.zIndex = 1050 + (idx + 1) * 20);
+                Array.from(document.querySelectorAll('.modal-backdrop')).forEach((b, idx) => b.style.zIndex = 1040 + (idx + 1) * 20);
+            }
+        } catch (err) {
+            console.warn('manageModalStacking hidden handler error', err);
+        }
+    });
+})();

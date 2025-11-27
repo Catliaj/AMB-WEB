@@ -61,6 +61,43 @@ class UserController extends BaseController
     }
 
     /**
+     * Return the user's age and birthdate as JSON
+     * GET /users/getAge/{id}
+     */
+    public function getAge($id = null)
+    {
+        $session = session();
+        // allow access only to logged-in users (or restrict further if needed)
+        if (!$session->get('isLoggedIn')) {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        if (empty($id) || !is_numeric($id)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid user id']);
+        }
+
+        $usersModel = new UsersModel();
+        $user = $usersModel->find($id);
+        if (!$user) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'User not found']);
+        }
+
+        $birth = $user['Birthdate'] ?? $user['birthdate'] ?? null;
+        if (empty($birth)) {
+            return $this->response->setStatusCode(200)->setJSON(['age' => null, 'birthdate' => null]);
+        }
+
+        try {
+            $dob = new \DateTime($birth);
+            $now = new \DateTime();
+            $age = $now->diff($dob)->y;
+            return $this->response->setJSON(['age' => $age, 'birthdate' => $dob->format('Y-m-d')]);
+        } catch (\Throwable $e) {
+            return $this->response->setStatusCode(200)->setJSON(['age' => null, 'birthdate' => $birth]);
+        }
+    }
+
+    /**
      * Registration with email verification token
      */
     public function StoreUsers()

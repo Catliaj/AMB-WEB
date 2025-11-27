@@ -60,6 +60,8 @@ $routes->post('users/signContract', 'UserController::signContract');
 $routes->post('bookings/proposeContract', 'UserController::proposeContract');
 $routes->post('bookings/confirmContract', 'UserController::confirmContract');
 $routes->get('users/getUser/(:num)', 'PropertyController::getUser/$1');
+// Return computed age and birthdate for a given user id (used by client-side contract modal)
+$routes->get('users/getAge/(:num)', 'UserController::getAge/$1');
 
 
 

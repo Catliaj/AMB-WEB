@@ -396,6 +396,7 @@
 <script>
   // Use site_url so index.php (index_page) is included when needed
   window.getUserUrlBase    = <?= json_encode(site_url('users/getUser')) ?>;   // used as `${window.getUserUrlBase}/{id}`
+    window.getAgeUrlBase     = <?= json_encode(site_url('users/getAge')) ?>;
   window.propertiesUrl     = <?= json_encode(site_url('properties/all')) ?>;
   window.propertiesViewUrl = <?= json_encode(site_url('properties/view')) ?>; // used as `${propertiesViewUrl}/{id}`
   window.bookingCreateUrl  = <?= json_encode(site_url('bookings/create')) ?>;
