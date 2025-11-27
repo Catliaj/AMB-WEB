@@ -50,11 +50,22 @@ $routes->get('properties/view/(:num)', 'PropertyController::viewProperty/$1');
 
 $routes->post('bookings/create', 'UserController::create');
 $routes->get('bookings/mine', 'UserController::mine');
+$routes->get('bookings/reservations', 'UserController::getReservations');
 $routes->post('bookings/cancel', 'UserController::cancel');
+// Reservation workflow methods
+$routes->post('users/reserve', 'UserController::reserve');
+$routes->post('users/selectPayment', 'UserController::selectPayment');
+$routes->post('users/signContract', 'UserController::signContract');
+// Fill provided PDF template with form fields + signature
+$routes->post('users/fillPdf', 'UserController::fillTemplatePdf');
+// Temporary debug route to test PDF fill without authentication (remove in production)
+$routes->post('debug/fillPdfNoAuth', 'UserController::fillTemplatePdfNoAuth');
 // Contract proposals + confirmations (used by client + agent flows)
 $routes->post('bookings/proposeContract', 'UserController::proposeContract');
 $routes->post('bookings/confirmContract', 'UserController::confirmContract');
 $routes->get('users/getUser/(:num)', 'PropertyController::getUser/$1');
+// Return computed age and birthdate for a given user id (used by client-side contract modal)
+$routes->get('users/getAge/(:num)', 'UserController::getAge/$1');
 
 
 
@@ -143,6 +154,10 @@ $routes->get('/admin/reports/export.csv', 'AdminController::exportReportsCsv');
 $routes->get('/admin/reports/export.pdf', 'AdminController::exportReportsPdf');
 // Reports data (JSON) for admin UI
 $routes->get('/admin/reports/data', 'AdminController::getReportsData');
+
+// Diagnostic Routes (for debugging database issues)
+$routes->get('/diagnostic/booking', 'DiagnosticController::booking');
+$routes->post('/diagnostic/fixBooking', 'DiagnosticController::fixBooking');
 
 
 /*

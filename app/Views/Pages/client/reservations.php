@@ -29,7 +29,53 @@
                         aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-
+                    <!-- Confirm Contract Modal (used by bookings.js) -->
+                    <div class="modal fade" id="confirmContractModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Select Payment / Propose Contract</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                            <label class="form-label"><strong>Property Price</strong></label>
+                                            <div id="contractPropertyPrice" class="fs-5">—</div>
+                                    </div>
+                                    <div class="mb-3">
+                                            <label class="form-label"><strong>Client Age</strong></label>
+                                            <div id="contractClientAge" class="fs-5">—</div>
+                                    </div>
+                                    <div class="mb-3">
+                                            <label class="form-label"><strong>Payment Mode</strong></label>
+                                            <div>
+                                                    <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="contractMode" id="modePagibig_confirm_res" value="pagibig">
+                                                            <label class="form-check-label" for="modePagibig_confirm_res">Pagibig (max 60 years)</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="contractMode" id="modeBanko_confirm_res" value="banko">
+                                                            <label class="form-check-label" for="modeBanko_confirm_res">Bank (max 30 years)</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="contractMode" id="modeFull_confirm_res" value="full">
+                                                            <label class="form-check-label" for="modeFull_confirm_res">Full Payment</label>
+                                                    </div>
+                                            </div>
+                                    </div>
+                                    <div class="mb-3">
+                                            <label class="form-label"><strong>Payment Calculation</strong></label>
+                                            <div id="contractMonthly" class="p-3 bg-light rounded">—</div>
+                                    </div>
+                                    <div id="contractErrors" class="text-danger small mb-2" style="display:none;"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" id="confirmContractBtn" class="btn btn-primary">Send Proposal</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Collapsible Content -->
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <!-- Center nav links (desktop), vertical in mobile -->
@@ -179,8 +225,10 @@
                         <div class="mt-3 d-flex justify-content-end">
                             <!-- Hidden agent id (if available) -->
                             <input type="hidden" id="bookingModalAgentId" value="">
-                            <button id="modalConfirmContractBtn" class="btn btn-success btn-sm me-2" style="display:none">Confirm Contract</button>
+                            <button id="modalSelectPaymentBtn" class="btn btn-info btn-sm me-2" style="display:none">Select Payment</button>
+                            <button id="modalConfirmContractBtn" class="btn btn-primary btn-sm me-2" style="display:none">Confirm Contract</button>
                             <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
+                            <button id="modalViewPropertyBtn" class="btn btn-outline-primary btn-sm me-2">View Property</button>
                             <button id="modalCloseBtn" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                         </div>
           </div>
@@ -194,23 +242,30 @@
   </div>
 </div>
 
-<!-- Confirm Contract Modal (client) -->
-<div class="modal fade" id="confirmContractModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+<!-- Payment Selection Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Confirm Contract</h5>
+                <h5 class="modal-title">Select Payment Method</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <input type="hidden" id="paymentModalBookingId" value="">
+                <input type="hidden" id="paymentModalReservationId" value="">
+                <input type="hidden" id="paymentModalPropertyPrice" value="">
+                <input type="hidden" id="paymentModalClientAge" value="">
+                <input type="hidden" id="paymentModalMonthlyPayment" value="">
+                <input type="hidden" id="paymentModalMode" value="">
+                
                 <div class="mb-3">
                     <label class="form-label"><strong>Property Price</strong></label>
-                    <div id="contractPropertyPrice">—</div>
+                    <div id="contractPropertyPrice" class="fs-5">—</div>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label"><strong>Client Age</strong></label>
-                    <div id="contractClientAge">—</div>
+                    <div id="contractClientAge" class="fs-5">—</div>
                 </div>
 
                 <div class="mb-3">
@@ -218,11 +273,11 @@
                     <div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="contractMode" id="modePagibig" value="pagibig">
-                            <label class="form-check-label" for="modePagibig">Pagibig (max age 60)</label>
+                            <label class="form-check-label" for="modePagibig">Pagibig (max 60 years)</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="contractMode" id="modeBanko" value="banko">
-                            <label class="form-check-label" for="modeBanko">Bank (max age 30)</label>
+                            <label class="form-check-label" for="modeBanko">Bank (max 30 years)</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="contractMode" id="modeFull" value="full">
@@ -232,8 +287,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label"><strong>Computed Monthly</strong></label>
-                    <div id="contractMonthly">—</div>
+                    <label class="form-label"><strong>Payment Calculation</strong></label>
+                    <div id="contractMonthly" class="p-3 bg-light rounded">—</div>
                 </div>
 
                 <div id="contractErrors" class="text-danger small mb-2" style="display:none;"></div>
@@ -241,7 +296,37 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" id="confirmContractBtn" class="btn btn-primary">Confirm Contract</button>
+                <button type="button" id="confirmPaymentBtn" class="btn btn-primary">Confirm Payment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sign Contract Modal -->
+<div class="modal fade" id="signContractModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sign Contract</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="signContractReservationId" value="">
+                <input type="hidden" id="signContractBookingId" value="">
+                
+                <div class="mb-3">
+                    <label class="form-label"><strong>Please sign below:</strong></label>
+                    <div class="border rounded p-2" style="background: white;">
+                        <canvas id="signaturePad" width="600" height="200" style="border: 1px solid #ddd; cursor: crosshair;"></canvas>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="clearSignatureBtn">Clear</button>
+                </div>
+                
+                <div id="signContractErrors" class="text-danger small mb-2" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="signContractBtn" class="btn btn-primary">Sign & Generate Contract</button>
             </div>
         </div>
     </div>
@@ -262,15 +347,21 @@
     <script>
         window.bookingCreateUrl = <?= json_encode(site_url('bookings/create')) ?>;
         window.myBookingsUrl = <?= json_encode(site_url('bookings/mine')) ?>;
+        window.reservationsUrl = <?= json_encode(site_url('bookings/reservations')) ?>;
         window.bookingCancelUrl = <?= json_encode(site_url('bookings/cancel')) ?>;
-          window.getUserUrlBase = <?= json_encode(site_url('users/getUser')) ?>;
-                // expose current user id for client-side age lookup
-                window.currentUserId = <?= json_encode($currentUserId ?? null) ?>;
+        window.reserveUrl = <?= json_encode(site_url('users/reserve')) ?>;
+        window.selectPaymentUrl = <?= json_encode(site_url('users/selectPayment')) ?>;
+        window.signContractUrl = <?= json_encode(site_url('users/signContract')) ?>;
+        window.getUserUrlBase = <?= json_encode(site_url('users/getUser')) ?>;
+        window.getAgeUrlBase = <?= json_encode(site_url('users/getAge')) ?>;
+        // expose current user id for client-side age lookup
+        window.currentUserId = <?= json_encode($currentUserId ?? null) ?>;
         window.csrfName = <?= json_encode(csrf_token()) ?>;
         window.csrfHash = <?= json_encode(csrf_hash()) ?>;
-    // Reservations page: show pending/confirmed/reserved
-    window.bookingsMode = 'reservations';
+        // Reservations page: show pending/confirmed/reserved
+        window.bookingsMode = 'reservations';
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.9/dist/signature_pad.umd.min.js"></script>
     </div>
 </body>
 

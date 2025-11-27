@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateBooking extends Migration
+class CreateBookings extends Migration
 {
     public function up()
     {
@@ -35,10 +35,10 @@ class CreateBooking extends Migration
             ],
 
             'Status' => [
-                'type'           => 'ENUM',
-                'constraint'     => ['Pending',  'Confirmed', 'Cancelled'],
-                'null'           => true,
-                'default'        => 'Pending',
+                'type' => 'ENUM',
+                'constraint' => ['Pending', 'Scheduled', 'Cancelled', 'Rejected'],
+                'null' => true,
+                'default' => 'Pending',
             ],
             'Reason' => [
                 'type'           => 'TEXT',
