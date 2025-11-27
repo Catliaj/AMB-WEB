@@ -549,6 +549,38 @@ class AdminController extends BaseController
             'Corporation' => $this->request->getPost('Corporation')
         ];
 
+        // If PropertyID is provided, perform an update instead of create
+        $providedId = $this->request->getPost('PropertyID');
+        if (!empty($providedId)) {
+            $propertyID = (int)$providedId;
+            // Remove UserID on update to avoid changing owner unintentionally
+            unset($data['UserID']);
+            $updated = $propertyModel->update($propertyID, $data);
+            if ($updated === false) {
+                return redirect()->back()->with('error', 'Failed to update property.');
+            }
+            // Handle any uploaded images for the existing property
+            $images = $this->request->getFiles();
+            if ($images && isset($images['images'])) {
+                foreach ($images['images'] as $img) {
+                    if ($img->isValid() && !$img->hasMoved()) {
+                        $newName = $img->getRandomName();
+                        $uploadPath = FCPATH . 'uploads/properties/';
+                        if (!is_dir($uploadPath)) {
+                            mkdir($uploadPath, 0777, true);
+                        }
+                        $img->move($uploadPath, $newName);
+                        $propertyImagesModel->insert([
+                            'PropertyID' => $propertyID,
+                            'Image' => $newName
+                        ]);
+                    }
+                }
+            }
+            return redirect()->to('/admin/ManageProperties')->with('success', 'Property updated successfully!');
+        }
+
+        // Otherwise create a new property
         $propertyID = $propertyModel->createWithStatusAndAgent($data);
 
         if ($propertyID) {
