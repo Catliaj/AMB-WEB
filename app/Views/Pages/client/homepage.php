@@ -350,25 +350,25 @@
         <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
         <script src="<?= base_url("assets/js/client.js")?>"></script>
         <script>
-            function toggleHeroImage() {
-    const hero = document.querySelector('.hero');
-    const heroImage = document.querySelector('.hero-image');
+    function checkScreenSize() {
+        const heroImage = document.querySelector('.hero-image');
+        const hero = document.querySelector('.hero');
+        const screenWidth = window.innerWidth;
 
-    const isMaximized = window.outerWidth >= screen.availWidth && window.outerHeight >= screen.availHeight * 0.92;
-
-    if (isMaximized) {
-        heroImage.style.display = 'block';
-        hero.classList.remove('center-content');
-    } else {
-        heroImage.style.display = 'none';
-        hero.classList.add('center-content');
+        // Show image on screens wider than 1200px (adjust as needed)
+        if (screenWidth > 1200) {
+            heroImage.style.display = 'block';
+            hero.classList.remove('center-content');
+        } else {
+            heroImage.style.display = 'none';
+            hero.classList.add('center-content');
+        }
     }
-}
 
-window.addEventListener('load', toggleHeroImage);
-window.addEventListener('resize', toggleHeroImage);
-
-        </script>
+    // Run on load and resize
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+</script>
     </div>
 </body>
 

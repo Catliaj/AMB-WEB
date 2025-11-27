@@ -12,6 +12,372 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?= base_url("assets/styles/clientstyle.css") ?>">
+    <style>
+        /* ========================================
+   PROFESSIONAL FILTER SIDEBAR
+======================================== */
+
+/* Filter Toggle Button (Mobile Only) */
+.filter-toggle-btn {
+    position: fixed;
+    bottom: 30px;
+    left: 1rem;
+    z-index: 1030;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(70, 149, 65, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.filter-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(70, 149, 65, 0.4);
+}
+
+.filter-toggle-btn i {
+    font-size: 1.2rem;
+}
+
+/* Hide on desktop */
+@media (min-width: 992px) {
+    .filter-toggle-btn {
+        display: none;
+    }
+}
+
+/* Filter Sidebar Container */
+.filter-sidebar {
+    background-color: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    width: 360px !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+html[data-theme="dark"] .filter-sidebar {
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Desktop: Fixed sidebar */
+@media (min-width: 992px) {
+    .filter-sidebar {
+        position: sticky;
+        top: 120px;
+        height: auto;
+        max-height: calc(100vh - 140px);
+        overflow-y: auto;
+        border: none;
+        border-right: 1px solid var(--border-color);
+    }
+    
+    /* Hide scrollbar */
+    .filter-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .filter-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .filter-sidebar::-webkit-scrollbar-thumb {
+        background: var(--text-muted);
+        border-radius: 10px;
+    }
+}
+
+/* Sidebar Content */
+.filter-sidebar-content {
+    padding: 1.5rem;
+}
+
+.offcanvas-header {
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+}
+
+.offcanvas-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+/* Filter Group */
+.filter-group {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.filter-group:last-of-type {
+    border-bottom: none;
+}
+
+/* Filter Label */
+.filter-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-label i {
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+/* Search Input Wrapper */
+.search-input-wrapper {
+    position: relative;
+}
+
+.search-input-wrapper .search-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+    font-size: 1rem;
+}
+
+/* Filter Input */
+.filter-input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(70, 149, 65, 0.1);
+}
+
+.filter-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Filter Chips */
+.filter-options-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.filter-chip {
+    padding: 0.75rem 1.25rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 50px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-align: center;
+    flex: 0 0 auto; /* Don't grow or shrink */
+    width: auto; /* Let content determine width */
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-chip:hover {
+    border-color: var(--primary);
+    background-color: var(--light-accent);
+    transform: translateY(-2px);
+}
+
+.filter-chip.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+html[data-theme="dark"] .filter-chip.active {
+    background-color: var(--primary);
+    color: white;
+}
+
+/* Price Range Container */
+.price-range-container {
+    width: 100%;
+}
+
+.price-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.price-input-group {
+    position: relative;
+    flex: 1;
+}
+
+.price-input-group .currency {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.price-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.25rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.price-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(70, 149, 65, 0.1);
+}
+
+.price-separator {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Filter Actions */
+.filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-filter-clear,
+.btn-filter-apply {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-filter-clear {
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1.5px solid var(--border-color);
+}
+
+.btn-filter-clear:hover {
+    background-color: var(--light-bg);
+    border-color: var(--text-muted);
+}
+
+.btn-filter-apply {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: white;
+}
+
+.btn-filter-apply:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(70, 149, 65, 0.3);
+}
+
+/* Content Area with Sidebar */
+.content-with-sidebar {
+    flex: 1;
+    padding: 2rem;
+    min-height: calc(100vh - 120px);
+}
+
+@media (min-width: 992px) {
+    main#mainContent {
+        display: flex;
+        gap: 0;
+        padding: 0 !important;
+    }
+    
+    main#mainContent > .container {
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        width: 100%;
+    }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 991px) {
+    .filter-sidebar {
+        width: 85vw !important;
+        max-width: 400px;
+    }
+    
+    .content-with-sidebar {
+        padding: 1rem;
+    }
+    
+    .filter-options-grid {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    }
+}
+
+/* Smooth Animations */
+.filter-chip,
+.filter-input,
+.price-input {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-sidebar .offcanvas-body {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Results Count Badge */
+.results-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--light-accent);
+    color: var(--primary);
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+html[data-theme="dark"] .results-count {
+    background-color: var(--light-bg);
+}
+    </style>
 </head>
 
 
@@ -73,55 +439,201 @@
     </nav>
 </body>
 
-<main id="mainContent" class="page-bg-muted py-4">
-    <div class="container">
+<main id="mainContent" class="page-bg-muted">
+    <div class="container-fluid p-0">
+        <div class="d-flex">
+            <!-- Filter Toggle Button (Mobile) -->
+            <button class="filter-toggle-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterSidebar">
+                <i class="bi bi-sliders"></i>
+                <span>Filters</span>
+            </button>
 
-        <div class="filters-card mb-4">
-            <div class="d-flex align-items-center mb-3">
-                <i class="bi bi-sliders text-primary me-2"></i>
-                <span class="fw-medium">Filters</span>
-            </div>
+            <!-- Desktop Sidebar + Mobile Offcanvas -->
+            <div class="offcanvas-lg offcanvas-start filter-sidebar" tabindex="-1" id="filterSidebar">
+                <div class="offcanvas-header d-lg-none">
+                    <h5 class="offcanvas-title">Filters</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+                </div>
+                
+                <div class="offcanvas-body">
+                    <div class="filter-sidebar-content">
+                        <!-- Search Filter -->
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-search"></i>
+                                Search Location
+                            </label>
+                            <div class="search-input-wrapper">
+                                <input type="text" 
+                                       id="searchFilter" 
+                                       class="filter-input" 
+                                       placeholder="Enter city, area, or landmark..."
+                                       oninput="applyFilters()">
+                                <i class="bi bi-geo-alt search-icon"></i>
+                            </div>
+                        </div>
 
-            <div class="row g-3">
-                <div class="col-md-6 col-lg-3">
-                    <div class="input-icon-wrapper">
-                        <i class="bi bi-search input-icon"></i>
-                        <input type="text" id="searchFilter" class="form-control input-with-icon themed-search"
-                            placeholder="Search location..." oninput="applyFilters()">
+                        <!-- Property Type Filter -->
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-house-door"></i>
+                                Property Type
+                            </label>
+                            <div class="filter-options-grid">
+                                <button class="filter-chip active" data-filter="type" data-value="all" onclick="selectChip(this, 'type')">
+                                    All Types
+                                </button>
+                                <button class="filter-chip" data-filter="type" data-value="Apartment" onclick="selectChip(this, 'type')">
+                                    Apartment
+                                </button>
+                                <button class="filter-chip" data-filter="type" data-value="House" onclick="selectChip(this, 'type')">
+                                    House
+                                </button>
+                                <button class="filter-chip" data-filter="type" data-value="Condo" onclick="selectChip(this, 'type')">
+                                    Condo
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bedrooms Filter -->
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-door-open"></i>
+                                Bedrooms
+                            </label>
+                            <div class="filter-options-grid">
+                                <button class="filter-chip active" data-filter="bedrooms" data-value="all" onclick="selectChip(this, 'bedrooms')">
+                                    Any
+                                </button>
+                                <button class="filter-chip" data-filter="bedrooms" data-value="1" onclick="selectChip(this, 'bedrooms')">
+                                    1
+                                </button>
+                                <button class="filter-chip" data-filter="bedrooms" data-value="2" onclick="selectChip(this, 'bedrooms')">
+                                    2
+                                </button>
+                                <button class="filter-chip" data-filter="bedrooms" data-value="3" onclick="selectChip(this, 'bedrooms')">
+                                    3
+                                </button>
+                                <button class="filter-chip" data-filter="bedrooms" data-value="4" onclick="selectChip(this, 'bedrooms')">
+                                    4
+                                </button>
+                                <button class="filter-chip" data-filter="bedrooms" data-value="5+" onclick="selectChip(this, 'bedrooms')">
+                                    5+
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Bathrooms Filter -->
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-droplet"></i>
+                                Bathrooms
+                            </label>
+                            <div class="filter-options-grid">
+                                <button class="filter-chip active" data-filter="bathrooms" data-value="all" onclick="selectChip(this, 'bathrooms')">
+                                    Any
+                                </button>
+                                <button class="filter-chip" data-filter="bathrooms" data-value="1" onclick="selectChip(this, 'bathrooms')">
+                                    1
+                                </button>
+                                <button class="filter-chip" data-filter="bathrooms" data-value="2" onclick="selectChip(this, 'bathrooms')">
+                                    2
+                                </button>
+                                <button class="filter-chip" data-filter="bathrooms" data-value="3+" onclick="selectChip(this, 'bathrooms')">
+                                    3+
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Price Range Filter -->
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-currency-dollar"></i>
+                                Price Range
+                            </label>
+                            <div class="price-range-container">
+                                <div class="price-inputs">
+                                    <div class="price-input-group">
+                                        <span class="currency">₱</span>
+                                        <input type="text" 
+                                               id="minPrice" 
+                                               class="price-input" 
+                                               placeholder="Min"
+                                               oninput="formatPriceInput(this); applyFilters()">
+                                    </div>
+                                    <span class="price-separator">—</span>
+                                    <div class="price-input-group">
+                                        <span class="currency">₱</span>
+                                        <input type="text" 
+                                               id="maxPrice" 
+                                               class="price-input" 
+                                               placeholder="Max"
+                                               oninput="formatPriceInput(this); applyFilters()">
+                                    </div>
+                                </div>
+                                
+                                <!-- Quick Price Filters -->
+                                <div class="filter-options-grid mt-3">
+                                    <button class="filter-chip" onclick="setQuickPrice(0, 500000)">
+                                        Under 500K
+                                    </button>
+                                    <button class="filter-chip" onclick="setQuickPrice(500000, 1000000)">
+                                        500K - 1M
+                                    </button>
+                                    <button class="filter-chip" onclick="setQuickPrice(1000000, 5000000)">
+                                        1M - 5M
+                                    </button>
+                                    <button class="filter-chip" onclick="setQuickPrice(5000000, null)">
+                                        5M+
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Size Filter -->
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="bi bi-arrows-fullscreen"></i>
+                                Property Size (sqft)
+                            </label>
+                            <div class="price-inputs">
+                                <input type="number" 
+                                       id="minSize" 
+                                       class="filter-input" 
+                                       placeholder="Min sqft"
+                                       style="padding: 0.75rem 1rem;"
+                                       oninput="applyFilters()">
+                                <span class="price-separator">—</span>
+                                <input type="number" 
+                                       id="maxSize" 
+                                       class="filter-input" 
+                                       placeholder="Max sqft"
+                                       style="padding: 0.75rem 1rem;"
+                                       oninput="applyFilters()">
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="filter-actions">
+                            <button class="btn-filter-clear" onclick="clearAllFilters()">
+                                <i class="bi bi-x-circle"></i>
+                                Clear All
+                            </button>
+                            <button class="btn-filter-apply d-lg-none" data-bs-dismiss="offcanvas">
+                                <i class="bi bi-check-circle"></i>
+                                Apply Filters
+                            </button>
+                        </div>
                     </div>
-
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <select id="typeFilter" class="form-select" onchange="applyFilters()">
-                        <option value="all">All Types</option>
-                        <option value="For Sale">For Sale</option>
-                        <option value="For Rent">For Rent</option>
-                        <option value="all">Liked</option>
-                    </select>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <select id="bedroomsFilter" class="form-select" onchange="applyFilters()">
-                        <option value="all">Any Bedrooms</option>
-                        <option value="2">2 Bedrooms</option>
-                        <option value="3">3 Bedrooms</option>
-                        <option value="4">4 Bedrooms</option>
-                        <option value="5">5+ Bedrooms</option>
-                    </select>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <select id="priceFilter" class="form-select" onchange="applyFilters()">
-                        <option value="all">All Prices</option>
-                        <option value="0-500k">$0 - $500k</option>
-                        <option value="500k-1m">$500k - $1M</option>
-                        <option value="1m-5m">$1M - $5M</option>
-                        <option value="5m+">$5M+</option>
-                    </select>
                 </div>
             </div>
-        </div>
 
-        <div id="propertiesContainer">
-            <!-- JS will inject property cards here via renderPropertiesGrid() -->
+            <!-- Main Content Area -->
+            <div class="content-with-sidebar">
+                <div id="propertiesContainer">
+                    <!-- Properties will be loaded here -->
+                </div>
+            </div>
         </div>
     </div>
 </main>
@@ -178,7 +690,7 @@
 
                         <!-- Action buttons -->
                         <div class="price-book">
-                            <button class="btn btn-outline-primary" id="modalChatBtn">
+                            <button class="btn btn-primary" id="modalChatBtn">
                                 <i class="bi bi-chat-dots-fill me-1"></i>Chat Agent
                             </button>
                             <button class="btn btn-primary" id="modalBookBtn">
