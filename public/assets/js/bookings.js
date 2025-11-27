@@ -113,7 +113,8 @@
                 <span class="badge ${badgeClass}">${escapeHtml(displayStatus)}</span>
                 <span class="ms-2 text-muted small">Date: ${escapeHtml(date)}</span>
               </div>
-              <p class="small text-muted mb-0">${reason}${notes ? (reason ? ' | ' : '') + notes : ''}</p>
+              <p class="small text-muted mb-0">${notes ? notes : ''}</p>
+              ${ (b.Rating !== undefined && b.Rating !== null) ? `<div class="small text-warning mt-1">Rating: ${escapeHtml(String(b.Rating))} &#9733;</div>` : '' }
             </div>
           </div>
           <div class="col-auto pe-3">
@@ -313,8 +314,27 @@ function populateBookingModal(b) {
     };
   }
 
-  // Details: we fetch property details from the card's Details button (btn-view-booking).
-  // The in-modal details button has been removed to avoid duplicate behavior.
+  // view property button
+  const viewPropBtn = document.getElementById('modalViewPropertyBtn');
+  if (viewPropBtn) {
+    viewPropBtn.onclick = () => {
+      if (b.PropertyID) {
+        window.location.href = '/properties/view/' + encodeURIComponent(b.PropertyID);
+      } else {
+        bootstrap.Modal.getInstance(document.getElementById('bookingDetailModal'))?.hide();
+        window.location.href = '/users/clientbrowse';
+      }
+    };
+  }
+  // Populate rating in modal (if provided by server)
+  const ratingEl = document.getElementById('bookingModalRating');
+  if (ratingEl) {
+    if (b.Rating !== undefined && b.Rating !== null && b.Rating !== '') {
+      ratingEl.textContent = String(b.Rating) + ' ★';
+    } else {
+      ratingEl.textContent = '—';
+    }
+  }
 }
 
   async function onCancelBooking(e) {

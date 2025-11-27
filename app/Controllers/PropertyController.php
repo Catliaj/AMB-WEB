@@ -168,10 +168,23 @@ class PropertyController extends BaseController
             return $this->response->setStatusCode(404)->setJSON(['error' => 'Property not found']);
         }
 
-        // Optional ownership check (agent only)
+        // Enforce role-based permissions:
+        // - Admin: allowed to update any property
+        // - Agent: allowed only if assigned to this property (agent_assigned == session UserID)
+        // - Others: forbidden
         $userId = $session->get('UserID');
-        if (isset($property['agent_assigned']) && !empty($property['agent_assigned']) && $property['agent_assigned'] != $userId) {
-            return $this->response->setStatusCode(403)->setJSON(['error' => 'You do not have permission to update this property']);
+        $role = $session->get('role');
+
+        if ($role === 'Admin') {
+            // Admin may proceed
+        } elseif ($role === 'Agent') {
+            // Allow if the property is unassigned OR assigned to this agent.
+            // Deny only when it's assigned to another agent.
+            if (isset($property['agent_assigned']) && !empty($property['agent_assigned']) && $property['agent_assigned'] != $userId) {
+                return $this->response->setStatusCode(403)->setJSON(['error' => 'You do not have permission to update this property']);
+            }
+        } else {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
         }
 
         // Collect updatable property fields (only those present in PropertyModel->allowedFields)
@@ -269,9 +282,59 @@ class PropertyController extends BaseController
             }
         }
 
-        // Build response
-        $result = ['success' => true, 'updated' => true];
-        if (!empty($uploadedImageUrls)) $result['imageUrls'] = $uploadedImageUrls;
+        // Handle deletion requests: expect POST field `deleteImages` (JSON array of filenames/ids)
+        $deletePayload = $this->request->getPost('deleteImages');
+        if ($deletePayload) {
+            // `deleteImages` may be submitted as JSON string or as an array (FormData with multiple fields).
+            if (is_array($deletePayload)) {
+                $toDelete = $deletePayload;
+            } else {
+                $toDelete = json_decode($deletePayload, true);
+            }
+
+            if (is_array($toDelete) && count($toDelete) > 0) {
+                foreach ($toDelete as $name) {
+                    if (empty($name)) continue;
+                    // If numeric -> treat as propertyImageID and delete by id
+                    if (is_numeric($name)) {
+                        $id = (int)$name;
+                        $f = $imgModel->find($id);
+                        if ($f && ($f['PropertyID'] ?? null) == $propertyID) {
+                            $filePath = FCPATH . 'uploads/properties/' . ($f['Image'] ?? '');
+                            try { if (is_file($filePath)) @unlink($filePath); } catch (\Throwable $e) { log_message('warning', 'Could not unlink image ' . $filePath . ': ' . $e->getMessage()); }
+                            try { $imgModel->delete($id); } catch (\Throwable $e) { log_message('warning', 'Could not delete image record id ' . $id . ': ' . $e->getMessage()); }
+                        }
+                        continue;
+                    }
+
+                    // Otherwise attempt to match by filename
+                    $found = $imgModel->where('PropertyID', $propertyID)->where('Image', $name)->findAll();
+                    if ($found) {
+                        foreach ($found as $f) {
+                            $filePath = FCPATH . 'uploads/properties/' . ($f['Image'] ?? '');
+                            try { if (is_file($filePath)) @unlink($filePath); } catch (\Throwable $e) { log_message('warning', 'Could not unlink image ' . $filePath . ': ' . $e->getMessage()); }
+                            try { $imgModel->delete($f['propertyImageID']); } catch (\Throwable $e) { log_message('warning', 'Could not delete image record for ' . ($f['propertyImageID'] ?? 'unknown') . ': ' . $e->getMessage()); }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Return authoritative image list for the property (after uploads and deletions)
+        // Return objects with id, filename and url so clients can send numeric ids for deletions.
+        $allImgs = $imgModel->where('PropertyID', $propertyID)->findAll();
+        $allList = [];
+        if (!empty($allImgs)) {
+            foreach ($allImgs as $ai) {
+                $allList[] = [
+                    'id' => $ai['propertyImageID'] ?? ($ai['propertyImageId'] ?? null),
+                    'filename' => $ai['Image'] ?? null,
+                    'url' => base_url('uploads/properties/' . ($ai['Image'] ?? ''))
+                ];
+            }
+        }
+
+        $result = ['success' => true, 'updated' => true, 'images' => $allList];
 
         return $this->response->setJSON($result);
     }

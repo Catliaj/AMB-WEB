@@ -256,6 +256,265 @@ class AdminController extends BaseController
         return $this->response->setJSON($booking);
     }
 
+    /**
+     * Export filtered reports as CSV
+     * GET /admin/reports/export.csv?startDate=...&endDate=...&property=...&agent=...&status=...
+     */
+    public function exportReportsCsv()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
+        }
+        if ($session->get('role') !== 'Admin') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        $start = $this->request->getGet('startDate');
+        $end = $this->request->getGet('endDate');
+        $propertyFilter = $this->request->getGet('property');
+        $agentFilter = $this->request->getGet('agent');
+        $statusFilter = $this->request->getGet('status');
+
+        $bookingModel = new \App\Models\BookingModel();
+        $builder = $bookingModel->builder();
+
+        $builder->select('booking.bookingID, property.PropertyID, property.Title AS PropertyTitle, property.Property_Type AS Property_Type, property.Price AS Sales, CONCAT(agent.FirstName, " ", agent.LastName) AS AgentName, booking.status AS BookingStatus, booking.Reason AS Reason, booking.bookingDate, CONCAT(users.FirstName, " ", users.LastName) AS ClientName, users.Email AS ClientEmail, users.phoneNumber AS ClientPhone')
+                ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
+                ->join('users', 'users.UserID = booking.userID', 'left')
+                ->join('users as agent', 'agent.UserID = property.agent_assigned', 'left')
+                ->orderBy('booking.bookingDate', 'DESC');
+
+        if (!empty($start)) {
+            $builder->where('booking.bookingDate >=', $start);
+        }
+        if (!empty($end)) {
+            $builder->where('booking.bookingDate <=', $end);
+        }
+        if (!empty($propertyFilter) && strtolower($propertyFilter) !== 'all properties') {
+            // allow filter by property type or by title fragment
+            $builder->groupStart();
+            $builder->like('property.Property_Type', $propertyFilter);
+            $builder->orLike('property.Title', $propertyFilter);
+            $builder->groupEnd();
+        }
+        if (!empty($agentFilter) && strtolower($agentFilter) !== 'all agents') {
+            if (is_numeric($agentFilter)) {
+                $builder->where('property.agent_assigned', (int)$agentFilter);
+            } else {
+                $builder->where("CONCAT(agent.FirstName, ' ', agent.LastName) =", $agentFilter);
+            }
+        }
+        if (!empty($statusFilter) && strtolower($statusFilter) !== 'all status') {
+            $builder->where('booking.status', $statusFilter);
+        }
+
+        $rows = $builder->get()->getResultArray();
+
+        // Compute IsSold flag for each row: sold OR (confirmed + reserved)
+        foreach ($rows as &$r) {
+            $status = isset($r['BookingStatus']) ? strtolower($r['BookingStatus']) : '';
+            $reason = isset($r['Reason']) ? strtolower($r['Reason']) : '';
+            $r['IsSold'] = ($status === 'sold' || ($status === 'confirmed' && $reason === 'reserved')) ? 1 : 0;
+        }
+
+        // Compute IsSold flag for each row: sold OR (confirmed + reserved)
+        foreach ($rows as &$r) {
+            $status = isset($r['BookingStatus']) ? strtolower($r['BookingStatus']) : '';
+            $reason = isset($r['Reason']) ? strtolower($r['Reason']) : '';
+            $r['IsSold'] = ($status === 'sold' || ($status === 'confirmed' && $reason === 'reserved')) ? 1 : 0;
+        }
+
+        // Build CSV in memory
+        $fp = fopen('php://temp', 'r+');
+        $headers = ['BookingID', 'PropertyID', 'PropertyTitle', 'PropertyType', 'AgentName', 'ClientName', 'ClientEmail', 'ClientPhone', 'BookingStatus', 'Reason', 'Sales', 'BookingDate', 'IsSold'];
+        fputcsv($fp, $headers);
+
+        foreach ($rows as $r) {
+            fputcsv($fp, [
+                $r['bookingID'] ?? $r['bookingID'] ?? '',
+                $r['PropertyID'] ?? '',
+                $r['PropertyTitle'] ?? '',
+                $r['Property_Type'] ?? '',
+                $r['AgentName'] ?? '',
+                $r['ClientName'] ?? '',
+                $r['ClientEmail'] ?? '',
+                $r['ClientPhone'] ?? '',
+                $r['BookingStatus'] ?? '',
+                $r['Reason'] ?? '',
+                isset($r['Sales']) ? $r['Sales'] : '',
+                $r['bookingDate'] ?? '',
+                isset($r['IsSold']) ? $r['IsSold'] : 0
+            ]);
+        }
+
+        rewind($fp);
+        $csv = stream_get_contents($fp);
+        fclose($fp);
+
+        $filename = 'reports-' . date('Ymd-His') . '.csv';
+        return $this->response->setHeader('Content-Type', 'text/csv; charset=utf-8')
+                              ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                              ->setBody($csv);
+    }
+
+    /**
+     * Export filtered reports as PDF (requires Dompdf)
+     * GET /admin/reports/export.pdf?startDate=...&endDate=...&property=...&agent=...&status=...
+     */
+    public function exportReportsPdf()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
+        }
+        if ($session->get('role') !== 'Admin') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        if (!class_exists('\Dompdf\Dompdf')) {
+            // Dompdf not installed — ask user to install via composer
+            return $this->response->setStatusCode(500)->setBody('Server PDF generator not available. Please install dompdf/dompdf via Composer.');
+        }
+
+        $start = $this->request->getGet('startDate');
+        $end = $this->request->getGet('endDate');
+        $propertyFilter = $this->request->getGet('property');
+        $agentFilter = $this->request->getGet('agent');
+        $statusFilter = $this->request->getGet('status');
+
+        $bookingModel = new \App\Models\BookingModel();
+        $builder = $bookingModel->builder();
+
+        $builder->select('booking.bookingID, property.PropertyID, property.Title AS PropertyTitle, property.Property_Type AS Property_Type, property.Price AS Sales, CONCAT(agent.FirstName, " ", agent.LastName) AS AgentName, booking.status AS BookingStatus, booking.Reason AS Reason, booking.bookingDate, CONCAT(users.FirstName, " ", users.LastName) AS ClientName, users.Email AS ClientEmail, users.phoneNumber AS ClientPhone')
+                ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
+                ->join('users', 'users.UserID = booking.userID', 'left')
+                ->join('users as agent', 'agent.UserID = property.agent_assigned', 'left')
+                ->orderBy('booking.bookingDate', 'DESC');
+
+        if (!empty($start)) {
+            $builder->where('booking.bookingDate >=', $start);
+        }
+        if (!empty($end)) {
+            $builder->where('booking.bookingDate <=', $end);
+        }
+        if (!empty($propertyFilter) && strtolower($propertyFilter) !== 'all properties') {
+            $builder->groupStart();
+            $builder->like('property.Property_Type', $propertyFilter);
+            $builder->orLike('property.Title', $propertyFilter);
+            $builder->groupEnd();
+        }
+        if (!empty($agentFilter) && strtolower($agentFilter) !== 'all agents') {
+            if (is_numeric($agentFilter)) {
+                $builder->where('property.agent_assigned', (int)$agentFilter);
+            } else {
+                $builder->where("CONCAT(agent.FirstName, ' ', agent.LastName) =", $agentFilter);
+            }
+        }
+        if (!empty($statusFilter) && strtolower($statusFilter) !== 'all status') {
+            $builder->where('booking.status', $statusFilter);
+        }
+
+        $rows = $builder->get()->getResultArray();
+
+        // Build simple HTML for PDF
+        $html = '<h2>Reports Export</h2>';
+        $html .= '<table border="1" cellpadding="6" cellspacing="0" width="100%">';
+        $html .= '<thead><tr><th>BookingID</th><th>Property</th><th>PropertyType</th><th>Agent</th><th>Client</th><th>Email</th><th>Phone</th><th>Status</th><th>Reason</th><th>Sales</th><th>Date</th><th>Sold</th></tr></thead><tbody>';
+        foreach ($rows as $r) {
+            $html .= '<tr>';
+            $html .= '<td>' . esc($r['bookingID'] ?? '') . '</td>';
+            $html .= '<td>' . esc($r['PropertyTitle'] ?? '') . '</td>';
+            $html .= '<td>' . esc($r['Property_Type'] ?? '') . '</td>';
+            $html .= '<td>' . esc($r['AgentName'] ?? '') . '</td>';
+            $html .= '<td>' . esc($r['ClientName'] ?? '') . '</td>';
+            $html .= '<td>' . esc($r['ClientEmail'] ?? '') . '</td>';
+            $html .= '<td>' . esc($r['ClientPhone'] ?? '') . '</td>';
+            $html .= '<td>' . esc($r['BookingStatus'] ?? '') . '</td>';
+            $html .= '<td>' . esc($r['Reason'] ?? '') . '</td>';
+            $html .= '<td>' . (isset($r['Sales']) ? number_format($r['Sales'], 2) : '') . '</td>';
+            $html .= '<td>' . esc($r['bookingDate'] ?? '') . '</td>';
+            $html .= '<td>' . ((isset($r['IsSold']) && $r['IsSold']) ? 'Yes' : 'No') . '</td>';
+            $html .= '</tr>';
+        }
+        $html .= '</tbody></table>';
+
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+        $pdfOutput = $dompdf->output();
+
+        $filename = 'reports-' . date('Ymd-His') . '.pdf';
+        return $this->response->setHeader('Content-Type', 'application/pdf')
+                              ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                              ->setBody($pdfOutput);
+    }
+
+    /**
+     * Return filtered reports as JSON for the admin UI
+     * GET /admin/reports/data?startDate=...&endDate=...&property=...&agent=...&status=...
+     */
+    public function getReportsData()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
+        }
+        if ($session->get('role') !== 'Admin') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        $start = $this->request->getGet('startDate');
+        $end = $this->request->getGet('endDate');
+        $propertyFilter = $this->request->getGet('property');
+        $agentFilter = $this->request->getGet('agent');
+        $statusFilter = $this->request->getGet('status');
+
+        $bookingModel = new \App\Models\BookingModel();
+        $builder = $bookingModel->builder();
+
+        $builder->select('booking.bookingID, property.PropertyID, property.Title AS PropertyTitle, property.Property_Type AS Property_Type, property.Price AS Sales, CONCAT(agent.FirstName, " ", agent.LastName) AS AgentName, booking.status AS BookingStatus, booking.Reason AS Reason, booking.bookingDate, CONCAT(users.FirstName, " ", users.LastName) AS ClientName, users.Email AS ClientEmail, users.phoneNumber AS ClientPhone')
+                ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
+                ->join('users', 'users.UserID = booking.userID', 'left')
+                ->join('users as agent', 'agent.UserID = property.agent_assigned', 'left')
+                ->orderBy('booking.bookingDate', 'DESC');
+
+        if (!empty($start)) {
+            $builder->where('booking.bookingDate >=', $start);
+        }
+        if (!empty($end)) {
+            $builder->where('booking.bookingDate <=', $end);
+        }
+        if (!empty($propertyFilter) && strtolower($propertyFilter) !== 'all properties') {
+            $builder->groupStart();
+            $builder->like('property.Property_Type', $propertyFilter);
+            $builder->orLike('property.Title', $propertyFilter);
+            $builder->groupEnd();
+        }
+        if (!empty($agentFilter) && strtolower($agentFilter) !== 'all agents') {
+            if (is_numeric($agentFilter)) {
+                $builder->where('property.agent_assigned', (int)$agentFilter);
+            } else {
+                $builder->where("CONCAT(agent.FirstName, ' ', agent.LastName) =", $agentFilter);
+            }
+        }
+        if (!empty($statusFilter) && strtolower($statusFilter) !== 'all status') {
+            $builder->where('booking.status', $statusFilter);
+        }
+
+        $rows = $builder->get()->getResultArray();
+
+        // Compute IsSold flag for each row: sold OR (confirmed + reserved)
+        foreach ($rows as &$r) {
+            $status = isset($r['BookingStatus']) ? strtolower($r['BookingStatus']) : '';
+            $reason = isset($r['Reason']) ? strtolower($r['Reason']) : '';
+            $r['IsSold'] = ($status === 'sold' || ($status === 'confirmed' && $reason === 'reserved')) ? 1 : 0;
+        }
+
+        return $this->response->setJSON($rows);
+    }
+
 
     public function logoutAdmin(): ResponseInterface
     {

@@ -98,12 +98,20 @@ class AgentController extends BaseController
             $property['Images'] = [];
 
             foreach ($images as $img) {
-                $property['Images'][] = base_url('uploads/properties/' . ($img['Image'] ?: 'no-image.jpg'));
+                $property['Images'][] = [
+                    'id' => $img['propertyImageID'] ?? null,
+                    'filename' => $img['Image'] ?? null,
+                    'url' => base_url('uploads/properties/' . ($img['Image'] ?: 'no-image.jpg'))
+                ];
             }
 
             // fallback if no image exists
             if (empty($property['Images'])) {
-                $property['Images'][] = base_url('uploads/properties/no-image.jpg');
+                $property['Images'][] = [
+                    'id' => null,
+                    'filename' => 'no-image.jpg',
+                    'url' => base_url('uploads/properties/no-image.jpg')
+                ];
             }
         }
 
@@ -372,6 +380,31 @@ class AgentController extends BaseController
 
         // Optionally join property or agent info here before returning if you need it on client
         return $this->response->setJSON(['booking' => $booking]);
+    }
+
+    /**
+     * Return bookings for a given client (userID) — used by agent client details view.
+     * GET /users/clientBookings/{userID}
+     */
+    public function clientBookings($userID = null)
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Agent') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        if (empty($userID)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'UserID required']);
+        }
+
+        $bookingModel = new BookingModel();
+        try {
+            $bookings = $bookingModel->getBookingsByUser($userID);
+            return $this->response->setJSON($bookings);
+        } catch (\Throwable $e) {
+            log_message('error', 'clientBookings error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+        }
     }
 
 

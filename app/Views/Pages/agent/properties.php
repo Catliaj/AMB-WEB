@@ -15,6 +15,8 @@
     .property-image { height: 180px; object-fit: cover; width:100%; border-radius:6px; }
     .small-hint { font-size: .85rem; color: #6c757d; }
     .badge-status { padding: .35em .6em; border-radius: .375rem; font-size:.8rem; }
+    .img-thumb-wrap { width:120px; position:relative; }
+    .img-thumb-wrap .remove-new { position:absolute; top:4px; right:4px; z-index:5; }
   </style>
 </head>
 <body>
@@ -34,8 +36,6 @@
 
   <main class="container-fluid mt-5 pt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      
-
       <div class="d-flex align-items-center gap-2 mt-3">
         <select id="filterSelect" class="form-select form-select-sm" style="width:auto">
           <option value="all">All</option>
@@ -67,11 +67,15 @@
             <input type="hidden" id="editPropertyID" name="propertyID" />
             <div class="row">
               <div class="col-md-6 text-center">
-                <img id="currentImagePreview" src="<?= base_url('uploads/properties/no-image.jpg') ?>" alt="House Image"
-                     class="rounded shadow-sm mb-3" style="width:100%; max-width:360px; height:220px; object-fit:cover;">
+                <div id="currentImagesContainer" class="mb-3 d-flex flex-wrap gap-2 justify-content-center">
+                  <!-- thumbnails inserted here -->
+                </div>
+                <div class="mb-2 small-hint text-muted">Existing images. Click remove to mark for deletion (changes saved when you press Save).</div>
                 <div class="mb-3">
-                  <label class="form-label fw-semibold">Replace Image</label>
-                  <input type="file" id="newImageInput" name="image" class="form-control" accept="image/*">
+                  <label class="form-label fw-semibold">Add / Replace Images</label>
+                  <input type="file" id="newImagesInput" name="images[]" class="form-control" accept="image/*" multiple>
+                  <div id="newImagesPreview" class="mt-2 d-flex flex-wrap gap-2"></div>
+                  <div class="small-hint mt-1">You can add multiple images. New files are uploaded alongside existing ones.</div>
                 </div>
               </div>
 
@@ -140,7 +144,7 @@
   <!-- endpoints exposed from PHP (site_url ensures correct base/CI index.php) -->
   <script>
     const apiListUrl = <?= json_encode(site_url('users/agentproperties')) ?>; // should return JSON for AJAX requests
-    const updateUrl = <?= json_encode(site_url('property/updateStatus')) ?>;  // endpoint to accept FormData (propertyID, status, image, ...)
+    const updateUrl = <?= json_encode(site_url('property/updateStatus')) ?>;  // endpoint to accept FormData (propertyID, status, images[], deleteImages[], ...)
     const uploadsBase = <?= json_encode(base_url('uploads/properties/')) ?>;
   </script>
 
@@ -148,15 +152,64 @@
   <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js") ?>"></script>
 
   <script>
+  // State
   let properties = [];
   let currentEditProperty = null;
+  let imagesMarkedForDeletion = []; // for existing images (ids or filenames)
+  let newSelectedFiles = []; // managed list of files the user added in the modal
 
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('refreshBtn').addEventListener('click', loadProperties);
     document.getElementById('filterSelect').addEventListener('change', applyFilter);
     document.getElementById('saveChangesBtn').addEventListener('click', savePropertyChanges);
+
+    // Manage newly selected files using newSelectedFiles to avoid duplicates and double-append
+    const newImgInput = document.getElementById('newImagesInput');
+    if (newImgInput) {
+      newImgInput.addEventListener('change', (ev) => {
+        const files = Array.from(ev.target.files || []);
+        // Add only files not already present (compare by name + size)
+        files.forEach(f => {
+          const key = `${f.name}_${f.size}`;
+          const exists = newSelectedFiles.some(x => `${x.name}_${x.size}` === key);
+          if (!exists) newSelectedFiles.push(f);
+        });
+        // clear the input to allow re-selecting same files later if user removed them
+        newImgInput.value = '';
+        renderNewFilesPreview();
+      });
+    }
+
     loadProperties();
   });
+
+  function renderNewFilesPreview() {
+    const preview = document.getElementById('newImagesPreview');
+    preview.innerHTML = '';
+    newSelectedFiles.forEach((f, i) => {
+      const url = URL.createObjectURL(f);
+      const wrapper = document.createElement('div');
+      wrapper.className = 'img-thumb-wrap img-thumbnail d-inline-block me-2 mb-2';
+      wrapper.style.width = '120px';
+      wrapper.innerHTML = `
+        <img src="${escapeHtml(url)}" style="width:120px;height:80px;object-fit:cover;display:block;border-radius:4px;">
+        <button type="button" class="btn btn-sm btn-danger remove-new" data-new-index="${i}">×</button>
+      `;
+      preview.appendChild(wrapper);
+    });
+    // attach listeners
+    preview.querySelectorAll('button[data-new-index]').forEach(b => {
+      b.addEventListener('click', () => {
+        const idx = Number(b.getAttribute('data-new-index'));
+        if (!isNaN(idx)) {
+          // revoke objectURL for the removed file if needed (optional)
+          try { URL.revokeObjectURL(newSelectedFiles[idx] && newSelectedFiles[idx].preview); } catch(e){}
+          newSelectedFiles.splice(idx, 1);
+          renderNewFilesPreview();
+        }
+      });
+    });
+  }
 
   async function loadProperties() {
     const container = document.getElementById('propertyContainer');
@@ -167,27 +220,46 @@
       const data = await res.json();
       properties = Array.isArray(data) ? data : (data.properties ?? data);
       if (!Array.isArray(properties)) properties = [];
-      // normalize each property for our front-end keys
+
+      // normalize and dedupe images
       properties = properties.map(p => {
-        // Images: if your DB returns a single Image column named Image, convert it.
         if (!p.Images || !Array.isArray(p.Images)) {
           if (p.Image) {
-            p.Images = [ p.Image.startsWith('http') ? p.Image : (uploadsBase + (p.Image || 'no-image.jpg')) ];
+            const src = (p.Image && String(p.Image).startsWith('http')) ? p.Image : (uploadsBase + (p.Image || 'no-image.jpg'));
+            p.Images = [{ id: null, filename: (p.Image || null), url: src }];
           } else {
-            p.Images = [ uploadsBase + 'no-image.jpg' ];
+            p.Images = [{ id: null, filename: 'no-image.jpg', url: uploadsBase + 'no-image.jpg' }];
           }
+        } else {
+          p.Images = p.Images.map(img => {
+            if (!img) return { id: null, filename: 'no-image.jpg', url: uploadsBase + 'no-image.jpg' };
+            if (typeof img === 'object' && img.url) return { id: img.id ?? null, filename: img.filename ?? null, url: img.url };
+            const filename = (function(u){ try { const parsed = new URL(u, location.origin); const parts = parsed.pathname.split('/'); return decodeURIComponent(parts.pop() || parsed.pathname); } catch(e){ return String(u).split('/').pop().split('?')[0]; } })(img);
+            return { id: null, filename: filename, url: img };
+          });
+
+          // Deduplicate images by id (preferred) or filename/url (case-insensitive)
+          const seen = new Set();
+          p.Images = p.Images.filter(img => {
+            if (!img) return false;
+            const key = (img.id && img.id !== null) ? String(img.id) : (img.filename ? String(img.filename).toLowerCase() : String(img.url).toLowerCase());
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
         }
+
         p.Title = p.Title ?? p.PropertyTitle ?? p.title ?? 'Untitled';
         p.Location = p.Location ?? p.PropertyLocation ?? p.location ?? '';
         p.Price = p.Price ?? p.price ?? 0;
-        // status: prefer New_Status from joins, fallback to status
         p.New_Status = p.New_Status ?? p.status ?? 'Available';
         return p;
       });
+
       renderList(properties);
     } catch (err) {
       console.error(err);
-      document.getElementById('propertyContainer').innerHTML = '<div class="text-danger text-center py-4">Failed to load properties.</div>';
+      container.innerHTML = '<div class="text-danger text-center py-4">Failed to load properties.</div>';
     }
   }
 
@@ -200,11 +272,12 @@
     }
 
     list.forEach((p, idx) => {
-      const img = (p.Images && p.Images[0]) ? p.Images[0] : (uploadsBase + 'no-image.jpg');
+      const firstImg = (p.Images && p.Images[0]) ? p.Images[0] : { url: uploadsBase + 'no-image.jpg' };
+      const img = (typeof firstImg === 'object') ? firstImg.url : firstImg;
       const badgeClass = (String(p.New_Status || '').toLowerCase() === 'occupied') ? 'bg-danger' : 'bg-success';
-      const div = document.createElement('div');
-      div.className = 'col-md-3 col-sm-6';
-      div.innerHTML = `
+      const col = document.createElement('div');
+      col.className = 'col-md-3 col-sm-6';
+      col.innerHTML = `
         <div class="card property-card p-3 shadow-sm animate__animated animate__fadeInUp" style="animation-delay:${idx*0.06}s">
           <img src="${escapeHtml(img)}" alt="${escapeHtml(p.Title || 'Property')}" class="property-image mb-3 rounded">
           <h6 class="fw-bold mb-1">${escapeHtml(p.Title || 'Untitled')}</h6>
@@ -216,10 +289,9 @@
           </div>
         </div>
       `;
-      container.appendChild(div);
+      container.appendChild(col);
     });
 
-    // attach delegated listeners
     container.querySelectorAll('button[data-action="edit"]').forEach(btn => {
       btn.addEventListener('click', () => openEditModal(btn.dataset.id));
     });
@@ -245,8 +317,52 @@
     document.getElementById('editPrice').value = p.Price ?? '';
     document.getElementById('editDescription').value = p.Description ?? '';
     document.getElementById('availabilitySelect').value = p.New_Status ?? p.status ?? 'Available';
-    document.getElementById('currentImagePreview').src = (p.Images && p.Images[0]) ? p.Images[0] : (uploadsBase + 'no-image.jpg');
-    document.getElementById('newImageInput').value = '';
+
+    // Existing images: render thumbnails and allow marking for deletion
+    imagesMarkedForDeletion = [];
+    const container = document.getElementById('currentImagesContainer');
+    container.innerHTML = '';
+
+    const imgs = Array.isArray(p.Images) ? p.Images : (p.Images ? [p.Images] : [{ url: uploadsBase + 'no-image.jpg' }]);
+
+    // Deduplicate before rendering (safety)
+    const seen = new Set();
+    imgs.forEach(el => {
+      if (!el) return;
+      const id = (typeof el === 'object') ? (el.id ?? null) : null;
+      const filename = (typeof el === 'object') ? (el.filename ?? null) : (function(u){ try { const parsed = new URL(u, location.origin); const parts = parsed.pathname.split('/'); return decodeURIComponent(parts.pop() || parsed.pathname); } catch(e){ return String(u).split('/').pop().split('?')[0]; } })(el);
+      const key = (id && id !== null) ? String(id) : (filename ? String(filename).toLowerCase() : (typeof el === 'object' ? String(el.url).toLowerCase() : String(el).toLowerCase()));
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      const src = (typeof el === 'object') ? el.url : el;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'position-relative';
+      wrapper.style.width = '120px';
+      wrapper.innerHTML = `
+        <img src="${escapeHtml(src)}" class="img-thumbnail" style="width:120px;height:80px;object-fit:cover;"> 
+        <button type="button" class="btn btn-sm btn-danger position-absolute" style="top:4px;right:4px;" data-image-id="${id ?? ''}" data-image-name="${escapeHtml(filename)}">Remove</button>
+      `;
+      container.appendChild(wrapper);
+    });
+
+    // reset new files and preview when opening
+    newSelectedFiles = [];
+    document.getElementById('newImagesPreview').innerHTML = '';
+    document.getElementById('newImagesInput').value = '';
+
+    // attach remove listeners: remove thumbnail immediately and record id/name
+    container.querySelectorAll('button[data-image-name]').forEach(b => {
+      b.addEventListener('click', () => {
+        const id = b.getAttribute('data-image-id');
+        const name = b.getAttribute('data-image-name');
+        const wrapper = b.closest('div.position-relative');
+        if (wrapper) wrapper.remove();
+        if (id && id !== '') imagesMarkedForDeletion.push(id);
+        else if (name) imagesMarkedForDeletion.push(name);
+      });
+    });
+
     const modal = new bootstrap.Modal(document.getElementById('editModal'));
     modal.show();
   }
@@ -255,8 +371,12 @@
     if (!currentEditProperty) return;
     const form = document.getElementById('editForm');
     const formData = new FormData(form);
-    const imageFile = document.getElementById('newImageInput').files[0];
-    if (imageFile) formData.append('image', imageFile);
+
+    // Append only our managed newSelectedFiles (prevents duplicates / double-appends)
+    newSelectedFiles.forEach(f => formData.append('images[]', f));
+
+    // Send delete entries as repeated fields so most backends (PHP) receive arrays
+    imagesMarkedForDeletion.forEach(d => formData.append('deleteImages[]', d));
 
     try {
       Swal.fire({ title: 'Saving...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
@@ -265,32 +385,22 @@
         credentials: 'same-origin',
         body: formData
       });
-      const json = await res.json().catch(()=>null);
+      const json = await res.json().catch(() => null);
       if (!res.ok || !(json && (json.success || json.updated))) {
         throw new Error(json?.error || 'Server returned ' + res.status);
       }
 
-      // Update local copy and UI
-      const p = properties.find(x => String(x.PropertyID) === String(currentEditProperty.PropertyID));
-      if (p) {
-        p.Title = formData.get('title') || p.Title;
-        p.Location = formData.get('location') || p.Location;
-        p.Price = formData.get('price') || p.Price;
-        p.Description = formData.get('description') || p.Description;
-        p.New_Status = formData.get('status') || p.New_Status;
-        if (json.imageUrl) {
-          // server returned url for uploaded image
-          p.Images = [ json.imageUrl ];
-        } else if (imageFile) {
-          // optional: show a local preview by creating an object URL
-          p.Images = [ URL.createObjectURL(imageFile) ];
-        }
-      }
+      // Do NOT attempt to merge images on the client side (this often causes duplication).
+      // Instead refresh authoritative data from server.
+      await loadProperties();
 
       Swal.close();
       Swal.fire({ icon: 'success', title: 'Saved' });
       bootstrap.Modal.getInstance(document.getElementById('editModal'))?.hide();
-      applyFilter();
+
+      // reset newSelectedFiles and deletion list
+      newSelectedFiles = [];
+      imagesMarkedForDeletion = [];
     } catch (err) {
       console.error(err);
       Swal.close();
@@ -304,7 +414,10 @@
 
     document.getElementById('viewTitle').innerText = p.Title || 'Property';
     const body = document.getElementById('viewBody');
-    const imgs = (p.Images || []).map(src => `<div class="col-md-6 mb-3"><img src="${escapeHtml(src)}" class="img-fluid rounded"></div>`).join('');
+    const imgs = (p.Images || []).map(el => {
+      const src = (typeof el === 'object') ? el.url : el;
+      return `<div class="col-md-6 mb-3"><img src="${escapeHtml(src)}" class="img-fluid rounded"></div>`;
+    }).join('');
     body.innerHTML = `
       <div class="row">
         <div class="col-lg-6">
@@ -320,7 +433,6 @@
       </div>
     `;
     const modal = new bootstrap.Modal(document.getElementById('viewModal'));
-    // "Edit" button in view modal opens edit modal for same property
     const editBtn = document.getElementById('editFromViewBtn');
     editBtn.onclick = () => {
       modal.hide();
