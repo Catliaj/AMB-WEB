@@ -56,6 +56,44 @@ class CreateUsersTable extends Migration
                 'constraint'     => '255',
             ],
 
+            // Profile image filename (stored as filename only; views build full URL using employmentStatus)
+            'Image' => [
+                'type'           => 'VARCHAR',
+                'constraint'     => '255',
+                'null'           => true,
+                'default'        => null,
+            ],
+
+            // Government ID image filename
+            'GovIDImage' => [
+                'type'           => 'VARCHAR',
+                'constraint'     => '255',
+                'null'           => true,
+                'default'        => null,
+            ],
+
+            // Government ID metadata
+            'gov_id_type' => [
+                'type'           => 'VARCHAR',
+                'constraint'     => '100',
+                'null'           => true,
+                'default'        => null,
+            ],
+            'gov_id_number' => [
+                'type'           => 'VARCHAR',
+                'constraint'     => '100',
+                'null'           => true,
+                'default'        => null,
+            ],
+
+            // Employment status used to determine uploads folder (e.g., 'ofw' or 'locallyemployed')
+            'employmentStatus' => [
+                'type'           => 'VARCHAR',
+                'constraint'     => '50',
+                'null'           => true,
+                'default'        => null,
+            ],
+
             'Role' => [
                 'type'           => 'ENUM',
                 'constraint'     => ['Admin', 'Agent', 'Client'],

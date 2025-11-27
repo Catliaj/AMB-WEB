@@ -103,8 +103,9 @@ class ChatSessionModel extends Model
     public function getClientsHandledByAgent($agentId)
     {
         // Use DISTINCT to avoid duplicates if a client has multiple sessions
+        // Also include Image and employmentStatus so callers can build full photo URLs
         return $this->db->table('chatSession AS cs')
-                        ->select('u.UserID, u.FirstName, u.MiddleName, u.LastName, u.Email, u.phoneNumber, u.Birthdate')
+                        ->select('u.UserID, u.FirstName, u.MiddleName, u.LastName, u.Email, u.phoneNumber, u.Birthdate, u.Image, u.employmentStatus')
                         ->join('users AS u', 'u.UserID = cs.UserID')
                         ->where('cs.AgentID', $agentId)
                         ->distinct()
