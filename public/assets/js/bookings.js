@@ -13,7 +13,27 @@
     container.innerHTML = `<div class="text-center py-4">Loading your bookings…</div>`;
 
     try {
-      const res = await fetch(myBookingsUrl, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      // Build fetch URL: include mode query param when page indicates reservations mode
+      let fetchUrl = myBookingsUrl;
+      try {
+        const mode = window.bookingsMode || null;
+        if (mode) {
+          // only append when URL doesn't already include the mode param
+          const urlObj = new URL(fetchUrl, window.location.origin);
+          if (!urlObj.searchParams.has('mode')) {
+            urlObj.searchParams.set('mode', mode === 'reservations' ? 'reservations' : 'bookings');
+            fetchUrl = urlObj.toString();
+          } else {
+            fetchUrl = urlObj.toString();
+          }
+        }
+      } catch (e) {
+        // fallback: append simple query string
+        if (window.bookingsMode === 'reservations' && fetchUrl.indexOf('?') === -1) fetchUrl += '?mode=reservations';
+        else if (window.bookingsMode === 'reservations') fetchUrl += '&mode=reservations';
+      }
+
+      const res = await fetch(fetchUrl, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       if (!res.ok) throw new Error('Failed to load bookings: ' + res.status);
       const data = await res.json();
 
@@ -143,11 +163,22 @@
     if (!id) return;
     // Best: fetch fresh booking details (if endpoint exists). We'll rely on the list data for now:
     try {
-      // If you have an endpoint /bookings/{id} use it; otherwise find the element's card data from DOM or reload full list and find booking.
-      // Simpler: re-fetch all bookings and find selected one
-      const res = await fetch(myBookingsUrl, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-      if (!res.ok) throw new Error('Failed to load booking');
-      const list = await res.json();
+      // Try a dedicated endpoint that returns a single booking by id
+      const detailUrl = '/bookings/' + encodeURIComponent(id);
+      const res = await fetch(detailUrl, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (res.ok) {
+        const booking = await res.json();
+        populateBookingModal(booking);
+        const modalEl = document.getElementById('bookingDetailModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        return;
+      }
+
+      // Fallback: re-fetch full list and find selected one (older behaviour)
+      const listRes = await fetch(myBookingsUrl, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!listRes.ok) throw new Error('Failed to load booking');
+      const list = await listRes.json();
       const booking = list.find(b => String(b.bookingID) === String(id));
       if (!booking) throw new Error('Booking not found');
 
@@ -387,15 +418,22 @@ function populateBookingModal(b) {
     const price = Number(e.currentTarget?.dataset?.price || 0);
     if (!bookingID) return;
 
-    // populate modal
-    document.getElementById('contractPropertyPrice').textContent = price ? `₱${Number(price).toLocaleString()}` : '—';
-    document.getElementById('contractMonthly').textContent = '—';
-    document.getElementById('contractErrors').style.display = 'none';
-    document.getElementById('contractClientAge').textContent = '…';
-
-    // open modal
+    // locate modal and scope DOM queries to it (fixes duplicate IDs across modals)
     const modalEl = document.getElementById('confirmContractModal');
+    if (!modalEl) return;
     const modal = new bootstrap.Modal(modalEl);
+
+    // scoped elements inside confirm modal
+    const priceEl = modalEl.querySelector('#contractPropertyPrice');
+    const monthlyEl = modalEl.querySelector('#contractMonthly');
+    const errorsElScoped = modalEl.querySelector('#contractErrors');
+    const ageEl = modalEl.querySelector('#contractClientAge');
+
+    // populate modal
+    if (priceEl) priceEl.textContent = price ? `₱${Number(price).toLocaleString()}` : '—';
+    if (monthlyEl) monthlyEl.textContent = '—';
+    if (errorsElScoped) errorsElScoped.style.display = 'none';
+    if (ageEl) ageEl.textContent = '…';
 
     // helper: fetch user's birthdate and compute age (returns number or null)
     async function getClientAge(userId) {
@@ -439,65 +477,59 @@ function populateBookingModal(b) {
     let age = null;
     const uid = window.currentUserId;
     age = await getClientAge(uid);
-    const ageEl = document.getElementById('contractClientAge');
-    ageEl.textContent = age !== null ? String(age) : '—';
+    if (ageEl) ageEl.textContent = age !== null ? String(age) : '—';
 
-    // attach compute handler
-    const radios = Array.from(document.querySelectorAll('input[name="contractMode"]'));
+    // attach compute handler to radios inside the confirm modal only
+    const radios = Array.from(modalEl.querySelectorAll('input[name="contractMode"]'));
     function compute() {
       const sel = radios.find(r => r.checked)?.value || null;
-      const errorsEl = document.getElementById('contractErrors');
-      errorsEl.style.display = 'none';
+      if (errorsElScoped) errorsElScoped.style.display = 'none';
       if (!sel) {
-        document.getElementById('contractMonthly').textContent = '—';
+        if (monthlyEl) monthlyEl.textContent = '—';
         return;
       }
 
       if (sel === 'full') {
-        document.getElementById('contractMonthly').textContent = `₱${Number(price).toLocaleString()}`;
+        if (monthlyEl) monthlyEl.textContent = `₱${Number(price).toLocaleString()}`;
         return;
       }
 
       const maxYears = sel === 'pagibig' ? 60 : (sel === 'banko' ? 30 : 0);
       if (age === null) {
-        errorsEl.textContent = 'Unable to determine age. Please update your profile birthdate.';
-        errorsEl.style.display = '';
-        document.getElementById('contractMonthly').textContent = '—';
+        if (errorsElScoped) { errorsElScoped.textContent = 'Unable to determine age. Please update your profile birthdate.'; errorsElScoped.style.display = ''; }
+        if (monthlyEl) monthlyEl.textContent = '—';
         return;
       }
 
       const years = maxYears - Number(age);
       if (years <= 0) {
-        errorsEl.textContent = `Not eligible for ${sel} (age exceeds maximum).`;
-        errorsEl.style.display = '';
-        document.getElementById('contractMonthly').textContent = '—';
+        if (errorsElScoped) { errorsElScoped.textContent = `Not eligible for ${sel} (age exceeds maximum).`; errorsElScoped.style.display = ''; }
+        if (monthlyEl) monthlyEl.textContent = '—';
         return;
       }
 
       const months = years * 12;
       if (months <= 0) {
-        document.getElementById('contractMonthly').textContent = '—';
+        if (monthlyEl) monthlyEl.textContent = '—';
         return;
       }
 
       const perMonth = Number(price) / months;
       // format number with grouping
       const perText = `₱${perMonth.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
-      document.getElementById('contractMonthly').textContent = perText;
+      if (monthlyEl) monthlyEl.textContent = perText;
     }
 
     radios.forEach(r => r.addEventListener('change', compute));
     // run compute once to initialize displayed value if a radio is pre-selected
     compute();
 
-    // Confirm button handler (client-side only for now)
-    const confirmBtn = document.getElementById('confirmContractBtn');
+    // Confirm button handler (client-side only for now) scoped to modal
+    const confirmBtn = modalEl.querySelector('#confirmContractBtn');
     const onConfirm = async () => {
       const sel = radios.find(r => r.checked)?.value || null;
       if (!sel) {
-        const errorsEl = document.getElementById('contractErrors');
-        errorsEl.textContent = 'Please choose a payment mode.';
-        errorsEl.style.display = '';
+        if (errorsElScoped) { errorsElScoped.textContent = 'Please choose a payment mode.'; errorsElScoped.style.display = ''; }
         return;
       }
 
@@ -509,9 +541,7 @@ function populateBookingModal(b) {
       } else {
         const years = maxYears - Number(age || 0);
         if (years <= 0) {
-          const errorsEl = document.getElementById('contractErrors');
-          errorsEl.textContent = 'Not eligible for this loan mode.';
-          errorsEl.style.display = '';
+          if (errorsElScoped) { errorsElScoped.textContent = 'Not eligible for this loan mode.'; errorsElScoped.style.display = ''; }
           return;
         }
         perMonth = Number(price) / (years * 12);
@@ -536,14 +566,14 @@ function populateBookingModal(b) {
         if (!res.ok || json?.error) throw new Error(json?.error || 'Failed to persist contract');
 
         // detach handler to avoid duplicates
-        confirmBtn.removeEventListener('click', onConfirm);
+        if (confirmBtn) confirmBtn.removeEventListener('click', onConfirm);
         radios.forEach(r => r.removeEventListener('change', compute));
-        modal.hide();
 
-        // Open signature modal so client can sign and generate final PDF
-        try {
-          const signModalEl = document.getElementById('signContractModal');
-          if (signModalEl) {
+        // Show signature modal only after confirm modal is fully hidden to avoid backdrop overlap
+        const signModalEl = document.getElementById('signContractModal');
+        const openSignModal = async () => {
+          try {
+            if (!signModalEl) return;
             // set booking/reservation ids for sign handler
             const resInput = document.getElementById('signContractReservationId');
             const bookInput = document.getElementById('signContractBookingId');
@@ -557,12 +587,11 @@ function populateBookingModal(b) {
             // One-time handler to init canvas after modal is shown
             const onShown = () => {
               try {
-                const canvas = document.getElementById('signaturePad');
+                const canvas = signModalEl.querySelector('#signaturePad') || document.getElementById('signaturePad');
                 if (!canvas) return;
 
                 // Ensure canvas is sized to its CSS layout size using devicePixelRatio
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                // use clientWidth/clientHeight which are meaningful when visible
                 const w = Math.max(300, canvas.clientWidth || 600);
                 const h = Math.max(120, canvas.clientHeight || 200);
                 canvas.width = Math.floor(w * ratio);
@@ -572,16 +601,16 @@ function populateBookingModal(b) {
 
                 signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgba(255,255,255,0)' });
 
-                const clearBtn = document.getElementById('clearSignatureBtn');
+                const clearBtn = signModalEl.querySelector('#clearSignatureBtn') || document.getElementById('clearSignatureBtn');
                 if (clearBtn) clearBtn.onclick = () => signaturePad.clear();
 
                 // prepare sign button handler (replace to avoid double binds)
-                const signBtn = document.getElementById('signContractBtn');
+                const signBtn = signModalEl.querySelector('#signContractBtn') || document.getElementById('signContractBtn');
                 if (signBtn) {
                   const newBtn = signBtn.cloneNode(true);
                   signBtn.parentNode.replaceChild(newBtn, signBtn);
                   newBtn.addEventListener('click', async () => {
-                    const errorsEl = document.getElementById('signContractErrors');
+                    const errorsEl = signModalEl.querySelector('#signContractErrors') || document.getElementById('signContractErrors');
                     if (errorsEl) { errorsEl.style.display = 'none'; errorsEl.textContent = ''; }
                     if (!signaturePad || signaturePad.isEmpty()) {
                       if (errorsEl) { errorsEl.textContent = 'Please provide your signature before continuing.'; errorsEl.style.display = ''; }
@@ -608,7 +637,7 @@ function populateBookingModal(b) {
                       if (resp?.pdf_url) try { window.open(resp.pdf_url, '_blank'); } catch (e) {}
 
                       Swal.fire({ icon: 'success', title: 'Contract Submitted', text: 'Contract generated and submitted. Awaiting admin confirmation.' });
-                      bootstrap.Modal.getInstance(document.getElementById('signContractModal'))?.hide();
+                      bootstrap.Modal.getInstance(signModalEl)?.hide();
                       loadMyBookings();
                     } catch (err) {
                       console.error('Sign contract failed', err);
@@ -625,32 +654,37 @@ function populateBookingModal(b) {
             };
 
             // cleanup on hide
-            const onHidden = () => {
+            const onHiddenSign = () => {
               try {
-                if (signaturePad) {
-                  signaturePad.off && signaturePad.off();
-                }
-                signaturePad = null;
                 // reset canvas size placeholder so next show re-inits fresh
-                const c = document.getElementById('signaturePad');
-                if (c) {
-                  c.width = 0; c.height = 0; const ctx = c.getContext && c.getContext('2d'); if (ctx) ctx.clearRect(0,0,c.width,c.height);
-                }
-                signModalEl.removeEventListener('hidden.bs.modal', onHidden);
+                const c = signModalEl.querySelector('#signaturePad') || document.getElementById('signaturePad');
+                if (c) { c.width = 0; c.height = 0; const ctx = c.getContext && c.getContext('2d'); if (ctx) ctx.clearRect(0,0,c.width,c.height); }
+                signModalEl.removeEventListener('hidden.bs.modal', onHiddenSign);
               } catch (e) { /* ignore */ }
             };
 
             signModalEl.addEventListener('shown.bs.modal', onShown);
-            signModalEl.addEventListener('hidden.bs.modal', onHidden);
+            signModalEl.addEventListener('hidden.bs.modal', onHiddenSign);
 
             signModal.show();
-          } else {
-            // fallback: show simple confirmation
+          } catch (err) {
+            console.warn('Opening sign modal failed', err);
             Swal.fire({ icon: 'success', title: 'Contract Proposal Sent', html: `<p>Mode: <strong>${sel}</strong></p><p>Monthly: <strong>₱${perMonth.toFixed(2)}</strong></p>` });
           }
-        } catch (err) {
-          console.warn('Opening sign modal failed', err);
-          Swal.fire({ icon: 'success', title: 'Contract Proposal Sent', html: `<p>Mode: <strong>${sel}</strong></p><p>Monthly: <strong>₱${perMonth.toFixed(2)}</strong></p>` });
+        };
+
+        // If confirm modal is visible, wait for it to hide to avoid backdrop overlap
+        try {
+          const onHiddenConfirm = () => {
+            modalEl.removeEventListener('hidden.bs.modal', onHiddenConfirm);
+            openSignModal();
+          };
+          modalEl.addEventListener('hidden.bs.modal', onHiddenConfirm);
+          modal.hide();
+        } catch (e) {
+          // fallback: hide then open
+          modal.hide();
+          setTimeout(openSignModal, 200);
         }
       } catch (err) {
         console.error('Persist contract failed', err);
@@ -658,7 +692,7 @@ function populateBookingModal(b) {
       }
     };
 
-    confirmBtn.addEventListener('click', onConfirm);
+    if (confirmBtn) confirmBtn.addEventListener('click', onConfirm);
 
     modal.show();
   }

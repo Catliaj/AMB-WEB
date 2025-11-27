@@ -806,11 +806,24 @@ class UserController extends BaseController
 
         $selectStr = implode(",\n                ", $selectFields);
 
-        // Build where condition depending on whether Purpose column exists
-        if (in_array('Purpose', $bookingFields, true)) {
-            $whereCond = "(booking.Purpose = 'Viewing' OR LOWER(booking.Reason) LIKE '%view%')";
+        // Determine mode (client may request 'reservations' or 'bookings')
+        $mode = $this->request->getGet('mode') ?? $this->request->getGet('view') ?? null;
+
+        // Build where condition depending on requested mode and whether Purpose column exists
+        if (strtolower((string)$mode) === 'reservations') {
+            if (in_array('Purpose', $bookingFields, true)) {
+                // Prefer explicit Purpose column when present
+                $whereCond = "(booking.Purpose = 'Reserve' OR LOWER(booking.Reason) LIKE '%reserve%')";
+            } else {
+                $whereCond = "LOWER(booking.Reason) LIKE '%reserve%'";
+            }
         } else {
-            $whereCond = "LOWER(booking.Reason) LIKE '%view%'";
+            // Default: bookings page -> Viewing
+            if (in_array('Purpose', $bookingFields, true)) {
+                $whereCond = "(booking.Purpose = 'Viewing' OR LOWER(booking.Reason) LIKE '%view%')";
+            } else {
+                $whereCond = "LOWER(booking.Reason) LIKE '%view%'";
+            }
         }
 
         $bookings = $bookingModel
@@ -883,6 +896,105 @@ class UserController extends BaseController
         unset($b);
 
         return $this->response->setJSON($bookings);
+    }
+
+    /**
+     * Return a single booking's details (JSON) for the logged-in client
+     * GET /bookings/{id}
+     */
+    public function getBooking($id = null)
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Client') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        if (empty($id) || !is_numeric($id)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid booking id']);
+        }
+
+        $userId = $session->get('UserID');
+        $bookingModel = new BookingModel();
+        $db = \Config\Database::connect();
+        $bookingFields = $db->getFieldNames('booking');
+
+        $selectFields = [
+            'booking.bookingID',
+            'booking.BookingDate AS bookingDate',
+        ];
+        if (in_array('Purpose', $bookingFields, true)) {
+            $selectFields[] = 'booking.Purpose';
+        }
+        $selectFields = array_merge($selectFields, [
+            'booking.Status AS BookingStatus',
+            'booking.Reason',
+            'booking.Notes',
+            'property.PropertyID',
+            'property.Title AS PropertyTitle',
+            'property.Description AS PropertyDescription',
+            'property.Property_Type',
+            'property.Location AS PropertyLocation',
+            'property.Size AS PropertySize',
+            'property.Bedrooms AS PropertyBedrooms',
+            'property.Bathrooms AS PropertyBathrooms',
+            'property.Parking_Spaces AS PropertyParking',
+            'property.agent_assigned',
+            'property.Corporation',
+            'property.Price AS PropertyPrice'
+        ]);
+
+        $selectStr = implode(",\n                ", $selectFields);
+
+        $booking = $bookingModel
+            ->select("\n                {$selectStr}\n            ")
+            ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
+            ->where('booking.bookingID', $id)
+            ->where('booking.UserID', $userId)
+            ->first();
+
+        if (!$booking) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'Booking not found']);
+        }
+
+        // Normalize Status
+        if (empty($booking['BookingStatus']) || trim($booking['BookingStatus']) === '') {
+            $booking['BookingStatus'] = 'Pending';
+        }
+
+        // attach images
+        $imgModel = new PropertyImageModel();
+        $propId = $booking['PropertyID'] ?? null;
+        $images = [];
+        if ($propId) {
+            $imgs = $imgModel->where('PropertyID', $propId)->findAll();
+            if (!empty($imgs)) {
+                foreach ($imgs as $i) {
+                    $images[] = base_url('uploads/properties/' . ($i['Image'] ?? 'no-image.jpg'));
+                }
+            } else {
+                $images[] = base_url('uploads/properties/no-image.jpg');
+            }
+        }
+        $booking['Images'] = $images;
+
+        // attach rating if reviews table exists
+        $booking['Rating'] = null;
+        try {
+            $review = $db->table('reviews')
+                ->select('rating')
+                ->where('bookingID', $booking['bookingID'])
+                ->orderBy('created_at', 'DESC')
+                ->limit(1)
+                ->get()
+                ->getRowArray();
+            if ($review && array_key_exists('rating', $review)) {
+                $booking['Rating'] = $review['rating'];
+            }
+        } catch (\Throwable $e) {
+            // ignore if table not present
+        }
+
+        return $this->response->setJSON($booking);
     }
 
     public function cancel()
@@ -1287,24 +1399,25 @@ class UserController extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['error' => 'You do not own this reservation']);
         }
 
-        try {
-            $updateData = [
-                'Term_Months' => $calculation['months'] ?? null,
-                'Monthly_Amortization' => $calculation['monthly_payment'] ?? $propertyPrice,
-                'updated_at' => date('Y-m-d H:i:s')
-            ];
+            try {
+                $updateData = [
+                    'Term_Months' => $calculation['months'] ?? null,
+                    'Monthly_Amortization' => $calculation['monthly_payment'] ?? $propertyPrice,
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
 
-            $db->table('houserreservation')->where('reservationID', $reservationId)->update($updateData);
+                // Filter fields to existing columns
+                $db->table('houserreservation')->where('reservationID', $reservationId)->update($this->filterTableFields('houserreservation', $updateData));
 
-            return $this->response->setJSON([
-                'success' => true,
-                'calculation' => $calculation,
-                'mode' => $mode
-            ]);
-        } catch (\Throwable $e) {
-            log_message('error', 'Select payment failed: ' . $e->getMessage());
-            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
-        }
+                return $this->response->setJSON([
+                    'success' => true,
+                    'calculation' => $calculation,
+                    'mode' => $mode
+                ]);
+            } catch (\Throwable $e) {
+                log_message('error', 'Select payment failed: ' . $e->getMessage());
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+            }
     }
 
     /**
@@ -1340,7 +1453,7 @@ class UserController extends BaseController
             $reservation = $db->table('houserreservation')->where('reservationID', $reservationId)->get()->getRowArray();
         } elseif (!empty($bookingId)) {
             $reservation = $db->table('houserreservation')->where('bookingID', $bookingId)->get()->getRowArray();
-            if (!$reservation) {
+                if (!$reservation) {
                 // create a reservation record for this booking
                 $insertData = [
                     'bookingID' => $bookingId,
@@ -1351,7 +1464,9 @@ class UserController extends BaseController
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
-                $db->table('houserreservation')->insert($insertData);
+                // Filter to actual table columns to avoid unknown column errors
+                $filtered = $this->filterTableFields('houserreservation', $insertData);
+                $db->table('houserreservation')->insert($filtered);
                 $newId = $db->insertID();
                 if ($newId) {
                     $reservation = $db->table('houserreservation')->where('reservationID', $newId)->get()->getRowArray();
@@ -1375,26 +1490,107 @@ class UserController extends BaseController
         }
 
         try {
-            // Decode base64 signature and save as blob
+            // Decode base64 signature and save as blob and PNG file for template filling
             $signatureData = base64_decode(preg_replace('#^data:image/[^;]+;base64,#', '', $signature));
             if ($signatureData === false) {
                 return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid signature format']);
             }
 
-            // Update reservation with signature
-            $db->table('houserreservation')->where('reservationID', $reservationId)->update([
+            // Save signature binary to DB as before (filter update keys)
+            $upd = [
                 'Buyer_Signature' => $signatureData,
                 'updated_at' => date('Y-m-d H:i:s')
-            ]);
+            ];
+            $db->table('houserreservation')->where('reservationID', $reservationId)->update($this->filterTableFields('houserreservation', $upd));
 
-            // Generate PDF contract (saves file and returns url)
-            $pdfPath = $this->generateContractPDF($reservation, $booking, $signature);
+            // Also save signature PNG to writable/contracts/signatures for FPDI image insertion
+            $sigDir = WRITEPATH . 'contracts/signatures/';
+            if (!is_dir($sigDir)) mkdir($sigDir, 0755, true);
+            $sigFilename = 'signature_res_' . ($reservationId ?? 'anon') . '_' . time() . '.png';
+            $sigPath = $sigDir . $sigFilename;
+            file_put_contents($sigPath, $signatureData);
 
-            // Mark reservation as pending admin confirmation (do not mark Completed)
-            $db->table('houserreservation')->where('reservationID', $reservationId)->update([
+            // Prepare data needed by the PDF template (extract client/agent/property similar to generateContractPDF)
+            $usersModel = new UsersModel();
+            $client = $usersModel->find($booking['UserID'] ?? $booking['userID'] ?? null);
+
+            $propertyModel = new \App\Models\PropertyModel();
+            $bookingPropertyId = $booking['PropertyID'] ?? $booking['propertyID'] ?? null;
+            $property = $propertyModel->find($bookingPropertyId);
+
+            $agent = null;
+            if (!empty($property['agent_assigned'])) {
+                $agent = $usersModel->where('UserID', $property['agent_assigned'])->where('Role', 'Agent')->first();
+            }
+
+            $propertyLocation = $property['Location'] ?? '';
+            $addressParts = explode(',', $propertyLocation);
+            $streetAddress = trim($addressParts[0] ?? $propertyLocation);
+            $city = trim($addressParts[1] ?? '');
+            $stateProvince = trim($addressParts[2] ?? '');
+            $postalZip = trim($addressParts[3] ?? '');
+
+            $startDate = date('Y-m-d', strtotime($booking['BookingDate'] ?? $booking['bookingDate'] ?? 'now'));
+            $termMonths = $reservation['Term_Months'] ?? 0;
+            $terminationDate = date('Y-m-d', strtotime('+' . $termMonths . ' months', strtotime($startDate)));
+
+            // Determine agreed monthly payment and deposit (20% of property price)
+            $contractModel = new \App\Models\ContractModel();
+            // Prefer contract by bookingID, fallback to latest proposed by this user
+            $latestContract = null;
+            try {
+                if (!empty($booking['bookingID'])) {
+                    $latestContract = $contractModel->where('bookingID', $booking['bookingID'])->orderBy('created_at', 'DESC')->first();
+                }
+            } catch (\Throwable $e) {
+                // ignore if contract table missing
+            }
+            if (empty($latestContract)) {
+                try {
+                    $latestContract = $contractModel->where('proposedBy', $session->get('UserID'))->orderBy('created_at', 'DESC')->first();
+                } catch (\Throwable $e) {
+                    $latestContract = null;
+                }
+            }
+
+            $monthlyFromContract = null;
+            if (!empty($latestContract) && isset($latestContract['monthly'])) {
+                $monthlyFromContract = floatval($latestContract['monthly']);
+            }
+
+            $monthlyAmount = $monthlyFromContract ?? floatval($reservation['Monthly_Amortization'] ?? 0);
+            $propertyPriceValue = floatval($property['Price'] ?? 0);
+            $downPayment = round($propertyPriceValue * 0.20, 2);
+
+            $templateFields = [
+                'teamLeaderFirstName' => $agent ? ($agent['FirstName'] ?? '') : '',
+                'teamLeaderLastName' => $agent ? ($agent['LastName'] ?? '') : '',
+                'clientFirstName' => $client['FirstName'] ?? '',
+                'clientLastName' => $client['LastName'] ?? '',
+                'streetAddress' => $streetAddress,
+                'city' => $city,
+                'stateProvince' => $stateProvince,
+                'postalZip' => $postalZip,
+                'termOfContract' => $termMonths > 0 ? $termMonths . ' months' : 'Not specified',
+                'startDate' => $startDate,
+                'termination' => $terminationDate,
+                'monthlyPayment' => number_format($monthlyAmount, 2),
+                'deposit' => number_format($downPayment, 2),
+                'agreedAmount' => number_format($propertyPriceValue, 2),
+                'furnishings' => $property['Description'] ?? '',
+                'signDay' => date('d'),
+                'signMonth' => date('F'),
+                'signYear' => date('Y')
+            ];
+
+            // Generate PDF from the provided PDF template using FPDI and the saved signature PNG
+            $pdfPath = $this->fillTemplateFromData($templateFields, $sigPath);
+
+            // Mark reservation as pending admin confirmation (do not mark Completed) - filter keys
+            $db->table('houserreservation')->where('reservationID', $reservationId)->update($this->filterTableFields('houserreservation', [
                 'Status' => 'PendingConfirmation',
                 'updated_at' => date('Y-m-d H:i:s')
-            ]);
+            ]));
 
             return $this->response->setJSON([
                 'success' => true,
@@ -1481,8 +1677,31 @@ class UserController extends BaseController
             'termOfContract' => $termMonths > 0 ? $termMonths . ' months' : 'Not specified',
             'startDate' => $startDate,
             'termination' => $terminationDate,
-            'monthlyPayment' => number_format($reservation['Monthly_Amortization'] ?? 0, 2),
-            'deposit' => number_format($reservation['DownPayment'] ?? 0, 2),
+            // Determine monthly payment and deposit (20% of property price). Prefer contract proposal values when available.
+            'monthlyPayment' => (function() use ($reservation, $booking, $property) {
+                try {
+                    $contractModel = new \App\Models\ContractModel();
+                    // Prefer contract by bookingID
+                    if (!empty($booking['bookingID'])) {
+                        $c = $contractModel->where('bookingID', $booking['bookingID'])->orderBy('created_at','DESC')->first();
+                        if (!empty($c) && isset($c['monthly'])) return number_format(floatval($c['monthly']), 2);
+                    }
+                    // fallback to contract proposedBy booking user
+                    $userId = $booking['UserID'] ?? $booking['userID'] ?? null;
+                    if (!empty($userId)) {
+                        $c = $contractModel->where('proposedBy', $userId)->orderBy('created_at','DESC')->first();
+                        if (!empty($c) && isset($c['monthly'])) return number_format(floatval($c['monthly']), 2);
+                    }
+                } catch (\Throwable $e) {
+                    // ignore
+                }
+                return number_format(floatval($reservation['Monthly_Amortization'] ?? 0), 2);
+            })(),
+            'deposit' => (function() use ($property, $reservation) {
+                $price = floatval($property['Price'] ?? 0);
+                $down = round($price * 0.20, 2);
+                return number_format($down, 2);
+            })(),
             'furnishings' => $property['Description'] ?? 'As per property listing',
             
             // Signature and date
@@ -1507,13 +1726,14 @@ class UserController extends BaseController
         if (!is_dir($pdfDir)) {
             mkdir($pdfDir, 0755, true);
         }
-        
+
         $reservationId = $reservation['reservationID'] ?? $reservation['ReservationID'] ?? time();
         $filename = 'contract_' . $reservationId . '_' . time() . '.pdf';
         $filepath = $pdfDir . $filename;
         file_put_contents($filepath, $dompdf->output());
-        
-        return base_url('writable/contracts/' . $filename);
+
+        // Return a controller URL that will stream the PDF securely
+        return site_url('users/contractFile/' . rawurlencode($filename));
     }
 
     /**
@@ -1714,13 +1934,22 @@ class UserController extends BaseController
                     // Term and dates (single-line box)
                     $writeBox(30, 95, 100, 5, $data['termOfContract'] . ' starting ' . $data['startDate']);
 
-                    // Monthly payment (right-aligned in its box)
+                    // Write agreed property price, monthly payment and deposit using ASCII 'PHP ' to avoid encoding issues
+                    $pdf->SetXY(140, 105);
+                    $pdf->Cell(50, 5, 'PHP ' . ($data['agreedAmount'] ?? $data['propertyPrice'] ?? ''), 0, 0, 'R');
                     $pdf->SetXY(140, 120);
-                    $pdf->Cell(50, 5, '₱' . $data['monthlyPayment'], 0, 0, 'R');
+                    $pdf->Cell(50, 5, 'PHP ' . ($data['monthlyPayment'] ?? ''), 0, 0, 'R');
+                    $pdf->SetXY(140, 135);
+                    $pdf->Cell(50, 5, 'PHP ' . ($data['deposit'] ?? ''), 0, 0, 'R');
 
                     // Insert signature image (adjust coordinates/width). Use larger width for clarity.
-                    $sigX = 30; $sigY = 200; $sigW = 70;
+                    $sigX = 300; $sigY = 20; $sigW = 70;
                     $pdf->Image($sigPath, $sigX, $sigY, $sigW, 0, 'PNG');
+
+                    // Add signed-on date text: "Signed on this {day} day of {month}, {year}"
+                    $signedText = 'Signed on this ' . ($data['signDay'] ?? '') . ' day of ' . ($data['signMonth'] ?? '') . ', ' . ($data['signYear'] ?? '');
+                    $pdf->SetXY(30, 150);
+                    $pdf->MultiCell(140, 5, trim($signedText), 0, 'L');
 
                     $outDir = WRITEPATH . 'contracts/';
                     if (!is_dir($outDir)) mkdir($outDir, 0755, true);
@@ -1728,7 +1957,7 @@ class UserController extends BaseController
                     $outPath = $outDir . $outFilename;
                     $pdf->Output($outPath, 'F');
 
-                    $publicUrl = base_url('writable/contracts/' . $outFilename);
+                    $publicUrl = site_url('users/contractFile/' . rawurlencode($outFilename));
                     return $this->response->setJSON(['success' => true, 'pdf_url' => $publicUrl]);
                 } catch (\Throwable $e) {
                     log_message('error', 'fillTemplatePdf error: ' . $e->getMessage());
@@ -1809,11 +2038,19 @@ class UserController extends BaseController
                     $writeBox(30, 80, 120, 5, $data['streetAddress'] . ', ' . $data['city'] . ' ' . $data['postalZip']);
                     $writeBox(30, 95, 100, 5, $data['termOfContract'] . ' starting ' . $data['startDate']);
 
+                    $pdf->SetXY(140, 105);
+                    $pdf->Cell(50, 5, 'PHP ' . ($data['agreedAmount'] ?? $data['propertyPrice'] ?? ''), 0, 0, 'R');
                     $pdf->SetXY(140, 120);
-                    $pdf->Cell(50, 5, '₱' . $data['monthlyPayment'], 0, 0, 'R');
+                    $pdf->Cell(50, 5, 'PHP ' . ($data['monthlyPayment'] ?? ''), 0, 0, 'R');
+                    $pdf->SetXY(140, 135);
+                    $pdf->Cell(50, 5, 'PHP ' . ($data['deposit'] ?? ''), 0, 0, 'R');
 
-                    $sigX = 30; $sigY = 200; $sigW = 70;
+                    $sigX = 300; $sigY = 20; $sigW = 70;
                     $pdf->Image($sigPath, $sigX, $sigY, $sigW, 0, 'PNG');
+                    // Add signed-on date text for the contract
+                    $signedText = 'Signed on this ' . ($data['signDay'] ?? '') . ' day of ' . ($data['signMonth'] ?? '') . ', ' . ($data['signYear'] ?? '');
+                    $pdf->SetXY(30, 150);
+                    $pdf->MultiCell(140, 5, trim($signedText), 0, 'L');
 
                     $outDir = WRITEPATH . 'contracts/';
                     if (!is_dir($outDir)) mkdir($outDir, 0755, true);
@@ -1821,13 +2058,160 @@ class UserController extends BaseController
                     $outPath = $outDir . $outFilename;
                     $pdf->Output($outPath, 'F');
 
-                    $publicUrl = base_url('writable/contracts/' . $outFilename);
+                    $publicUrl = site_url('users/contractFile/' . rawurlencode($outFilename));
                     return $this->response->setJSON(['success' => true, 'pdf_url' => $publicUrl, 'sig_path' => $sigPath]);
                 } catch (\Throwable $e) {
                     log_message('error', 'fillTemplatePdfNoAuth error: ' . $e->getMessage());
                     return $this->response->setStatusCode(500)->setJSON(['error' => 'PDF generation failed: ' . $e->getMessage()]);
                 }
             }
+
+    /**
+     * Helper: fill an existing PDF template using FPDI with provided field values and a signature image file.
+     * Returns public URL to generated PDF on success, throws on failure.
+     */
+    private function fillTemplateFromData(array $data, string $signatureFilePath)
+    {
+        // Locate template
+        $preferred = FCPATH . 'assets/PDFContract/Contract-Agreement.pdf';
+        $fallback = FCPATH . 'assets/PDFContruct/Contract-Agreement.pdf';
+        if (file_exists($preferred)) {
+            $template = $preferred;
+        } elseif (file_exists($fallback)) {
+            $template = $fallback;
+        } else {
+            throw new \RuntimeException('PDF template not found. Checked: ' . $preferred . ' and ' . $fallback);
+        }
+
+        try {
+            $pdf = new Fpdi();
+            $pageCount = $pdf->setSourceFile($template);
+            $tpl = $pdf->importPage(1);
+            $size = $pdf->getTemplateSize($tpl);
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            $pdf->useTemplate($tpl);
+
+            $pdf->SetFont('Helvetica', '', 10);
+            $pdf->SetTextColor(0,0,0);
+
+            $writeBox = function($x, $y, $w, $lh, $text) use ($pdf) {
+                $pdf->SetXY($x, $y);
+                $pdf->MultiCell($w, $lh, trim($text), 0, 'L');
+            };
+
+            // Map common fields into sensible positions (adjust if your template uses different coords)
+            $writeBox(20, 73, 80, 5, ($data['teamLeaderFirstName'] ?? '') );
+            $writeBox(65, 73, 80, 5, ($data['teamLeaderLastName'] ?? ''));
+            $writeBox(122, 73, 80, 5, ($data['clientFirstName'] ?? '') . ' ');
+            $writeBox(168, 73, 80, 5, ($data['clientLastName'] ?? ''));
+            $writeBox(20, 98, 120, 5, ($data['streetAddress'] ?? '') );
+            $writeBox(65, 98, 60, 5, ('Nasugbo') );
+            $writeBox(110, 98, 60, 5, ('Batangas') );
+            $writeBox(155, 98, 60, 5, ('4231') );
+
+
+            $writeBox(70, 110, 100, 5, ('commence of signing'));
+            // Start date
+            $writeBox(142, 110, 100, 5, ($data['startDate'] ?? ''));
+
+          
+            // Right column: agreed amount, monthly payment and deposit
+            $pdf->SetXY(175, 120);
+            $pdf->Cell(28, 5, 'PHP ' . ($data['agreedAmount'] ?? $data['propertyPrice'] ?? ''), 0, 0, 'R');
+
+            $pdf->SetXY(20, 129);
+            $pdf->Cell(28, 5, 'PHP ' . ($data['monthlyPayment'] ?? ''), 0, 0, 'R');
+
+            $pdf->SetXY(140, 129);
+            $pdf->Cell(28, 5, 'PHP ' . ($data['deposit'] ?? ''), 0, 0, 'R');
+            
+            
+     
+            $signDay = ($data['signDay'] ?? '');
+            $signMonth = ($data['signMonth'] ?? '');
+            $signYear = ($data['signYear'] ?? '');
+
+            $pdf->SetXY(47, 300);
+            $pdf->MultiCell(160, 5, trim($signDay), 0, 'L');
+
+            $pdf->SetXY(82, 300);
+            $pdf->MultiCell(160, 5, trim($signMonth), 0, 'L');
+
+            $pdf->SetXY(117, 300);
+            $pdf->MultiCell(160, 5, trim($signYear), 0, 'L');
+
+            // Insert signature image if present
+            if (!empty($signatureFilePath) && file_exists($signatureFilePath)) {
+                $sigX = 150; $sigY = 300; $sigW = 70;
+                $pdf->Image($signatureFilePath, $sigX, $sigY, $sigW, 0, 'PNG');
+            }
+
+
+
+            $outDir = WRITEPATH . 'contracts/';
+            if (!is_dir($outDir)) mkdir($outDir, 0755, true);
+            $outFilename = 'contract_filled_' . time() . '_' . (session()->get('UserID') ?? 'anon') . '.pdf';
+            $outPath = $outDir . $outFilename;
+            $pdf->Output($outPath, 'F');
+
+            // Return a controller-served URL for secure access to generated PDF
+            return site_url('users/contractFile/' . rawurlencode($outFilename));
+        } catch (\Throwable $e) {
+            log_message('error', 'fillTemplateFromData error: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Filter an associative array to only keys that exist as columns in the given DB table.
+     * This avoids SQL errors when application code includes timestamps or fields not present.
+     */
+    private function filterTableFields(string $table, array $data): array
+    {
+        $db = \Config\Database::connect();
+        try {
+            $cols = $db->getFieldNames($table);
+        } catch (\Throwable $e) {
+            // If table not found or error, return empty to avoid accidental inserts
+            log_message('warning', 'filterTableFields: failed to read fields for ' . $table . ' - ' . $e->getMessage());
+            return [];
+        }
+        $out = [];
+        foreach ($data as $k => $v) {
+            if (in_array($k, $cols, true)) {
+                $out[$k] = $v;
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Serve a generated contract PDF from writable/contracts securely.
+     * GET /users/contractFile/{filename}
+     */
+    public function contractFile($filename = null)
+    {
+        if (empty($filename)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'filename required']);
+        }
+
+        // normalize filename (prevent directory traversal)
+        $safe = rawurldecode($filename);
+        if (preg_match('#[\\/]|\.\.#', $safe)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'invalid filename']);
+        }
+
+        $path = WRITEPATH . 'contracts/' . $safe;
+        if (!is_file($path)) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'file not found']);
+        }
+
+        // Serve file with correct headers (inline display)
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $this->response->setHeader('Content-Disposition', 'inline; filename="' . basename($path) . '"');
+        $this->response->setBody(file_get_contents($path));
+        return $this->response;
+    }
 
 
 }
