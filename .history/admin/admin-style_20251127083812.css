@@ -45,8 +45,7 @@ html[data-theme="light"] {
 }
 
 html[data-theme="light"] .from-agent {
-  background: #2b74cc;
-  color: white;
+  background: #a0c4ff;
 }
 
 html[data-theme="light"] .from-client {
@@ -789,7 +788,7 @@ canvas { width: 100% !important; height: 170px !important; }
   font-size: 13px;
 }
 .filters-bar input { width: 240px; }
-.table-container { background: var(--card); border-radius: 10px; box-shadow: var(--shadow); overflow: auto; }
+.table-container { background: var(--card); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
 .actions { display: flex; gap: 6px; }
 .action-btn { background: none; border: none; cursor: pointer; color: var(--muted); transition: color 0.2s; padding: 4px; }
 .action-btn:hover { color: var(--accent1); }
