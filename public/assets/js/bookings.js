@@ -59,7 +59,7 @@
             const reason = String(b.Reason || b.reason || '').toLowerCase();
             if (s === 'pending' && reason.includes('view')) return true;
             // show scheduled bookings here too
-            return s === 'cancelled' || s === 'rejected' || s === 'viewing' || s === 'completed' || s === 'scheduled' || s === 'confirmed';
+            return s === 'cancelled' || s === 'rejected' || s === 'viewing' || s === 'completed' || s === 'scheduled' || s === 'scheduled';
           });
         }
       }
@@ -68,7 +68,7 @@
       try {
         if (window.bookingsMode === 'reservations') {
           const totalCount = Array.isArray(filtered) ? filtered.length : 0;
-          const scheduledCount = Array.isArray(filtered) ? filtered.filter(x => String((x.BookingStatus||x.status||'')).toLowerCase() === 'confirmed').length : 0;
+          const scheduledCount = Array.isArray(filtered) ? filtered.filter(x => String((x.BookingStatus||x.status||'')).toLowerCase() === 'scheduled').length : 0;
           const pendingCount = Array.isArray(filtered) ? filtered.filter(x => String((x.BookingStatus||x.status||'')).toLowerCase() === 'pending').length : 0;
           const totalEl = document.getElementById('totalReservationsCount');
           const scheduledEl = document.getElementById('scheduledReservationsCount');
@@ -76,6 +76,19 @@
           if (totalEl) totalEl.textContent = String(totalCount);
           if (scheduledEl) scheduledEl.textContent = String(scheduledCount);
           if (pendingEl) pendingEl.textContent = String(pendingCount);
+        }
+        // Update booking counters when on bookings page
+        if (window.bookingsMode === 'bookings') {
+          const totalCountB = Array.isArray(filtered) ? filtered.length : 0;
+          const confirmedCountB = Array.isArray(filtered) ? filtered.filter(x => String((x.BookingStatus||x.status||'')).toLowerCase() === 'scheduled').length : 0;
+          // Upcoming: treat confirmed/scheduled as upcoming; user requested upcoming to reflect confirmed
+          const upcomingCountB = confirmedCountB;
+          const totalElB = document.getElementById('totalBookingsCount');
+          const confirmedElB = document.getElementById('confirmedBookingsCount');
+          const upcomingElB = document.getElementById('upcomingBookingsCount');
+          if (totalElB) totalElB.textContent = String(totalCountB);
+          if (confirmedElB) confirmedElB.textContent = String(confirmedCountB);
+          if (upcomingElB) upcomingElB.textContent = String(upcomingCountB);
         }
       } catch (e) {
         console.warn('Failed to update reservation counters', e);
@@ -92,6 +105,31 @@
       container.innerHTML = filtered.map(renderBookingCard).join('');
       // attach listeners for detail buttons
       container.querySelectorAll('.btn-view-booking').forEach(btn => btn.addEventListener('click', onViewBooking));
+      // attach listeners for view property buttons (open property details modal)
+      container.querySelectorAll('.btn-view-property').forEach(btn => btn.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        const propId = btn.dataset.propertyId || btn.getAttribute('data-property-id');
+        if (!propId) return;
+        try {
+          const res = await fetch((window.propertiesViewUrl || '/index.php/properties/view') + '/' + encodeURIComponent(propId), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+          if (!res.ok) throw new Error('Failed to load property');
+          const property = await res.json();
+          // reuse client.js's modal updater if available
+          if (window.updatePropertyModal) {
+            window.updatePropertyModal(property);
+            const modalEl = document.getElementById('propertyDetailsModal');
+            if (modalEl) new bootstrap.Modal(modalEl).show();
+          } else if (window.openPropertyDetails) {
+            window.openPropertyDetails(propId);
+          } else {
+            // fallback: navigate to property view page
+            window.location.href = '/properties/view/' + encodeURIComponent(propId);
+          }
+        } catch (err) {
+          console.error('Failed to open property details', err);
+          if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Error', text: 'Unable to load property details.' });
+        }
+      }));
       container.querySelectorAll('.btn-cancel-booking').forEach(btn => btn.addEventListener('click', onCancelBooking));
       container.querySelectorAll('.btn-confirm-contract').forEach(btn => btn.addEventListener('click', onConfirmContract));
     } catch (err) {
@@ -142,6 +180,7 @@
           <div class="col-auto pe-3">
                 <div class="d-flex flex-column gap-2">
                   <button class="btn btn-sm btn-outline-primary btn-view-booking" data-id="${escapeHtml(b.bookingID)}">Details</button>
+                  <button class="btn btn-sm btn-outline-secondary btn-view-property" data-property-id="${escapeHtml(b.PropertyID || b.property_id || '')}">View Property</button>
                 </div>
           </div>
         </div>
@@ -192,6 +231,32 @@
     }
   }
 function populateBookingModal(b) {
+  // helper to detect if a reservation/booking has a contract file
+  const detectHasContract = (obj) => {
+    if (!obj) return false;
+    // common direct fields
+    const direct = obj.ContractFile || obj.contract_file || obj.contractPath || obj.Contract_Path || obj.ContractFilePath || obj.contract_file_path || obj.contractFile || obj.contractFilePath || obj.contractPDF || obj.contractpdf || obj.contractPdf;
+    if (direct) return true;
+
+    // check common arrays that might contain attachments
+    const listKeys = ['Files', 'files', 'attachments', 'Attachments', 'Documents', 'documents'];
+    for (const k of listKeys) {
+      const list = obj[k];
+      if (Array.isArray(list) && list.length) {
+        for (const item of list) {
+          const name = (item && (item.filename || item.name || item.path || item.url)) ? (item.filename || item.name || item.path || item.url) : String(item);
+          if (/contract|agreement|signed/i.test(String(name))) return true;
+        }
+      }
+    }
+
+    // scan string values for a likely contract/pdf url or filename
+    for (const v of Object.values(obj)) {
+      if (typeof v === 'string' && /\.pdf$/i.test(v) && /contract|agreement|signed|filled/i.test(v)) return true;
+    }
+
+    return false;
+  };
   // helper: safely set textContent if element exists
   const setText = (id, value) => {
     const el = document.getElementById(id);
@@ -297,7 +362,12 @@ function populateBookingModal(b) {
   // show/hide cancel button depending on status
   const cancelBtn = document.getElementById('modalCancelBookingBtn');
   if (cancelBtn) {
-    if (['pending','confirmed','scheduled'].includes(String(status).toLowerCase())) {
+    const s = String(status).toLowerCase();
+    // hide cancel button when status is 'scheduled'
+    if (s === 'scheduled') {
+      cancelBtn.style.display = 'none';
+      cancelBtn.onclick = null;
+    } else if (['pending','confirmed','viewing'].includes(s)) {
       cancelBtn.style.display = '';
       cancelBtn.dataset.id = b.bookingID;
       cancelBtn.onclick = onCancelBooking;
@@ -310,7 +380,13 @@ function populateBookingModal(b) {
   // Show Confirm Contract button when booking is confirmed
   const confirmBtn = document.getElementById('modalConfirmContractBtn');
   if (confirmBtn) {
-    if (['confirmed','scheduled'].includes(String(status).toLowerCase())) {
+    const s = String(status).toLowerCase();
+    // Use robust detector to see if a contract file exists
+    const hasContractFile = detectHasContract(b);
+    if (hasContractFile) {
+      confirmBtn.style.display = 'none';
+      confirmBtn.onclick = null;
+    } else if (['confirmed','scheduled'].includes(s)) {
       confirmBtn.style.display = '';
       // set dataset for use by handler
       confirmBtn.dataset.id = b.bookingID ?? '';

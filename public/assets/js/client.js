@@ -711,31 +711,43 @@ setText('bookingPropertyAgentEmail', agentEmail || '');
       }
 
             if (typeof Swal !== 'undefined') {
+                // Show a success modal with an OK button that redirects to the bookings page on confirm
                 Swal.fire({
                     icon: 'success',
-                    title: 'Booking Submitted!',
+                    title: 'Booked Successfully',
                     html: `<p><strong>${document.getElementById('bookingPropertyTitle')?.textContent || ''}</strong></p>
-                                 <p>Date: —</p>`
+                           <p>Your booking request has been submitted.</p>`,
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const purpose = document.getElementById('bookingPurpose')?.value || '';
+                        try {
+                            if (String(purpose).toLowerCase() === 'viewing') {
+                                window.location.href = '/users/clientbookings';
+                            } else {
+                                window.location.href = '/users/clientreservations';
+                            }
+                        } catch (e) {
+                            // fallback to bookings page
+                            window.location.href = '/users/clientbookings';
+                        }
+                    }
                 });
             } else {
-                alert('Booking submitted successfully.');
-            }
-
-                        // close modal
-            bootstrap.Modal.getInstance(document.getElementById('bookingModal'))?.hide();
-            // navigate user depending on purpose: Viewing -> bookings page; Reserve -> reservations page
-            const purpose = document.getElementById('bookingPurpose')?.value || '';
-            try {
+                // Fallback: alert then redirect
+                // Fallback: decide redirect based on purpose value if available
+                const purpose = document.getElementById('bookingPurpose')?.value || '';
                 if (String(purpose).toLowerCase() === 'viewing') {
+                    alert('Booking submitted successfully. You will be redirected to your bookings.');
                     window.location.href = '/users/clientbookings';
                 } else {
-                    // default reserve -> reservations
+                    alert('Booking submitted successfully. You will be redirected to your reservations.');
                     window.location.href = '/users/clientreservations';
                 }
-            } catch (e) {
-                // fallback: reload bookings list
-                loadMyBookings();
             }
+
+            // close only the booking modal; do not immediately reload the entire page
+            bootstrap.Modal.getInstance(document.getElementById('bookingModal'))?.hide();
 
     } catch (err) {
       console.error('Booking save failed', err);
