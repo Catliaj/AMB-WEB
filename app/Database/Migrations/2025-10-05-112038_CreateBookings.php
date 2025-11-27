@@ -36,7 +36,7 @@ class CreateBookings extends Migration
 
             'Status' => [
                 'type' => 'ENUM',
-                'constraint' => ['Pending', 'Scheduled', 'Cancelled', 'Rejected'],
+                'constraint' => ['Pending','Scheduled','Cancelled','Rejected'],
                 'null' => true,
                 'default' => 'Pending',
             ],

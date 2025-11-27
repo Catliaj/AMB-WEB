@@ -225,15 +225,14 @@
 
             
 
-                                                        <div class="mt-3 d-flex justify-content-end">
-                                                        <!-- Hidden agent id (if available) -->
-                                                        <input type="hidden" id="bookingModalAgentId" value="">
-                                                            <button id="modalReserveBtn" class="btn btn-success btn-sm me-2" style="display:none">Reserve</button>
-                                                            <button id="modalConfirmContractBtn" class="btn btn-primary btn-sm me-2" style="display:none">Confirm Contract</button>
-                                                            <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
-                                                              <button id="modalViewPropertyBtn" class="btn btn-outline-primary btn-sm me-2">View Property</button>
-                                                              <button id="modalCloseBtn" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                                                </div>
+                                                                                                                <div class="mt-3 d-flex justify-content-end">
+                                                                                                                <!-- Hidden agent id (if available) -->
+                                                                                                                <input type="hidden" id="bookingModalAgentId" value="">
+                                                                                                                        <button id="modalReserveBtn" class="btn btn-success btn-sm me-2" style="display:none">Reserve</button>
+                                                                                                                        <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
+                                                                                                                            <button id="modalViewPropertyBtn" class="btn btn-outline-primary btn-sm me-2">View Property</button>
+                                                                                                                            <button id="modalCloseBtn" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                                                                                </div>
           </div>
         </div>
 

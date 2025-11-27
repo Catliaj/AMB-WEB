@@ -51,6 +51,7 @@ $routes->get('properties/view/(:num)', 'PropertyController::viewProperty/$1');
 $routes->post('bookings/create', 'UserController::create');
 $routes->get('bookings/mine', 'UserController::mine');
 $routes->get('bookings/reservations', 'UserController::getReservations');
+$routes->get('bookings/(:num)', 'UserController::getBooking/$1');
 $routes->post('bookings/cancel', 'UserController::cancel');
 // Reservation workflow methods
 $routes->post('users/reserve', 'UserController::reserve');
@@ -58,6 +59,8 @@ $routes->post('users/selectPayment', 'UserController::selectPayment');
 $routes->post('users/signContract', 'UserController::signContract');
 // Fill provided PDF template with form fields + signature
 $routes->post('users/fillPdf', 'UserController::fillTemplatePdf');
+// Serve generated contract PDFs securely
+$routes->get('users/contractFile/(:segment)', 'UserController::contractFile/$1');
 // Temporary debug route to test PDF fill without authentication (remove in production)
 $routes->post('debug/fillPdfNoAuth', 'UserController::fillTemplatePdfNoAuth');
 // Contract proposals + confirmations (used by client + agent flows)
