@@ -717,12 +717,9 @@ class UserController extends BaseController
             $purpose = 'Viewing';
         }
 
-        // If a booking date/time is provided at creation, treat it as Scheduled
-        if (!empty($bookingDate)) {
-            $status = 'Scheduled';
-        } else {
-            $status = 'Pending';
-        }
+        // For client-created bookings, treat them as 'Pending' regardless of bookingDate
+        // (Agents should set scheduled bookings via agent workflow).
+        $status = 'Pending';
 
         // Save booking using your BookingModel
         $bookingModel = new \App\Models\BookingModel();
@@ -1273,7 +1270,7 @@ class UserController extends BaseController
             return $this->response->setStatusCode(400)->setJSON(['error' => 'Only scheduled bookings can be reserved']);
         }
 
-        // Create reservation record
+            // Create reservation record using the ReservationModel so allowedFields are respected
         $reservationModel = new \App\Models\ReservationModel();
         $reservationData = [
             'bookingID' => $bookingId,
@@ -1284,23 +1281,20 @@ class UserController extends BaseController
         ];
 
         try {
-            // Ensure DB connection is available for direct table operations
-            $db = \Config\Database::connect();
-
-            $db->table('houserreservation')->insert($reservationData);
-            $reservationId = $db->insertID();
-            if (!$reservationId) {
+            // Insert via model to ensure proper fields
+            $insertId = $reservationModel->insert($reservationData);
+            if ($insertId === false || empty($insertId)) {
                 return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to create reservation']);
             }
 
             // Update booking status to indicate it's now a reservation
-            // Use direct DB update since Status column is PascalCase
+            $db = \Config\Database::connect();
             $db->table('booking')->where('bookingID', $bookingId)->update([
                 'Status' => 'Reserved',
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
 
-            return $this->response->setJSON(['success' => true, 'reservationID' => $reservationId]);
+            return $this->response->setJSON(['success' => true, 'reservationID' => $insertId]);
         } catch (\Throwable $e) {
             log_message('error', 'Reserve booking failed: ' . $e->getMessage());
             return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error: ' . $e->getMessage()]);
@@ -1385,8 +1379,8 @@ class UserController extends BaseController
         }
 
         // Update reservation with payment details
-        $db = \Config\Database::connect();
-        $reservation = $db->table('houserreservation')->where('reservationID', $reservationId)->get()->getRowArray();
+        $reservationModel = new \App\Models\ReservationModel();
+        $reservation = $reservationModel->find($reservationId);
         if (!$reservation) {
             return $this->response->setStatusCode(404)->setJSON(['error' => 'Reservation not found']);
         }
@@ -1407,7 +1401,7 @@ class UserController extends BaseController
                 ];
 
                 // Filter fields to existing columns
-                $db->table('houserreservation')->where('reservationID', $reservationId)->update($this->filterTableFields('houserreservation', $updateData));
+                $db->table('reservations')->where('reservationID', $reservationId)->update($this->filterTableFields('reservations', $updateData));
 
                 return $this->response->setJSON([
                     'success' => true,
@@ -1448,28 +1442,72 @@ class UserController extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $reservation = null;
+            $reservation = null;
+        $reservationModel = new \App\Models\ReservationModel();
         if (!empty($reservationId)) {
-            $reservation = $db->table('houserreservation')->where('reservationID', $reservationId)->get()->getRowArray();
+            $reservation = $reservationModel->find($reservationId);
         } elseif (!empty($bookingId)) {
-            $reservation = $db->table('houserreservation')->where('bookingID', $bookingId)->get()->getRowArray();
-                if (!$reservation) {
-                // create a reservation record for this booking
+            $reservation = $reservationModel->where('bookingID', $bookingId)->first();
+            if (!$reservation) {
+                // create a reservation record for this booking via model
                 $insertData = [
                     'bookingID' => $bookingId,
                     'DownPayment' => 0,
                     'Term_Months' => null,
                     'Monthly_Amortization' => null,
-                    'Status' => 'PendingConfirmation',
+                    // Use a valid enum/status value that exists in the DB schema so inserts succeed
+                    'Status' => 'Ongoing',
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
-                // Filter to actual table columns to avoid unknown column errors
-                $filtered = $this->filterTableFields('houserreservation', $insertData);
-                $db->table('houserreservation')->insert($filtered);
-                $newId = $db->insertID();
+
+                // Try inserting using the model/table defined in the model first (usually 'reservations')
+                $newId = false;
+                try {
+                    $tableName = property_exists($reservationModel, 'table') ? $reservationModel->table : 'reservations';
+                    $filtered = $this->filterTableFields($tableName, $insertData);
+                    if (!empty($filtered)) {
+                        $newId = $reservationModel->insert($filtered);
+                    }
+                } catch (\Throwable $e) {
+                    log_message('warning', 'ReservationModel insert failed: ' . $e->getMessage());
+                    $newId = false;
+                }
+
+                // If model insert didn't work (e.g. DB has legacy table), attempt legacy table names
+                if (empty($newId)) {
+                    $legacy = ['houserreservation', 'houserReservation', 'houser_reservation'];
+                    foreach ($legacy as $t) {
+                        try {
+                            if ($db->tableExists($t)) {
+                                $filtered2 = $this->filterTableFields($t, $insertData);
+                                if (!empty($filtered2)) {
+                                    $db->table($t)->insert($filtered2);
+                                    $newId = $db->insertID();
+                                    if (!empty($newId)) break;
+                                }
+                            }
+                        } catch (\Throwable $_e) {
+                            // ignore and try next
+                        }
+                    }
+                }
+
                 if ($newId) {
-                    $reservation = $db->table('houserreservation')->where('reservationID', $newId)->get()->getRowArray();
+                    // reload reservation from whichever table the ID came from
+                    try {
+                        $reservation = $reservationModel->find($newId);
+                    } catch (\Throwable $_e) {
+                        // fallback: try to read from legacy table
+                        foreach (['houserreservation','houserReservation','houser_reservation'] as $t) {
+                            try {
+                                if ($db->tableExists($t)) {
+                                    $reservation = $db->table($t)->where('reservationID', $newId)->get()->getRowArray();
+                                    if ($reservation) break;
+                                }
+                            } catch (\Throwable $__e) { }
+                        }
+                    }
                     $reservationId = $newId;
                 }
             } else {
@@ -1478,7 +1516,26 @@ class UserController extends BaseController
         }
 
         if (!$reservation) {
-            return $this->response->setStatusCode(404)->setJSON(['error' => 'Reservation not found or could not be created']);
+                // Provide diagnostic information about available reservation tables and which fields would be accepted.
+                $candidates = ['reservations','houserreservation','houserReservation','houser_reservation'];
+                $diag = [];
+                foreach ($candidates as $t) {
+                    try {
+                        $exists = $db->tableExists($t);
+                        $filtered = $this->filterTableFields($t, [
+                            'bookingID'=> $bookingId,
+                            'DownPayment'=>0,
+                            'Term_Months'=>null,
+                            'Monthly_Amortization'=>null,
+                            'Status'=>'PendingConfirmation',
+                        ]);
+                        $diag[$t] = ['exists' => $exists, 'allowed_keys' => array_values(array_keys($filtered))];
+                    } catch (\Throwable $_e) {
+                        $diag[$t] = ['exists' => false, 'allowed_keys' => []];
+                    }
+                }
+
+                return $this->response->setStatusCode(404)->setJSON(['error' => 'Reservation not found or could not be created', 'diagnostic' => $diag]);
         }
 
         // Check ownership through booking
@@ -1496,12 +1553,33 @@ class UserController extends BaseController
                 return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid signature format']);
             }
 
-            // Save signature binary to DB as before (filter update keys)
+            // Save signature binary to DB as before (filter update keys). Try model first, then legacy tables.
+            $reservationModel = new \App\Models\ReservationModel();
             $upd = [
                 'Buyer_Signature' => $signatureData,
                 'updated_at' => date('Y-m-d H:i:s')
             ];
-            $db->table('houserreservation')->where('reservationID', $reservationId)->update($this->filterTableFields('houserreservation', $upd));
+            try {
+                $tableName = property_exists($reservationModel, 'table') ? $reservationModel->table : 'reservations';
+                $filteredUpd = $this->filterTableFields($tableName, $upd);
+                if (!empty($filteredUpd)) {
+                    $reservationModel->update($reservationId, $filteredUpd);
+                } else {
+                    // try legacy tables
+                    $legacy = ['houserreservation','houserReservation','houser_reservation'];
+                    foreach ($legacy as $t) {
+                        if ($db->tableExists($t)) {
+                            $f2 = $this->filterTableFields($t, $upd);
+                            if (!empty($f2)) {
+                                $db->table($t)->where('reservationID', $reservationId)->update($f2);
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $_e) {
+                log_message('warning', 'Failed to persist Buyer_Signature: ' . $_e->getMessage());
+            }
 
             // Also save signature PNG to writable/contracts/signatures for FPDI image insertion
             $sigDir = WRITEPATH . 'contracts/signatures/';
@@ -1587,10 +1665,26 @@ class UserController extends BaseController
             $pdfPath = $this->fillTemplateFromData($templateFields, $sigPath);
 
             // Mark reservation as pending admin confirmation (do not mark Completed) - filter keys
-            $db->table('houserreservation')->where('reservationID', $reservationId)->update($this->filterTableFields('houserreservation', [
-                'Status' => 'PendingConfirmation',
-                'updated_at' => date('Y-m-d H:i:s')
-            ]));
+            // Persist the generated contract filename/path on the reservation so the UI can detect it
+            try {
+                $parsed = parse_url($pdfPath);
+                $pdfFilename = basename($parsed['path'] ?? $pdfPath);
+                $updateContract = [
+                    // include multiple likely column names; filterTableFields will keep only existing ones
+                    'contractPDF' => $pdfFilename,
+                    'ContractFile' => $pdfFilename,
+                    'contract_file' => $pdfFilename,
+                    // Do not write an unsupported Status value (e.g. 'PendingConfirmation') because
+                    // the DB enum does not contain it. Presence of the contract file itself will
+                    // be used by the UI to hide/show Confirm buttons.
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+                $reservationModel = new \App\Models\ReservationModel();
+                $reservationModel->update($reservationId, $this->filterTableFields('reservations', $updateContract));
+            } catch (\Throwable $ee) {
+                // Non-fatal: log and continue — UI will still get pdf_url in response
+                log_message('warning', 'Failed to persist contract filename on reservation: ' . $ee->getMessage());
+            }
 
             return $this->response->setJSON([
                 'success' => true,
@@ -2145,9 +2239,7 @@ class UserController extends BaseController
                 $sigX = 150; $sigY = 300; $sigW = 70;
                 $pdf->Image($signatureFilePath, $sigX, $sigY, $sigW, 0, 'PNG');
             }
-
-
-
+            
             $outDir = WRITEPATH . 'contracts/';
             if (!is_dir($outDir)) mkdir($outDir, 0755, true);
             $outFilename = 'contract_filled_' . time() . '_' . (session()->get('UserID') ?? 'anon') . '.pdf';

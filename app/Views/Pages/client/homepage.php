@@ -45,10 +45,10 @@
                                 <a class="nav-link nav-link-custom" href="/users/clientbrowse">Browse Properties</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" href="/users/clientreservations">Reservations</a>
+                                <a class="nav-link nav-link-custom" href="/users/clientbookings">My Bookings</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" href="/users/clientbookings">My Bookings</a>
+                                <a class="nav-link nav-link-custom" href="/users/clientreservations">Reservations</a>
                             </li>
                             <li class="nav-item d-lg-none">
                                 <a class="nav-link nav-link-custom" href="/users/clientprofile">Profile</a>

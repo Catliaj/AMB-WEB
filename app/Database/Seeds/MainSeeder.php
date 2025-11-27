@@ -11,7 +11,6 @@ class MainSeeder extends Seeder
         $this->call('UserSeeder');
         $this->call('PropertySeeder');
         $this->call('PropertystatushistorySeeder');
-        $this->call('BookingsSeeder');
         $this->call('SessionSeeder');
         $this->call('MessageSeeder');
 

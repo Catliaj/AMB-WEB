@@ -6,19 +6,15 @@ use CodeIgniter\Model;
 
 class ReservationModel extends Model
 {
-    protected $table = 'houserreservation';
+    protected $table = 'reservations';
     protected $primaryKey = 'reservationID';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     protected $allowedFields = [
-        'bookingID',
-        'DownPayment',
-        'Term_Months',
-        'Monthly_Amortization',
-        'Buyer_Signature',
-        'Status'
+       'bookingID', 'DownPayment', 'Term_Months', 'Monthly_Amortization', 'Buyer_Signature', 'Status', 'contractPDF', 'created_at', 'updated_at'
+        
     ];
 
     // Dates
@@ -62,8 +58,8 @@ class ReservationModel extends Model
     public function getReservationsWithDetails($userId = null)
     {
         $builder = $this->select('
-            houserreservation.*,
-            houserreservation.reservationID,
+            reservations.*,
+            reservations.reservationID,
             booking.bookingID,
             booking.BookingDate AS bookingDate,
             booking.Status AS BookingStatus,
@@ -82,7 +78,7 @@ class ReservationModel extends Model
             property.Corporation,
             property.Price AS PropertyPrice
         ')
-        ->join('booking', 'booking.bookingID = houserreservation.bookingID', 'left')
+        ->join('booking', 'booking.bookingID = reservations.bookingID', 'left')
         ->join('property', 'property.PropertyID = booking.PropertyID', 'left');
 
         if ($userId) {

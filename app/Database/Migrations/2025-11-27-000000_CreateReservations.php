@@ -44,6 +44,10 @@ class CreateReservations extends Migration
                 'constraint' => "'Ongoing','Completed','Defaulted'",
                 'default' => 'Ongoing'
             ],
+            'contractPDF' => [
+                'type' => 'BLOB',
+                'null' => true,
+            ],
             'created_at' => [
                 'type' => 'DATETIME',
                 'null' => true,
@@ -52,6 +56,7 @@ class CreateReservations extends Migration
                 'type' => 'DATETIME',
                 'null' => true,
             ],
+
         ]);
 
         $this->forge->addKey('reservationID', true);

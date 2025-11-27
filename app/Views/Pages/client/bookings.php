@@ -127,7 +127,7 @@
                                 </div>
                                 <div>
                                     <p class="text-muted small mb-0">Total Bookings</p>
-                                    <h3 class="h4 mb-0">4</h3>
+                                    <h3 id="totalBookingsCount" class="h4 mb-0">0</h3>
                                 </div>
                             </div>
                         </div>
@@ -142,7 +142,7 @@
                                 </div>
                                 <div>
                                     <p class="text-muted small mb-0">Confirmed</p>
-                                    <h3 class="h4 mb-0">2</h3>
+                                    <h3 id="confirmedBookingsCount" class="h4 mb-0">0</h3>
                                 </div>
                             </div>
                         </div>
@@ -157,7 +157,7 @@
                                 </div>
                                 <div>
                                     <p class="text-muted small mb-0">Upcoming</p>
-                                    <h3 class="h4 mb-0">2</h3>
+                                    <h3 id="upcomingBookingsCount" class="h4 mb-0">0</h3>
                                 </div>
                             </div>
                         </div>
@@ -171,6 +171,69 @@
 
         </div>
     </main>
+    <!-- Property Details Modal (reused from browse view) -->
+    <div class="modal fade" id="propertyDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content property-modal-content">
+                <div class="modal-body p-0 position-relative">
+
+                    <!-- Close button (visible) -->
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+
+                    <!-- Image Area with Overlayed Details -->
+                    <div class="property-modal-image-wrapper position-relative">
+                        <img id="modalPropertyImage" class="property-details-image" alt="Property Image">
+
+                       
+                        <span class="property-type-badge" id="modalPropertyType"></span>
+
+                        <!-- Navigation Arrows -->
+                        <button class="modal-nav prev" onclick="navigateProperty(-1)">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <button class="modal-nav next" onclick="navigateProperty(1)">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+
+                        <!-- Overlay Details -->
+                        <div class="property-modal-details-overlay">
+                            <!-- Property Title -->
+                            <h5 id="modalPropertyTitle" class="mb-1"></h5>
+
+                            <!-- Price directly under title -->
+                            <div class="property-price text-primary fw-bold mb-2">
+                                ₱<span id="modalPropertyPrice"></span>
+                            </div>
+
+                            <!-- Location -->
+                            <div class="location mb-2">
+                                <i class="bi bi-geo-alt"></i>
+                                <span id="modalPropertyLocation"></span>
+                            </div>
+
+                            <!-- House stats -->
+                            <div class="house-stats mb-3">
+                                <div><i class="bi bi-house-door"></i><span id="modalPropertyBeds"></span></div>
+                                <div><i class="bi bi-droplet"></i><span id="modalPropertyBaths"></span></div>
+                                <div><i class="bi bi-arrows-fullscreen"></i><span id="modalPropertySqft"></span></div>
+                            </div>
+
+                            <!-- Action buttons -->
+                            <div class="price-book">
+                                <button class="btn btn-outline-primary" id="modalChatBtn">
+                                    <i class="bi bi-chat-dots-fill me-1"></i>Chat Agent
+                                </button>
+                               
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Booking Detail Modal (paste into the bookings view before closing </body>) -->
     <!-- Booking Detail Modal (paste into the bookings view before closing </body>) -->
 <div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-hidden="true">
@@ -230,7 +293,7 @@
                                                                                                                 <input type="hidden" id="bookingModalAgentId" value="">
                                                                                                                         <button id="modalReserveBtn" class="btn btn-success btn-sm me-2" style="display:none">Reserve</button>
                                                                                                                         <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
-                                                                                                                            <button id="modalViewPropertyBtn" class="btn btn-outline-primary btn-sm me-2">View Property</button>
+                                                                                                                           
                                                                                                                             <button id="modalCloseBtn" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                                                                                                 </div>
           </div>
