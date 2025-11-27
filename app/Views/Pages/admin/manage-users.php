@@ -26,7 +26,8 @@
       --hover-overlay: rgba(0,0,0,0.04);
     }
     /* Sidebar and table header overrides to use the light palette */
-    .sidebar { background: var(--panel, #ffffff); border-color: var(--divider); }
+    .sidebar { background: linear-gradient(120deg, #d3f0ff 0%, #c8f5d2 100%); border-color: var(--divider); }
+    html[data-theme="dark"] .sidebar { background: linear-gradient(120deg, #252e42 0%, #2d4038 100%); }
     .nav a { color: var(--text); }
     thead { background: var(--th-bg, var(--card)); }
     th { color: var(--th-text, var(--text)); }
@@ -312,7 +313,7 @@
      <img src="<?= base_url('assets/img/amb_logo.png')?>" alt="AMB Logo">
     <nav class="nav">
       <a href="/admin/adminHomepage" ><i data-lucide="layout-dashboard"></i> Dashboard</a>
-      <a href="/admin/manageUsers" class="active"><i data-lucide="users"></i> Manage Users</a>
+      <a href="/admin/manageUsers" class="active" style="background: linear-gradient(90deg, #2e7d32, #1565c0);"><i data-lucide="users"></i> Manage Users</a>
       <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
       <!-- User Bookings removed -->
       <!-- View Chats removed for privacy -->
@@ -348,7 +349,7 @@
     <div class="layout">
       <div>
         <table id="userTable">
-          <thead>
+          <thead style="background: white;">
             <tr>
               <th>UserID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th>
             </tr>

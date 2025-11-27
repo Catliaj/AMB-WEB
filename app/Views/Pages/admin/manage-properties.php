@@ -23,10 +23,12 @@
       --hover-overlay: rgba(0,0,0,0.04);
     }
     /* Sidebar and table header overrides to use the light palette */
-    .sidebar { background: var(--panel, #ffffff); border-color: var(--divider); }
+    .sidebar { background: linear-gradient(120deg, #d3f0ff 0%, #c8f5d2 100%); border-color: var(--divider); }
+    html[data-theme="dark"] .sidebar { background: linear-gradient(120deg, #252e42 0%, #2d4038 100%); }
     .nav a { color: var(--text); }
     thead { background: var(--th-bg, var(--card)); }
     th { color: var(--th-text, var(--text)); }
+    .filters-bar { background: white; padding: 10px; border-radius: 8px; }
   </style>
 
   <style>
@@ -190,7 +192,7 @@
     <nav class="nav">
       <a href="/admin/adminHomepage" ><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
-      <a href="/admin/ManageProperties" class="active"><i data-lucide="home"></i> Manage Properties</a>
+      <a href="/admin/ManageProperties" class="active" style="background: linear-gradient(90deg, #2e7d32, #1565c0);"><i data-lucide="home"></i> Manage Properties</a>
       <!-- User Bookings removed -->
       <!-- View Chats removed for privacy -->
       <a href="/admin/Reports"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
@@ -214,21 +216,21 @@
       <button class="btn" id="btnAddProperty"><i data-lucide="plus-circle"></i> Add Property</button>
     </header>
 
-    <div class="filters-bar">
-      <input type="text" id="searchInput" placeholder="Search all columns...">
-      <select id="filterStatus">
+    <div class="filters-bar" style="background: white; padding: 10px; border-radius: 8px;">
+      <input type="text" id="searchInput" placeholder="Search all columns..." style="background: white; color: black;">
+      <select id="filterStatus" style="background: white; color: black;">
         <option value="">Status</option>
         <option value="Available">Available</option>
         <option value="Reserved">Reserved</option>
         <option value="Sold">Sold</option>
       </select>
-      <select id="filterType">
+      <select id="filterType" style="background: white; color: black;">
         <option value="">Type</option>
         <option value="Apartment">Apartment</option>
         <option value="Condo">Condo</option>
         <option value="House">House</option>
       </select>
-    <select id="filterAgent">
+    <select id="filterAgent" style="background: white; color: black;">
       <option value="">All Agents</option>
       <?php foreach ($agents as $agent): ?>
         <option value="<?= esc($agent['full_name']); ?>"><?= esc($agent['full_name']); ?></option>
@@ -240,7 +242,7 @@
 
     <div class="table-container">
       <table id="propertyTable">
-        <thead>
+        <thead style="background: white;">
           <tr>
             <th>Property ID</th>
             <th>Title</th>
