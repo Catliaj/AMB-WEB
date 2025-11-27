@@ -79,8 +79,8 @@
   }
 
   function renderBookingCard(b) {
-    // Clients cannot assign booking dates; do not display booking date on client view
-    const date = '—';
+    // Show booking date if available
+    const date = b.bookingDate ? new Date(b.bookingDate).toLocaleDateString() : '—';
     const status = b.BookingStatus || b.status || 'Pending';
     // Display label: treat 'Confirmed' as 'Scheduled' for clients
     const _s = String(status || '').toLowerCase();
@@ -88,6 +88,7 @@
     const img = (b.Images && b.Images[0]) ? b.Images[0] : (b.Image ? b.Image : 'uploads/properties/no-image.jpg');
     const badgeClass = statusClass(status);
     const notes = b.Notes || b.Notes === 0 ? escapeHtml(b.Notes) : '';
+    const reason = b.Reason ? `Purpose: ${escapeHtml(b.Reason)}` : '';
 
     // Build a safe absolute image URL (preserve absolute URLs from backend)
     let imgUrl = '';
@@ -110,8 +111,9 @@
               <p class="text-muted small mb-1">${escapeHtml(b.PropertyLocation || b.Location || '')}</p>
               <div class="mb-1">
                 <span class="badge ${badgeClass}">${escapeHtml(displayStatus)}</span>
+                <span class="ms-2 text-muted small">Date: ${escapeHtml(date)}</span>
               </div>
-              <p class="small text-muted mb-0">${notes ? notes : ''}</p>
+              <p class="small text-muted mb-0">${reason}${notes ? (reason ? ' | ' : '') + notes : ''}</p>
             </div>
           </div>
           <div class="col-auto pe-3">
