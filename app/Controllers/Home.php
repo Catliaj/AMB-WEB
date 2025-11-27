@@ -26,4 +26,20 @@ class Home extends BaseController
 
         return view('Pages/landingpage');
     }
+
+    public function getProperty($id = null)
+    {
+        // Redirect to admin getProperty if admin, else error
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Admin') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        if (!$id) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'Property id required']);
+        }
+
+        $adminController = new \App\Controllers\AdminController();
+        return $adminController->getProperty($id);
+    }
 }

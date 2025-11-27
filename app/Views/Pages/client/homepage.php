@@ -45,6 +45,9 @@
                                 <a class="nav-link nav-link-custom" href="/users/clientbrowse">Browse Properties</a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link nav-link-custom" href="/users/clientreservations">Reservations</a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link nav-link-custom" href="/users/clientbookings">My Bookings</a>
                             </li>
                             <li class="nav-item d-lg-none">
@@ -108,7 +111,7 @@
                         <?php if (!empty($topViewed) && is_array($topViewed)): ?>
                             <?php foreach ($topViewed as $prop): ?>
                                 <div class="col-md-6 col-lg-4">
-                                    <div class="property-card" onclick="window.location='/property/view/<?= esc($prop['PropertyID']) ?>'">
+                                        <div class="property-card" onclick="openPropertyDetails(<?= esc($prop['PropertyID']) ?>)">
                                         <div class="property-image">
                                             <img src="<?= esc($prop['PropertyImage'] ? base_url('uploads/properties/' . $prop['PropertyImage']) : base_url('uploads/properties/no-image.jpg')) ?>"
                                                 alt="<?= esc($prop['Title']) ?>" loading="lazy">
@@ -139,7 +142,7 @@
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span class="property-price">PHP <?= esc(number_format($prop['Price'] ?? 0)) ?></span>
-                                                <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); window.location='/property/view/<?= esc($prop['PropertyID']) ?>'">View Details</button>
+                                                    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openPropertyDetails(<?= esc($prop['PropertyID']) ?>)">View Details</button>
                                             </div>
                                         </div>
                                     </div>
@@ -272,6 +275,76 @@
     <a href="/users/chat" class="chat-fab" id="chatButton">
         <i class="bi bi-chat-dots-fill fs-4"></i>
     </a>
+
+
+<!-- Property Details Modal (copied from browse.php) -->
+<div class="modal fade" id="propertyDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content property-modal-content">
+            <div class="modal-body p-0 position-relative">
+
+                <!-- Close button (visible) -->
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+
+                <!-- Image Area with Overlayed Details -->
+                <div class="property-modal-image-wrapper position-relative">
+                    <img id="modalPropertyImage" class="property-details-image" alt="Property Image">
+
+                    <!-- Heart & Badge -->
+                    <button class="property-favorite" id="modalFavoriteBtn" onclick="toggleFavoriteFromModal(event)">
+                        <i class="bi bi-heart fs-5"></i>
+                    </button>
+                    <span class="property-type-badge" id="modalPropertyType"></span>
+
+                    <!-- Navigation Arrows -->
+                    <button class="modal-nav prev" onclick="navigateProperty(-1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="modal-nav next" onclick="navigateProperty(1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+
+                    <!-- Overlay Details -->
+                    <div class="property-modal-details-overlay">
+                        <!-- Property Title -->
+                        <h5 id="modalPropertyTitle" class="mb-1"></h5>
+
+                        <!-- Price directly under title -->
+                        <div class="property-price text-primary fw-bold mb-2">
+                            ₱<span id="modalPropertyPrice"></span>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="location mb-2">
+                            <i class="bi bi-geo-alt"></i>
+                            <span id="modalPropertyLocation"></span>
+                        </div>
+
+                        <!-- House stats -->
+                        <div class="house-stats mb-3">
+                            <div><i class="bi bi-house-door"></i><span id="modalPropertyBeds"></span></div>
+                            <div><i class="bi bi-droplet"></i><span id="modalPropertyBaths"></span></div>
+                            <div><i class="bi bi-arrows-fullscreen"></i><span id="modalPropertySqft"></span></div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="price-book">
+                            <button class="btn btn-outline-primary" id="modalChatBtn">
+                                <i class="bi bi-chat-dots-fill me-1"></i>Chat Agent
+                            </button>
+                            <button class="btn btn-primary" id="modalBookBtn">
+                                <i class="bi bi-calendar-check me-2"></i>Book Property
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
         <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>

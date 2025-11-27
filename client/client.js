@@ -74,7 +74,7 @@ const bookingsData = [
         propertyImage: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
         propertyName: "Modern Family House",
         location: "Beverly Hills, CA",
-        bookingDate: "Oct 18, 2025",
+        bookingDate: "—",
         viewingTime: "2:00 PM - 3:00 PM",
         status: "confirmed",
         bookingId: "BK001"
@@ -84,7 +84,7 @@ const bookingsData = [
         propertyImage: "https://images.unsplash.com/photo-1715985160020-d8cd6fdc8ba9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
         propertyName: "Luxury Penthouse",
         location: "Manhattan, NY",
-        bookingDate: "Oct 20, 2025",
+        bookingDate: "—",
         viewingTime: "11:00 AM - 12:00 PM",
         status: "confirmed",
         bookingId: "BK002"
@@ -94,7 +94,7 @@ const bookingsData = [
         propertyImage: "https://images.unsplash.com/photo-1591268193431-c86baf208255?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
         propertyName: "Garden Villa Estate",
         location: "Miami, FL",
-        bookingDate: "Oct 12, 2025",
+        bookingDate: "—",
         viewingTime: "3:00 PM - 4:00 PM",
         status: "completed",
         bookingId: "BK003"
@@ -104,7 +104,7 @@ const bookingsData = [
         propertyImage: "https://images.unsplash.com/photo-1707075108813-edefd7b3308d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
         propertyName: "Beachfront Paradise",
         location: "Malibu, CA",
-        bookingDate: "Oct 10, 2025",
+        bookingDate: "—",
         viewingTime: "10:00 AM - 11:00 AM",
         status: "cancelled",
         bookingId: "BK004"
@@ -458,7 +458,8 @@ function openBookingDetails(bookingId) {
     document.getElementById('bookingModalImage').src = booking.propertyImage;
     document.getElementById('bookingModalTitle').textContent = booking.propertyName;
     document.getElementById('bookingModalLocation').textContent = booking.location;
-    document.getElementById('bookingModalDate').textContent = booking.bookingDate;
+    const modalDateEl = document.getElementById('bookingModalDate');
+    if (modalDateEl) modalDateEl.textContent = booking.bookingDate;
     document.getElementById('bookingModalTime').textContent = booking.viewingTime;
     document.getElementById('bookingModalId').textContent = booking.bookingId;
     
