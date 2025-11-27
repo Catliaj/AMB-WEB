@@ -125,7 +125,7 @@
                     </li>
                 </ul>
                 
-                <button class="btn btn-outline-danger d-flex align-items-center gap-2">
+                <button class="btn btn-danger d-flex align-items-center gap-2">
                     <i class="bi bi-box-arrow-right"></i>
                     <a class="nav-link nav-link-custom" href="/admin/logout"><span>Logout</span></a>
                     
