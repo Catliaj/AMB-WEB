@@ -104,27 +104,186 @@ class UserController extends BaseController
             'updated_at'  => date('Y-m-d H:i:s'),
         ];
 
+        // Handle optional file uploads: profile photo and government ID
+        // Employment status influences where profile photos are stored
+        $employmentStatus = $this->request->getPost('employmentStatus') ?? $this->request->getPost('Employment_Status') ?? null;
+
+        // Prepare upload status for diagnostics
+        $uploadStatus = [
+            'profilePhoto' => 'not_provided',
+            'govIdImage' => 'not_provided'
+        ];
+
+        // Profile photo: input name expected 'profilePhoto'
+        try {
+            $photoFile = $this->request->getFile('profilePhoto');
+            if ($photoFile && $photoFile->getName() !== '' ) {
+                if ($photoFile->isValid() && !$photoFile->hasMoved()) {
+                    // Choose upload directory per user's employment status
+                    // Store files under public/uploads/ofw/ or public/uploads/locallyemployed/
+                    $subdir = 'locallyemployed';
+                    if ($employmentStatus && strcasecmp(trim($employmentStatus), 'ofw') === 0) {
+                        $subdir = 'ofw';
+                    }
+                    $photoDir = FCPATH . 'uploads/' . $subdir . '/';
+                    if (!is_dir($photoDir)) {
+                        mkdir($photoDir, 0755, true);
+                    }
+                    $newName = $photoFile->getRandomName();
+                    $moved = $photoFile->move($photoDir, $newName);
+                    if ($moved) {
+                        // Store only the filename in DB; view templates build the full URL using folder
+                        $data['Image'] = $newName;
+                        $data['employmentStatus'] = $subdir;
+                        $uploadStatus['profilePhoto'] = 'saved: ' . $newName . ' in uploads/' . $subdir;
+                    } else {
+                        $uploadStatus['profilePhoto'] = 'move_failed';
+                        log_message('warning', 'Profile photo move failed for uploaded file.');
+                    }
+                } else {
+                    $err = $photoFile->getError();
+                    $uploadStatus['profilePhoto'] = 'invalid_or_moved; error=' . $err;
+                    log_message('warning', 'Profile photo invalid or already moved. Error code: ' . $err);
+                }
+            }
+        } catch (\Throwable $e) {
+            $uploadStatus['profilePhoto'] = 'exception: ' . $e->getMessage();
+            log_message('warning', 'Profile photo upload exception: ' . $e->getMessage());
+        }
+
+        // Government ID: input name expected 'govIdImage' — move to uploads/governmentid/ for safekeeping.
+        // We will not write gov ID fields into `users` table here. Employment-specific tables will receive document filenames after user creation.
+        $govName = null;
+        try {
+            $idFile = $this->request->getFile('govIdImage');
+            if ($idFile && $idFile->getName() !== '') {
+                if ($idFile->isValid() && !$idFile->hasMoved()) {
+                    $govDir = FCPATH . 'uploads/governmentid/';
+                    if (!is_dir($govDir)) {
+                        mkdir($govDir, 0755, true);
+                    }
+                    $govName = $idFile->getRandomName();
+                    $moved = $idFile->move($govDir, $govName);
+                    if ($moved) {
+                        $uploadStatus['govIdImage'] = 'saved: ' . $govName . ' in uploads/governmentid';
+                    } else {
+                        $uploadStatus['govIdImage'] = 'move_failed';
+                        log_message('warning', 'Gov ID move failed for uploaded file.');
+                    }
+                } else {
+                    $err = $idFile->getError();
+                    $uploadStatus['govIdImage'] = 'invalid_or_moved; error=' . $err;
+                    log_message('warning', 'Gov ID invalid or already moved. Error code: ' . $err);
+                }
+            }
+        } catch (\Throwable $e) {
+            $uploadStatus['govIdImage'] = 'exception: ' . $e->getMessage();
+            log_message('warning', 'Gov ID upload exception: ' . $e->getMessage());
+        }
+
         if ($usersModel->insert($data)) {
             $userID = $usersModel->getInsertID();
 
 
             $tokenModel->insert([
                 'userID'     => $userID,
-                'token'      => $otp_code, 
+                'token'      => $otp_code,
                 'expires_at' => $session_expiry,
                 'created_at' => date('Y-m-d H:i:s'),
             ]);
 
- 
+            // After user is created, persist employment-specific documents into the appropriate model/table.
+            try {
+                $empStatus = $employmentStatus;
+                if ($empStatus === 'locally_employed' || strcasecmp($empStatus, 'locally_employed') === 0 || strcasecmp($empStatus, 'locallyemployed') === 0) {
+                    $localModel = new \App\Models\LocalEmploymentModel();
+                    $localData = [ 'UserID' => $userID ];
+                    // Fields: Id_With_Signature, Payslip, proof_of_billing
+                    $localFiles = [ 'Id_With_Signature', 'Payslip', 'proof_of_billing' ];
+                    foreach ($localFiles as $f) {
+                        $file = $this->request->getFile($f);
+                        if ($file && $file->getName() !== '' && $file->isValid() && !$file->hasMoved()) {
+                            $dir = FCPATH . 'uploads/locallyemployed/';
+                            if (!is_dir($dir)) mkdir($dir, 0755, true);
+                            $newName = $file->getRandomName();
+                            if ($file->move($dir, $newName)) {
+                                $localData[$f] = $newName;
+                                $uploadStatus[$f] = 'saved: ' . $newName . ' in uploads/locallyemployed';
+                            } else {
+                                $uploadStatus[$f] = 'move_failed';
+                            }
+                        }
+                    }
+                    // If gov ID was uploaded and Id_With_Signature is empty, use gov file as Id_With_Signature
+                    if (empty($localData['Id_With_Signature']) && $govName) {
+                        // copy/move the gov file into locallyemployed folder to keep employment docs together
+                        $source = FCPATH . 'uploads/governmentid/' . $govName;
+                        if (is_file($source)) {
+                            $destName = $govName; // reuse filename
+                            $dest = FCPATH . 'uploads/locallyemployed/' . $destName;
+                            if (!is_dir(dirname($dest))) mkdir(dirname($dest), 0755, true);
+                            copy($source, $dest);
+                            $localData['Id_With_Signature'] = $destName;
+                            $uploadStatus['govIdImage_to_localemployment'] = 'copied into uploads/locallyemployed as ' . $destName;
+                        }
+                    }
+                    // Insert employment record if we have any non-empty fields besides UserID
+                    $hasDoc = false;
+                    foreach ($localData as $k => $v) { if ($k !== 'UserID' && !empty($v)) { $hasDoc = true; break; } }
+                    if ($hasDoc) {
+                        $localModel->insert($localData);
+                    }
+                } else if ($empStatus === 'ofw' || strcasecmp($empStatus, 'ofw') === 0 || strcasecmp($empStatus, 'ofw') === 0) {
+                    $ofwModel = new \App\Models\OFWModel();
+                    $ofwData = [ 'UserID' => $userID ];
+                    $ofwFiles = [ 'Job_Contract', 'Passport', 'Official_Identity_Documents' ];
+                    foreach ($ofwFiles as $f) {
+                        $file = $this->request->getFile($f);
+                        if ($file && $file->getName() !== '' && $file->isValid() && !$file->hasMoved()) {
+                            $dir = FCPATH . 'uploads/ofw/';
+                            if (!is_dir($dir)) mkdir($dir, 0755, true);
+                            $newName = $file->getRandomName();
+                            if ($file->move($dir, $newName)) {
+                                $ofwData[$f] = $newName;
+                                $uploadStatus[$f] = 'saved: ' . $newName . ' in uploads/ofw';
+                            } else {
+                                $uploadStatus[$f] = 'move_failed';
+                            }
+                        }
+                    }
+                    // If gov ID was uploaded and Official_Identity_Documents is empty, copy gov file into ofw folder
+                    if (empty($ofwData['Official_Identity_Documents']) && $govName) {
+                        $source = FCPATH . 'uploads/governmentid/' . $govName;
+                        if (is_file($source)) {
+                            $destName = $govName;
+                            $dest = FCPATH . 'uploads/ofw/' . $destName;
+                            if (!is_dir(dirname($dest))) mkdir(dirname($dest), 0755, true);
+                            copy($source, $dest);
+                            $ofwData['Official_Identity_Documents'] = $destName;
+                            $uploadStatus['govIdImage_to_ofw'] = 'copied into uploads/ofw as ' . $destName;
+                        }
+                    }
+                    $hasDoc = false;
+                    foreach ($ofwData as $k => $v) { if ($k !== 'UserID' && !empty($v)) { $hasDoc = true; break; } }
+                    if ($hasDoc) {
+                        $ofwModel->insert($ofwData);
+                    }
+                }
+            } catch (\Throwable $e) {
+                log_message('warning', 'Employment docs save exception: ' . $e->getMessage());
+                $uploadStatus['employment_docs_exception'] = $e->getMessage();
+            }
+
             $session->remove(['otp_code', 'otp_email', 'otp_expiry']);
 
             return $this->response->setJSON([
                 'status' => 'success',
                 'message' => 'User registered successfully',
+                'uploadStatus' => $uploadStatus
             ]);
         }
 
-        return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to register user.']);
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to register user.', 'uploadStatus' => $uploadStatus]);
     }
 
     /**

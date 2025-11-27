@@ -24,7 +24,7 @@ class Home extends BaseController
             }
         }
 
-        return view('Pages/landingpage');
+        return view('Pages/landing_homepage');
     }
 
     public function getProperty($id = null)

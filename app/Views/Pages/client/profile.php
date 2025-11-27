@@ -78,9 +78,13 @@
                             $first = $user['FirstName'] ?? '';
                             $last = $user['LastName'] ?? '';
                             $initials = strtoupper(trim(($first ? $first[0] : '') . ($last ? $last[0] : '')));
-                            $profileImage = !empty($user['Image'])
-                                ? base_url('uploads/profiles/' . $user['Image'])
-                                : base_url('uploads/profiles/default-profile.jpg');
+                            // Build profile image path based on employmentStatus and stored filename
+                            if (!empty($user['Image'])) {
+                                $folder = (isset($user['employmentStatus']) && strtolower($user['employmentStatus']) === 'ofw') ? 'ofw' : 'locallyemployed';
+                                $profileImage = base_url('uploads/' . $folder . '/' . $user['Image']);
+                            } else {
+                                $profileImage = base_url('uploads/profiles/default-profile.jpg');
+                            }
                         ?>
                         <div class="col-md-auto text-center text-md-start mb-3 mb-md-0">
                             <?php if (!empty($user['Image'])): ?>

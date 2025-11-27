@@ -98,9 +98,14 @@
 
 
     //ayosin toh pag may data na picture
+    // Build photo URL from stored filename + employmentStatus when available
+    let photoSrc = '<?= base_url('uploads/properties/no-image.jpg') ?>';
+    if (c.Image && c.Image.trim() !== '') {
+      const folder = (c.employmentStatus && c.employmentStatus.toLowerCase() === 'ofw') ? 'ofw' : 'locallyemployed';
+      photoSrc = '<?= base_url('') ?>' + 'uploads/' + folder + '/' + c.Image;
+    }
     clientItem.innerHTML = `
-      <img src="${c.photo && c.photo.trim() !== '' ? c.photo : '<?= base_url('uploads/properties/no-image.jpg') ?>'}" 
-     class="client-photo rounded-circle">
+      <img src="${photoSrc}" class="client-photo rounded-circle">
     <span class="client-name">${fullName}</span>
     `;
 
@@ -112,11 +117,17 @@
     const c = clients[i];
     const fullName = [c.FirstName, c.MiddleName, c.LastName].filter(Boolean).join(' ');
 
-    //ayosin toh pag may data na picture
+    // Build detail photo URL
+    let detailPhoto = '<?= base_url('uploads/properties/no-image.jpg') ?>';
+    if (c.Image && c.Image.trim() !== '') {
+      const folder = (c.employmentStatus && c.employmentStatus.toLowerCase() === 'ofw') ? 'ofw' : 'locallyemployed';
+      detailPhoto = '<?= base_url('') ?>' + 'uploads/' + folder + '/' + c.Image;
+    }
+    // Render details
     detailsDiv.innerHTML = `
       <div class="animate__animated animate__fadeIn">
         <div class="text-center mb-3">
-         <img src="${c.photo && c.photo.trim() !== '' ? c.photo : '<?= base_url('uploads/properties/no-image.jpg') ?>'}" 
+         <img src="${detailPhoto}" 
           class="client-detail-photo rounded-circle shadow-sm mb-2" 
           alt="${c.FirstName}">
 

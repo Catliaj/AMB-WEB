@@ -13,8 +13,11 @@ class UsersModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'FirstName', 'MiddleName', 'LastName', 'Birthdate', 'phoneNumber', 'Email', 'Password', 'Role', 'status', 'created_at', 'updated_at'
+        'FirstName', 'MiddleName', 'LastName', 'Birthdate', 'phoneNumber', 'Email', 'Password', 'Role', 'status', 'created_at', 'updated_at',
+        // Profile and government ID fields
+        'Image', 'GovIDImage', 'gov_id_type', 'gov_id_number', 'employmentStatus'
     ];
+
     
 
     protected bool $allowEmptyInserts = false;
