@@ -11,6 +11,174 @@
 
   <link rel="stylesheet" href="<?= base_url('assets/styles/admin-style.css')?>">
 
+  <link rel="stylesheet" href="<?= base_url('client/clientstyle.css')?>">
+   <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent1: #4e9eff;
+      --accent2: #2a405a;
+      --accent3: #68b76b;
+      --shadow: 0 6px 18px rgba(20,25,30,0.06);
+      --divider: #e6e9ef;
+      --hover-overlay: rgba(0,0,0,0.04);
+    }
+    /* Sidebar and table header overrides to use the light palette */
+    .sidebar { background: var(--panel, #ffffff); border-color: var(--divider); }
+    .nav a { color: var(--text); }
+    thead { background: var(--th-bg, var(--card)); }
+    th { color: var(--th-text, var(--text)); }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      display: flex;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: none;
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background: var(--hover-overlay);
+      transform: scale(1.05);
+    }
+
+    .icon-btn.danger {
+      color: #f87171;
+    }
+
+    .icon-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      width: 380px;
+      background: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-content input, 
+    .modal-content select {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--divider);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .filters {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .filters input, 
+    .filters select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--divider);
+      background: var(--card);
+      color: var(--text);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--divider);
+    }
+
+    th {
+      background: var(--hover-overlay);
+      font-weight: 600;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .right-panel {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .profile-pic img {
+      width: 100px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+    }
+
+    .toggle {
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: white;
+      background: #f87171;
+      transition: 0.2s;
+    }
+
+    .toggle.active {
+      background: #34d399;
+    }
+  </style>
+
   <style>
     body {
       font-family: 'Montserrat', sans-serif;
