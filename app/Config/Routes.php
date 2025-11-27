@@ -50,7 +50,12 @@ $routes->get('properties/view/(:num)', 'PropertyController::viewProperty/$1');
 
 $routes->post('bookings/create', 'UserController::create');
 $routes->get('bookings/mine', 'UserController::mine');
+$routes->get('bookings/reservations', 'UserController::getReservations');
 $routes->post('bookings/cancel', 'UserController::cancel');
+// Reservation workflow methods
+$routes->post('users/reserve', 'UserController::reserve');
+$routes->post('users/selectPayment', 'UserController::selectPayment');
+$routes->post('users/signContract', 'UserController::signContract');
 // Contract proposals + confirmations (used by client + agent flows)
 $routes->post('bookings/proposeContract', 'UserController::proposeContract');
 $routes->post('bookings/confirmContract', 'UserController::confirmContract');
@@ -143,6 +148,10 @@ $routes->get('/admin/reports/export.csv', 'AdminController::exportReportsCsv');
 $routes->get('/admin/reports/export.pdf', 'AdminController::exportReportsPdf');
 // Reports data (JSON) for admin UI
 $routes->get('/admin/reports/data', 'AdminController::getReportsData');
+
+// Diagnostic Routes (for debugging database issues)
+$routes->get('/diagnostic/booking', 'DiagnosticController::booking');
+$routes->post('/diagnostic/fixBooking', 'DiagnosticController::fixBooking');
 
 
 /*

@@ -57,14 +57,14 @@
                   $statusText = $b['BookingStatus'] ?? $b['status'] ?? 'Pending';
                   $statusLower = strtolower(trim($statusText));
                   $isPending = ($statusLower === 'pending');
-                  $isConfirmed = ($statusLower === 'confirmed');
+                  $isScheduled = ($statusLower === 'scheduled');
                   $isRejected = ($statusLower === 'rejected');
                   $isCancelled = ($statusLower === 'cancelled');
 
                   // badge class mapping
                   $statusClass = 'bg-secondary text-white';
                   if ($isPending) $statusClass = 'bg-warning text-dark';
-                  if ($isConfirmed) $statusClass = 'bg-success text-white';
+                  if ($isScheduled) $statusClass = 'bg-success text-white';
                   if ($isRejected) $statusClass = 'bg-danger text-white';
                   if ($isCancelled) $statusClass = 'bg-danger text-white';
 
@@ -215,11 +215,11 @@
       if (!bookingId) { Swal.fire({ icon: 'error', title: 'Missing ID', text: 'This booking has no id; cannot update.' }); return; }
 
       const result = await Swal.fire({
-        title: 'Confirm booking?',
-        text: 'Are you sure you want to confirm this booking?',
+        title: 'Approve booking?',
+        text: 'Are you sure you want to approve this booking?',
         icon: 'question',
         showCancelButton: true,
-        confirmButtonText: 'Yes, confirm',
+        confirmButtonText: 'Yes, approve',
         cancelButtonText: 'Cancel'
       });
       if (!result.isConfirmed) return;
@@ -228,7 +228,7 @@
       Swal.fire({ title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
       try {
-        const payload = { booking_id: bookingId, status: 'confirmed' }; // send lowercase; controller normalizes
+        const payload = { booking_id: bookingId, status: 'scheduled' }; // send lowercase; controller normalizes
         if (window.updateBookingStatusUrl) {
           const res = await fetch(window.updateBookingStatusUrl, {
             method: 'POST',
@@ -239,9 +239,9 @@
           const json = await res.json().catch(()=>null);
           if (!res.ok || !(json && (json.success || json.updated))) throw new Error(json?.error || ('Server returned ' + res.status));
         }
-        applyStatusToRow(tr, 'Confirmed');
+        applyStatusToRow(tr, 'Scheduled');
         Swal.close();
-        Toast.fire({ icon: 'success', title: 'Booking confirmed' });
+        Toast.fire({ icon: 'success', title: 'Booking approved' });
       } catch (err) {
         Swal.close();
         console.error(err);
@@ -302,7 +302,7 @@
       let cls = 'bg-secondary text-white';
       const st = String(statusText).toLowerCase();
       if (st === 'pending') cls = 'bg-warning text-dark';
-      if (st === 'confirmed') cls = 'bg-success text-white';
+      if (st === 'scheduled') cls = 'bg-success text-white';
       if (st === 'rejected') cls = 'bg-danger text-white';
       if (st === 'cancelled') cls = 'bg-danger text-white';
       statusCell.innerHTML = `<span class="badge ${cls}">${escapeHtml(statusText)}</span>`;

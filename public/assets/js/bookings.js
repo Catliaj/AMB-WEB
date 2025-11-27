@@ -28,16 +28,18 @@
             const reason = String(b.Reason || b.reason || '').toLowerCase();
             // Exclude any bookings that are viewing-purpose (even if status is 'pending')
             if (reason.includes('view')) return false;
-            return s === 'pending' || s === 'confirmed' || s === 'reserved';
+            // include scheduled bookings intended for reservation
+            return s === 'pending' || s === 'confirmed' || s === 'reserved' || s === 'scheduled';
           });
         } else {
-          // bookings page shows cancelled, viewing, or other non-active statuses
+          // bookings page shows cancelled, viewing, scheduled, or other non-active statuses
           // include pending bookings that were created for "viewing" purpose
           filtered = data.filter(b => {
             const s = String(b.BookingStatus || b.status || '').toLowerCase();
             const reason = String(b.Reason || b.reason || '').toLowerCase();
             if (s === 'pending' && reason.includes('view')) return true;
-            return s === 'cancelled' || s === 'rejected' || s === 'viewing' || s === 'completed';
+            // show scheduled bookings here too
+            return s === 'cancelled' || s === 'rejected' || s === 'viewing' || s === 'completed' || s === 'scheduled' || s === 'confirmed';
           });
         }
       }
@@ -129,7 +131,7 @@
 
   function statusClass(status) {
     const s = String(status || '').toLowerCase();
-    if (s === 'confirmed' || s === 'confirmed') return 'bg-success text-white';
+    if (s === 'confirmed' || s === 'scheduled') return 'bg-success text-white';
     if (s === 'pending') return 'bg-warning text-dark';
     if (s === 'rejected' || s === 'cancelled') return 'bg-danger text-white';
     return 'bg-secondary text-white';
@@ -264,7 +266,7 @@ function populateBookingModal(b) {
   // show/hide cancel button depending on status
   const cancelBtn = document.getElementById('modalCancelBookingBtn');
   if (cancelBtn) {
-    if (['pending','confirmed'].includes(String(status).toLowerCase())) {
+    if (['pending','confirmed','scheduled'].includes(String(status).toLowerCase())) {
       cancelBtn.style.display = '';
       cancelBtn.dataset.id = b.bookingID;
       cancelBtn.onclick = onCancelBooking;
@@ -277,7 +279,7 @@ function populateBookingModal(b) {
   // Show Confirm Contract button when booking is confirmed
   const confirmBtn = document.getElementById('modalConfirmContractBtn');
   if (confirmBtn) {
-    if (String(status).toLowerCase() === 'confirmed') {
+    if (['confirmed','scheduled'].includes(String(status).toLowerCase())) {
       confirmBtn.style.display = '';
       // set dataset for use by handler
       confirmBtn.dataset.id = b.bookingID ?? '';

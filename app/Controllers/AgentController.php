@@ -283,10 +283,10 @@ class AgentController extends BaseController
                 return $this->response->setStatusCode(400)->setJSON(['error' => 'booking_id and status are required']);
             }
 
-            // Acceptable statuses: Pending, Confirmed, Cancelled, Rejected
+            // Acceptable statuses: Pending, Scheduled, Cancelled, Rejected
             $allowed = [
             'pending'   => 'Pending',
-            'confirmed' => 'Confirmed',
+            'scheduled' => 'Scheduled',
             'cancelled' => 'Cancelled',
             'rejected'  => 'Rejected'
             ];
@@ -309,61 +309,74 @@ class AgentController extends BaseController
                 return $this->response->setStatusCode(403)->setJSON(['error' => 'You do not have permission to modify this booking']);
             }
 
-            // Build payload using DB column names used in your model
-            $pk = $bookingModel->primaryKey ?? 'bookingID';
-            $payload = [
-                $pk => $bookingId,
-                'status' => $normalizedStatus,
+            // Use direct DB update with raw SQL to ensure PascalCase column names work correctly
+            $db = \Config\Database::connect();
+            
+            // Log the update attempt for debugging
+            log_message('debug', "Updating booking {$bookingId} with status: {$normalizedStatus}");
+            
+            // Build update data
+            $updateData = [
+                'Status' => $normalizedStatus,
                 'updated_at' => date('Y-m-d H:i:s'),
             ];
-
-            // add reason to first matching reason column if present in booking (do not invent new columns)
             if ($reason !== null) {
-                if (array_key_exists('StatusReason', $booking)) {
-                    $payload['StatusReason'] = $reason;
-                } elseif (array_key_exists('RejectionReason', $booking)) {
-                    $payload['RejectionReason'] = $reason;
-                } elseif (array_key_exists('Remarks', $booking)) {
-                    $payload['Remarks'] = $reason;
-                } elseif (array_key_exists('notes', $booking)) {
-                    $payload['notes'] = $reason;
-                }
+                $currentNotes = $booking['Notes'] ?? '';
+                $updateData['Notes'] = $currentNotes . ($currentNotes ? "\n" : '') . 'Rejection reason: ' . $reason;
             }
-
-            log_message('debug', 'updateBookingStatus payload: ' . json_encode($payload));
-
+            
+            // Try using the model first (now that allowedFields is fixed)
             try {
-                // save() will update when primary key included and respects allowedFields
-                $result = $bookingModel->save($payload);
-                log_message('debug', 'BookingModel::save result: ' . var_export($result, true));
-
-                if ($result === false) {
-                    $errors = method_exists($bookingModel, 'errors') ? $bookingModel->errors() : null;
-                    log_message('error', 'BookingModel save returned false. Errors: ' . json_encode($errors));
-                    return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to update booking status', 'details' => $errors]);
+                $updateResult = $bookingModel->update($bookingId, $updateData);
+                if ($updateResult !== false) {
+                    log_message('debug', "Model update succeeded for booking {$bookingId}");
+                    // Verify the update
+                    $verifyBooking = $db->table('booking')->select('Status')->where('bookingID', $bookingId)->get()->getRowArray();
+                    $verifiedStatus = $verifyBooking['Status'] ?? '';
+                    log_message('debug', "Verified status after model update: '{$verifiedStatus}'");
+                    return $this->response->setJSON(['success' => true, 'updated' => true, 'status' => $normalizedStatus, 'verified_status' => $verifiedStatus]);
                 }
-
-                return $this->response->setJSON(['success' => true, 'updated' => true, 'status' => $normalizedStatus]);
             } catch (\Exception $e) {
-                log_message('error', 'BookingModel::save exception for ' . $bookingId . ' - ' . $e->getMessage());
-                // Fallback direct DB update using model table and pk
-                try {
-                    $db = \Config\Database::connect();
-                    $table = $bookingModel->table ?? 'booking';
-                    $builder = $db->table($table);
-                    $ok = $builder->where($pk, $bookingId)->update([
-                        'status' => $normalizedStatus,
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ]);
-                    if ($ok) {
-                        return $this->response->setJSON(['success' => true, 'updated' => true, 'status' => $normalizedStatus, 'fallback' => true]);
-                    }
-                } catch (\Exception $inner) {
-                    log_message('error', 'Fallback DB update failed for ' . $bookingId . ': ' . $inner->getMessage());
-                }
-
-                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to update booking status (exception)']);
+                log_message('error', "Model update failed: " . $e->getMessage());
             }
+            
+            // Fallback to direct DB update using query builder
+            $builder = $db->table('booking');
+            $builder->set('Status', $normalizedStatus);
+            $builder->set('updated_at', date('Y-m-d H:i:s'));
+            if ($reason !== null) {
+                $currentNotes = $booking['Notes'] ?? '';
+                $builder->set('Notes', $currentNotes . ($currentNotes ? "\n" : '') . 'Rejection reason: ' . $reason);
+            }
+            $builder->where('bookingID', $bookingId);
+            $updated = $builder->update();
+            
+            // Check if update actually affected rows (returns number of affected rows)
+            if ($updated === false) {
+                log_message('error', "Database update failed for booking {$bookingId}");
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to update booking status - database error']);
+            }
+            
+            if ($updated === 0) {
+                log_message('warning', "No rows updated for booking {$bookingId} - booking may not exist or status unchanged");
+                // Verify current status
+                $currentBooking = $db->table('booking')->select('Status')->where('bookingID', $bookingId)->get()->getRowArray();
+                $currentStatus = $currentBooking['Status'] ?? '';
+                log_message('debug', "Current status for booking {$bookingId}: '{$currentStatus}', trying to set: '{$normalizedStatus}'");
+                if ($currentStatus === $normalizedStatus) {
+                    return $this->response->setJSON(['success' => true, 'updated' => true, 'status' => $normalizedStatus, 'message' => 'Status already set']);
+                }
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'No rows were updated', 'current_status' => $currentStatus]);
+            }
+            
+            log_message('debug', "Successfully updated booking {$bookingId} - {$updated} row(s) affected");
+            
+            // Verify the update by fetching the booking again
+            $verifyBooking = $db->table('booking')->select('Status')->where('bookingID', $bookingId)->get()->getRowArray();
+            $verifiedStatus = $verifyBooking['Status'] ?? '';
+            log_message('debug', "Verified status after update for booking {$bookingId}: '{$verifiedStatus}'");
+            
+            return $this->response->setJSON(['success' => true, 'updated' => true, 'status' => $normalizedStatus, 'rows_affected' => $updated, 'verified_status' => $verifiedStatus]);
         }
     public function getBooking($id = null)
     {

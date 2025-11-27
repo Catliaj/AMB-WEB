@@ -29,7 +29,53 @@
                         aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-
+                    <!-- Confirm Contract Modal (used by bookings.js) -->
+                    <div class="modal fade" id="confirmContractModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Select Payment / Propose Contract</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                            <label class="form-label"><strong>Property Price</strong></label>
+                                            <div id="contractPropertyPrice" class="fs-5">—</div>
+                                    </div>
+                                    <div class="mb-3">
+                                            <label class="form-label"><strong>Client Age</strong></label>
+                                            <div id="contractClientAge" class="fs-5">—</div>
+                                    </div>
+                                    <div class="mb-3">
+                                            <label class="form-label"><strong>Payment Mode</strong></label>
+                                            <div>
+                                                    <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="contractMode" id="modePagibig_confirm" value="pagibig">
+                                                            <label class="form-check-label" for="modePagibig_confirm">Pagibig (max 60 years)</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="contractMode" id="modeBanko_confirm" value="banko">
+                                                            <label class="form-check-label" for="modeBanko_confirm">Bank (max 30 years)</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="contractMode" id="modeFull_confirm" value="full">
+                                                            <label class="form-check-label" for="modeFull_confirm">Full Payment</label>
+                                                    </div>
+                                            </div>
+                                    </div>
+                                    <div class="mb-3">
+                                            <label class="form-label"><strong>Payment Calculation</strong></label>
+                                            <div id="contractMonthly" class="p-3 bg-light rounded">—</div>
+                                    </div>
+                                    <div id="contractErrors" class="text-danger small mb-2" style="display:none;"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" id="confirmContractBtn" class="btn btn-primary">Send Proposal</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Collapsible Content -->
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <!-- Center nav links (desktop), vertical in mobile -->
@@ -179,13 +225,15 @@
 
             
 
-                        <div class="mt-3 d-flex justify-content-end">
-                            <!-- Hidden agent id (if available) -->
-                            <input type="hidden" id="bookingModalAgentId" value="">
-                              <button id="modalConfirmContractBtn" class="btn btn-success btn-sm me-2" style="display:none">Confirm Contract</button>
-                              <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
-                              <button id="modalCloseBtn" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                        </div>
+                                                        <div class="mt-3 d-flex justify-content-end">
+                                                        <!-- Hidden agent id (if available) -->
+                                                        <input type="hidden" id="bookingModalAgentId" value="">
+                                                            <button id="modalReserveBtn" class="btn btn-success btn-sm me-2" style="display:none">Reserve</button>
+                                                            <button id="modalConfirmContractBtn" class="btn btn-primary btn-sm me-2" style="display:none">Confirm Contract</button>
+                                                            <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
+                                                              <button id="modalViewPropertyBtn" class="btn btn-outline-primary btn-sm me-2">View Property</button>
+                                                              <button id="modalCloseBtn" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                                </div>
           </div>
         </div>
 
@@ -214,11 +262,12 @@
         window.bookingCreateUrl = <?= json_encode(site_url('bookings/create')) ?>;
         window.myBookingsUrl = <?= json_encode(site_url('bookings/mine')) ?>;
         window.bookingCancelUrl = <?= json_encode(site_url('bookings/cancel')) ?>;
-          window.getUserUrlBase = <?= json_encode(site_url('users/getUser')) ?>;
+        window.reserveUrl = <?= json_encode(site_url('users/reserve')) ?>;
+        window.getUserUrlBase = <?= json_encode(site_url('users/getUser')) ?>;
         window.csrfName = <?= json_encode(csrf_token()) ?>;
         window.csrfHash = <?= json_encode(csrf_hash()) ?>;
-                // this page shows cancelled/viewing bookings only
-                window.bookingsMode = 'bookings';
+        // this page shows cancelled/viewing bookings only
+        window.bookingsMode = 'bookings';
     </script>
     </div>
 </body>

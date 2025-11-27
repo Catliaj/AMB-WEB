@@ -13,7 +13,7 @@ class BookingModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'userID', 'propertyID', 'bookingDate', 'status', 'Reason', 'Notes','created_at', 'updated_at'
+        'UserID', 'PropertyID', 'BookingDate', 'Status', 'Reason', 'Notes','created_at', 'updated_at'
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -53,7 +53,7 @@ class BookingModel extends Model
 
     public function getPendingBookings()
     {
-        return $this->where('status', 'Pending')->countAllResults();
+        return $this->where('Status', 'Pending')->countAllResults();
     }
 
     public function getTotalBookingByMonth()
@@ -97,8 +97,8 @@ class BookingModel extends Model
     {
         return $this->select('
                 booking.bookingID,
-                booking.bookingDate,
-                booking.status AS BookingStatus,
+                booking.BookingDate AS bookingDate,
+                booking.Status AS BookingStatus,
                 users.UserID AS ClientID,
                 CONCAT(users.FirstName, " ", users.LastName) AS ClientName,
                 users.Email AS ClientEmail,
@@ -110,7 +110,7 @@ class BookingModel extends Model
             ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
             ->join('users', 'users.UserID = booking.UserID', 'left')
             ->where('property.agent_assigned', $agentID)
-            ->orderBy('booking.bookingDate', 'DESC')
+            ->orderBy('booking.BookingDate', 'DESC')
             ->findAll();
     }
 
@@ -119,15 +119,15 @@ class BookingModel extends Model
     {
         return $this->select('
                 booking.bookingID,
-                booking.bookingDate,
-                booking.status AS BookingStatus,
+                booking.BookingDate AS bookingDate,
+                booking.Status AS BookingStatus,
                 property.PropertyID,
                 property.Title AS PropertyTitle,
                 property.Location AS PropertyLocation
             ')
             ->join('property', 'property.PropertyID = booking.PropertyID', 'left')
-            ->where('booking.userID', $userID)
-            ->orderBy('booking.bookingDate', 'DESC')
+            ->where('booking.UserID', $userID)
+            ->orderBy('booking.BookingDate', 'DESC')
             ->findAll();
     }
 
