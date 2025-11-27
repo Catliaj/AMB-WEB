@@ -166,6 +166,23 @@
   position: relative;
 }
 
+/* Ensure form fields inside the Add/Edit modal use dark text so values are readable
+   even if the modal background is light in some themes. Scoped to #addModal to avoid
+   changing other modal styles. */
+#addModal .modal-content input,
+#addModal .modal-content select,
+#addModal .modal-content textarea,
+#addModal .modal-content .form-control,
+#addModal .modal-content .form-select,
+#addModal .modal-content label {
+  color: #000 !important;
+}
+
+#addModal .modal-content input::placeholder,
+#addModal .modal-content textarea::placeholder {
+  color: #666 !important;
+}
+
 
 
 
@@ -563,9 +580,24 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
     
     const btnAddProperty = document.getElementById("btnAddProperty");
     btnAddProperty.addEventListener("click", () => {
-      addModal.classList.add("active");
+      // Clear form for creating a new property
+      const form = document.getElementById('propertyForm');
+      form.reset();
+      // Ensure hidden PropertyID is empty so controller creates
+      const propIdEl = document.getElementById('PropertyID');
+      if (propIdEl) propIdEl.value = '';
+      // Reset image preview
       imageFiles = [];
       multiPreview.innerHTML = "";
+      // Ensure input text is visible (black)
+      ['newTitle','newType','newDescription','newPrice','newLocation','newSize','newBedrooms','newBathrooms','newParking','newCorporation','newAgent'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.color = '#000';
+      });
+      // Ensure the form action points to the create endpoint
+      form.action = `<?= base_url('admin/property/store-property') ?>`;
+      // Open modal with animation
+      showModal('addModal');
     });
 
  
