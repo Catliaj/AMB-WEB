@@ -26,7 +26,8 @@
       --hover-overlay: rgba(0,0,0,0.04);
     }
     /* Sidebar and table header overrides to use the light palette */
-    .sidebar { background: var(--panel, #ffffff); border-color: var(--divider); }
+    .sidebar { background: linear-gradient(120deg, #d3f0ff 0%, #c8f5d2 100%); border-color: var(--divider); }
+    html[data-theme="dark"] .sidebar { background: linear-gradient(120deg, #252e42 0%, #2d4038 100%); }
     .nav a { color: var(--text); }
     thead { background: var(--th-bg, var(--card)); }
     th { color: var(--th-text, var(--text)); }
@@ -72,16 +73,7 @@
       height: 20px;
     }
 
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
+    /* Use Bootstrap's modal styles — avoid overriding global .modal rules */
     .modal-content {
       width: 380px;
       background: var(--card);
@@ -91,6 +83,57 @@
       flex-direction: column;
       gap: 10px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Make the Add/Edit Agent modal white with black text (like Manage Properties) */
+    #addAgentModal .modal-content {
+      background: #fff !important;
+      color: #000 !important;
+    }
+    #addAgentModal .modal-content .modal-body,
+    #addAgentModal .modal-content .modal-footer {
+      color: #000 !important;
+    }
+    #addAgentModal .modal-content input,
+    #addAgentModal .modal-content select,
+    #addAgentModal .modal-content textarea,
+    #addAgentModal .modal-content .form-control {
+      color: #000 !important;
+      background: #fff !important;
+      border: 1px solid var(--divider) !important;
+    }
+    #addAgentModal .modal-content .modal-header.bg-primary {
+      background: var(--accent1) !important;
+      color: #fff !important;
+    }
+    /* Ensure the modal appears above Bootstrap's backdrop so inputs are clickable */
+    #addAgentModal.modal {
+      z-index: 2080 !important;
+    }
+    /* Keep the backdrop slightly below the modal (scoped global adjustment) */
+    .modal-backdrop.show {
+      z-index: 2070 !important;
+    }
+
+    /* Make the View Documents modal light and on top */
+    #viewDocumentsModal .modal-content {
+      background: #fff !important;
+      color: #000 !important;
+    }
+    #viewDocumentsModal .modal-content .modal-body,
+    #viewDocumentsModal .modal-content .modal-footer {
+      color: #000 !important;
+    }
+    #viewDocumentsModal .modal-content input,
+    #viewDocumentsModal .modal-content select,
+    #viewDocumentsModal .modal-content textarea,
+    #viewDocumentsModal .modal-content .form-control {
+      color: #000 !important;
+      background: #fff !important;
+      border: 1px solid var(--divider) !important;
+    }
+    #viewDocumentsModal.modal {
+      z-index: 2080 !important;
     }
 
     .modal-content input, 
@@ -219,11 +262,6 @@
   height: 28px !important;
   stroke-width: 2.2 !important; /* Thicker stroke for clarity */
 }
-    
-
-  
-
-
 
     .filters {
       margin: 20px 0;
@@ -312,7 +350,7 @@
      <img src="<?= base_url('assets/img/amb_logo.png')?>" alt="AMB Logo">
     <nav class="nav">
       <a href="/admin/adminHomepage" ><i data-lucide="layout-dashboard"></i> Dashboard</a>
-      <a href="/admin/manageUsers" class="active"><i data-lucide="users"></i> Manage Users</a>
+      <a href="/admin/manageUsers" class="active" style="background: linear-gradient(90deg, #2e7d32, #1565c0);"><i data-lucide="users"></i> Manage Users</a>
       <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
       <!-- User Bookings removed -->
       <!-- View Chats removed for privacy -->
@@ -348,7 +386,7 @@
     <div class="layout">
       <div>
         <table id="userTable">
-          <thead>
+          <thead style="background: white;">
             <tr>
               <th>UserID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th>
             </tr>
@@ -381,8 +419,22 @@
       </div>
 
       <aside class="right-panel" id="userDetails">
-        <div class="profile-pic"><img src="https://via.placeholder.com/100" alt="Profile"></div>
-        <h3>Select a user to view details</h3>
+        <div class="profile-pic"><img id="rp_avatar" src="https://via.placeholder.com/100" alt="Profile"></div>
+        <h3 id="rp_name">Select a user to view details</h3>
+        <div id="rp_meta" style="margin-top:10px; text-align:left; display:none;">
+          <p><strong>User ID:</strong> <span id="rp_userid"></span></p>
+          <p><strong>Role:</strong> <span id="rp_role"></span></p>
+          <p><strong>Status:</strong> <span id="rp_status"></span></p>
+          <p><strong>Email:</strong> <span id="rp_email"></span></p>
+          <p><strong>Phone:</strong> <span id="rp_phone"></span></p>
+          <p><strong>Birthdate:</strong> <span id="rp_bday"></span></p>
+        </div>
+
+        <div id="rp_actions" style="margin-top:12px; display:none;">
+          <button id="viewDocsBtn" class="btn btn-outline-secondary btn-sm">View Documents</button>
+        </div>
+
+        <div id="rp_ids_list" style="margin-top:12px; display:none; text-align:left;"></div>
       </aside>
     </div>
   </section>
@@ -549,13 +601,13 @@
 
           <!-- View Documents Modal -->
           <div class="modal fade" id="viewDocumentsModal" tabindex="-1" aria-labelledby="viewDocumentsLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-md">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
               <div class="modal-content">
                 <div class="modal-header">
                   <h5 class="modal-title" id="viewDocumentsLabel">Documents</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="docsModalBody">
+                <div class="modal-body" id="docsModalBody" style="max-height: 400px; overflow-y: auto; text-align: center;">
                   <!-- documents will be injected here -->
                 </div>
                 <div class="modal-footer">
@@ -717,44 +769,41 @@ document.addEventListener("DOMContentLoaded", () => {
       addAgentModal.show();
     }
 
-    // View user details -> open view modal
+    // View user details -> populate right-panel (no popup)
     if (btn?.dataset.view !== undefined) {
       const idx = Number(btn.dataset.view);
       const u = users[idx];
-      // Populate modal fields
-      document.getElementById('vu_userid').textContent = u.UserID || '';
-      document.getElementById('vu_first').textContent = u.FirstName || '';
-      document.getElementById('vu_middle').textContent = u.MiddleName || '';
-      document.getElementById('vu_last').textContent = u.LastName || '';
-      document.getElementById('vu_bday').textContent = u.Birthdate || '';
-      document.getElementById('vu_role').textContent = u.Role || '';
-      document.getElementById('vu_status').textContent = u.status || '';
-      document.getElementById('vu_email').textContent = u.Email || '';
-      document.getElementById('vu_phone').textContent = u.PhoneNumber || '';
 
-      // Populate documents list (inline) and prepare view documents modal
-      const docsList = document.getElementById('vu_docs_list');
-      docsList.innerHTML = '';
-      const docs = u.documents || u.docs || null;
-      if (docs && Array.isArray(docs) && docs.length) {
-        const ul = document.createElement('ul');
-        ul.className = 'list-group';
-        docs.forEach(d => {
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center';
-          const name = d.name || d.filename || (typeof d === 'string' ? d : 'Document');
-          li.innerHTML = `<span>${name}</span><a href="${d.url || d.file || '#'}" target="_blank" class="btn btn-sm btn-outline-primary">Open</a>`;
-          ul.appendChild(li);
-        });
-        docsList.appendChild(ul);
-      } else {
-        docsList.innerHTML = '<p class="text-muted">No documents uploaded</p>';
+      // Populate right-panel fields
+      let pic = 'https://via.placeholder.com/100';
+      if (u.Image && u.employmentStatus) {
+        pic = '<?= base_url() ?>' + 'uploads/' + u.employmentStatus + '/' + u.Image;
       }
+      document.getElementById('rp_avatar').src = pic;
+      document.getElementById('rp_name').textContent = (u.FirstName || '') + ' ' + (u.LastName || '');
+      document.getElementById('rp_userid').textContent = u.UserID || '';
+      document.getElementById('rp_role').textContent = u.Role || '';
+      document.getElementById('rp_status').textContent = u.status || '';
+      document.getElementById('rp_email').textContent = u.Email || '';
+      document.getElementById('rp_phone').textContent = u.PhoneNumber || '';
+      document.getElementById('rp_bday').textContent = u.Birthdate || '';
 
-      // Wire View Documents button
-      const vdBtn = document.getElementById('vu_viewDocs');
-      vdBtn.onclick = () => {
-        const docsModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('viewDocumentsModal'));
+      // show meta and actions
+      document.getElementById('rp_meta').style.display = 'block';
+      document.getElementById('rp_actions').style.display = 'block';
+      document.getElementById('rp_ids_list').style.display = 'none';
+
+      // store selection on panel for other actions
+      const panel = document.getElementById('userDetails');
+      panel.dataset.selectedIndex = idx;
+      panel.dataset.selectedId = u.UserID || '';
+
+      // (View IDs button removed) -- IDs are not shown in the panel per request
+
+      // Wire the View Documents button to reuse document modal
+      const viewDocsBtn = document.getElementById('viewDocsBtn');
+      viewDocsBtn.onclick = () => {
+        const docs = u.documents || u.docs || null;
         const body = document.getElementById('docsModalBody');
         if (docs && Array.isArray(docs) && docs.length) {
           body.innerHTML = '';
@@ -769,11 +818,8 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           body.innerHTML = '<p class="text-muted">No documents available for this user.</p>';
         }
-        docsModal.show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('viewDocumentsModal')).show();
       };
-
-      // Show the view modal
-      bootstrap.Modal.getOrCreateInstance(document.getElementById('viewUserModal')).show();
     }
   });
 

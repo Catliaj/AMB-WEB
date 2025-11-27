@@ -5,6 +5,9 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\UsersModel;
+use App\Models\CLientGovernmentIDModel;
+use App\Models\LocalEmploymentModel;
+use App\Models\OFWModel;
 
 class AdminController extends BaseController
 {
@@ -179,7 +182,57 @@ class AdminController extends BaseController
         $userModel = new \App\Models\UsersModel();
         $data['users'] = $userModel->getUsersList();
 
+        $govModel = new \App\Models\CLientGovernmentIDModel();
+        $localModel = new \App\Models\LocalEmploymentModel();
+        $ofwModel = new \App\Models\OFWModel();
+        foreach ($data['users'] as &$user) {
+            $user['documents'] = [];
 
+            $baseUrl = base_url();
+            $employmentStatus = $user['employmentStatus'] ?? 'locallyemployed'; // default if null
+
+            // Fetch from clientGovernmentID
+            $govDocs = $govModel->where('UserID', $user['UserID'])->first();
+            if ($govDocs) {
+                if (!empty($govDocs['Government_ID'])) {
+                    $user['documents'][] = ['name' => 'Government ID', 'url' => $baseUrl . 'uploads/' . $employmentStatus . '/' . $govDocs['Government_ID']];
+                }
+                if (!empty($govDocs['TIN_ID'])) {
+                    $user['documents'][] = ['name' => 'TIN ID', 'url' => $baseUrl . 'uploads/' . $employmentStatus . '/' . $govDocs['TIN_ID']];
+                }
+                if (!empty($govDocs['Selfie_with_ID'])) {
+                    $user['documents'][] = ['name' => 'Selfie with ID', 'url' => $baseUrl . 'uploads/' . $employmentStatus . '/' . $govDocs['Selfie_with_ID']];
+                }
+            }
+
+            // Fetch from localEmployment
+            $localDocs = $localModel->where('UserID', $user['UserID'])->first();
+            if ($localDocs) {
+                if (!empty($localDocs['Id_With_Signature'])) {
+                    $user['documents'][] = ['name' => 'ID with Signature', 'url' => $baseUrl . 'uploads/' . $employmentStatus . '/' . $localDocs['Id_With_Signature']];
+                }
+                if (!empty($localDocs['Payslip'])) {
+                    $user['documents'][] = ['name' => 'Payslip', 'url' => $baseUrl . 'uploads/' . $employmentStatus . '/' . $localDocs['Payslip']];
+                }
+                if (!empty($localDocs['proof_of_billing'])) {
+                    $user['documents'][] = ['name' => 'Proof of Billing', 'url' => $baseUrl . 'uploads/' . $employmentStatus . '/' . $localDocs['proof_of_billing']];
+                }
+            }
+
+            // Fetch from OFW
+            $ofwDocs = $ofwModel->where('UserID', $user['UserID'])->first();
+            if ($ofwDocs) {
+                if (!empty($ofwDocs['Job_Contract'])) {
+                    $user['documents'][] = ['name' => 'Job Contract', 'url' => $baseUrl . 'uploads/' . $employmentStatus . '/' . $ofwDocs['Job_Contract']];
+                }
+                if (!empty($ofwDocs['Passport'])) {
+                    $user['documents'][] = ['name' => 'Passport', 'url' => $baseUrl . 'uploads/' . $employmentStatus . '/' . $ofwDocs['Passport']];
+                }
+                if (!empty($ofwDocs['Official_Identity_Documents'])) {
+                    $user['documents'][] = ['name' => 'Official Identity Documents', 'url' => $baseUrl . 'uploads/' . $employmentStatus . '/' . $ofwDocs['Official_Identity_Documents']];
+                }
+            }
+        }
 
         return view('Pages/admin/manage-users', [
                 'UserID' => session()->get('UserID'),
@@ -549,6 +602,38 @@ class AdminController extends BaseController
             'Corporation' => $this->request->getPost('Corporation')
         ];
 
+        // If PropertyID is provided, perform an update instead of create
+        $providedId = $this->request->getPost('PropertyID');
+        if (!empty($providedId)) {
+            $propertyID = (int)$providedId;
+            // Remove UserID on update to avoid changing owner unintentionally
+            unset($data['UserID']);
+            $updated = $propertyModel->update($propertyID, $data);
+            if ($updated === false) {
+                return redirect()->back()->with('error', 'Failed to update property.');
+            }
+            // Handle any uploaded images for the existing property
+            $images = $this->request->getFiles();
+            if ($images && isset($images['images'])) {
+                foreach ($images['images'] as $img) {
+                    if ($img->isValid() && !$img->hasMoved()) {
+                        $newName = $img->getRandomName();
+                        $uploadPath = FCPATH . 'uploads/properties/';
+                        if (!is_dir($uploadPath)) {
+                            mkdir($uploadPath, 0777, true);
+                        }
+                        $img->move($uploadPath, $newName);
+                        $propertyImagesModel->insert([
+                            'PropertyID' => $propertyID,
+                            'Image' => $newName
+                        ]);
+                    }
+                }
+            }
+            return redirect()->to('/admin/ManageProperties')->with('success', 'Property updated successfully!');
+        }
+
+        // Otherwise create a new property
         $propertyID = $propertyModel->createWithStatusAndAgent($data);
 
         if ($propertyID) {

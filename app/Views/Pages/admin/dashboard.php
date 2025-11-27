@@ -20,7 +20,8 @@
       --hover-overlay: rgba(0,0,0,0.04);
     }
     /* Sidebar and table header overrides to use the light palette */
-    .dashboard-page .sidebar, .sidebar { background: var(--panel, #ffffff); border-color: var(--divider); }
+    .dashboard-page .sidebar, .sidebar { background: linear-gradient(120deg, #d3f0ff 0%, #c8f5d2 100%); border-color: var(--divider); }
+    html[data-theme="dark"] .dashboard-page .sidebar, html[data-theme="dark"] .sidebar { background: linear-gradient(120deg, #252e42 0%, #2d4038 100%); }
     .dashboard-page .nav a, .nav a { color: var(--text); }
     thead { background: var(--th-bg, var(--card)); }
     th { color: var(--th-text, var(--text)); }
@@ -52,7 +53,8 @@
   z-index: 10;
 }
 .modal-content {
-  background: var(--card);
+  background: linear-gradient(135deg, #1a237e, #2e7d32);
+  color: white;
   padding: 20px;
   border-radius: 12px;
   width: 400px;
@@ -77,7 +79,7 @@
   <aside class="sidebar">
     <img src="<?= base_url('assets/img/amb_logo.png')?>" alt="AMB Logo">
     <nav class="nav">
-      <a href="/admin/adminHomepage" class="active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a href="/admin/adminHomepage" class="active" style="background: linear-gradient(90deg, #2e7d32, #1565c0);"><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
       <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
       <!-- User Bookings removed -->

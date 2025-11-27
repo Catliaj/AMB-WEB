@@ -23,10 +23,12 @@
       --hover-overlay: rgba(0,0,0,0.04);
     }
     /* Sidebar and table header overrides to use the light palette */
-    .sidebar { background: var(--panel, #ffffff); border-color: var(--divider); }
+    .sidebar { background: linear-gradient(120deg, #d3f0ff 0%, #c8f5d2 100%); border-color: var(--divider); }
+    html[data-theme="dark"] .sidebar { background: linear-gradient(120deg, #252e42 0%, #2d4038 100%); }
     .nav a { color: var(--text); }
     thead { background: var(--th-bg, var(--card)); }
     th { color: var(--th-text, var(--text)); }
+    .filters-bar { background: white; padding: 10px; border-radius: 8px; }
   </style>
 
   <style>
@@ -164,6 +166,23 @@
   position: relative;
 }
 
+/* Ensure form fields inside the Add/Edit modal use dark text so values are readable
+   even if the modal background is light in some themes. Scoped to #addModal to avoid
+   changing other modal styles. */
+#addModal .modal-content input,
+#addModal .modal-content select,
+#addModal .modal-content textarea,
+#addModal .modal-content .form-control,
+#addModal .modal-content .form-select,
+#addModal .modal-content label {
+  color: #000 !important;
+}
+
+#addModal .modal-content input::placeholder,
+#addModal .modal-content textarea::placeholder {
+  color: #666 !important;
+}
+
 
 
 
@@ -190,7 +209,7 @@
     <nav class="nav">
       <a href="/admin/adminHomepage" ><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
-      <a href="/admin/ManageProperties" class="active"><i data-lucide="home"></i> Manage Properties</a>
+      <a href="/admin/ManageProperties" class="active" style="background: linear-gradient(90deg, #428d46ff, #2376d4ff);"><i data-lucide="home"></i> Manage Properties</a>
       <!-- User Bookings removed -->
       <!-- View Chats removed for privacy -->
       <a href="/admin/Reports"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
@@ -214,21 +233,21 @@
       <button class="btn" id="btnAddProperty"><i data-lucide="plus-circle"></i> Add Property</button>
     </header>
 
-    <div class="filters-bar">
-      <input type="text" id="searchInput" placeholder="Search all columns...">
-      <select id="filterStatus">
+    <div class="filters-bar" style="background: white; padding: 10px; border-radius: 8px;">
+      <input type="text" id="searchInput" placeholder="Search all columns..." style="background: white; color: black;">
+      <select id="filterStatus" style="background: white; color: black;">
         <option value="">Status</option>
         <option value="Available">Available</option>
         <option value="Reserved">Reserved</option>
         <option value="Sold">Sold</option>
       </select>
-      <select id="filterType">
+      <select id="filterType" style="background: white; color: black;">
         <option value="">Type</option>
         <option value="Apartment">Apartment</option>
         <option value="Condo">Condo</option>
         <option value="House">House</option>
       </select>
-    <select id="filterAgent">
+    <select id="filterAgent" style="background: white; color: black;">
       <option value="">All Agents</option>
       <?php foreach ($agents as $agent): ?>
         <option value="<?= esc($agent['full_name']); ?>"><?= esc($agent['full_name']); ?></option>
@@ -240,7 +259,7 @@
 
     <div class="table-container">
       <table id="propertyTable">
-        <thead>
+        <thead style="background: white;">
           <tr>
             <th>Property ID</th>
             <th>Title</th>
@@ -316,15 +335,22 @@
 </div>
 
  <div class="modal" id="addModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
-  <div class="modal-dialog modal-lg  ">
-    <div class="modal-content shadow-lg rounded-4 p-3" >
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content shadow-lg rounded-4 p-3 modal-animate" >
       
-      <h2 id="modalTitle" class="mb-2 text-center">Add New Property</h2>
+      <h2 id="modalTitle" class="mb-2 text-center">Add / Edit Property</h2>
             
-      <form action="<?= base_url('admin/property/store-property') ?>" method="POST" enctype="multipart/form-data">
+      <form id="propertyForm" action="<?= base_url('admin/property/store-property') ?>" method="POST" enctype="multipart/form-data">
+
+        <?php if (function_exists('csrf_field')): ?>
+          <?= csrf_field() ?>
+        <?php else: ?>
+          <input type="hidden" name="<?= esc(csrf_token()) ?>" value="<?= esc(csrf_hash()) ?>">
+        <?php endif; ?>
 
 
         <input type="hidden" id="userID" name="UserID" value="<?= esc(session()->get('UserID')); ?>">
+        <input type="hidden" id="PropertyID" name="PropertyID" value="">
 
         <div class="row g-3">
           <!-- Title -->
@@ -419,7 +445,7 @@
 
         <!-- Buttons -->
         <div class="actions d-flex justify-content-end gap-2 mt-4">
-          <button class="btn btn-secondary cancel" type="button" id="cancelAdd" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-secondary cancel" type="button" id="cancelAdd">Cancel</button>
           <button class="btn btn-primary" type="submit" id="saveProperty">Save</button>
         </div>
 
@@ -460,7 +486,7 @@ let deletePropertyID = null;
 
 function openDeleteModal(id) {
   deletePropertyID = id;
-  document.getElementById("deleteModal").classList.add("active");
+  showModal('deleteModal');
 }
 
 document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
@@ -473,7 +499,7 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
     .then((res) => res.json())
     .then((data) => {
       alert(data.message || "Property deleted successfully!");
-      closeModal("deleteModal");
+      hideModal('deleteModal');
 
       // Remove the deleted property from table
       const index = properties.findIndex(p => p.PropertyID == deletePropertyID);
@@ -554,9 +580,24 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
     
     const btnAddProperty = document.getElementById("btnAddProperty");
     btnAddProperty.addEventListener("click", () => {
-      addModal.classList.add("active");
+      // Clear form for creating a new property
+      const form = document.getElementById('propertyForm');
+      form.reset();
+      // Ensure hidden PropertyID is empty so controller creates
+      const propIdEl = document.getElementById('PropertyID');
+      if (propIdEl) propIdEl.value = '';
+      // Reset image preview
       imageFiles = [];
       multiPreview.innerHTML = "";
+      // Ensure input text is visible (black)
+      ['newTitle','newType','newDescription','newPrice','newLocation','newSize','newBedrooms','newBathrooms','newParking','newCorporation','newAgent'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.color = '#000';
+      });
+      // Ensure the form action points to the create endpoint
+      form.action = `<?= base_url('admin/property/store-property') ?>`;
+      // Open modal with animation
+      showModal('addModal');
     });
 
  
@@ -595,6 +636,100 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
   filterAgent.addEventListener("change", applyFilters);
 
   renderTable();
+</script>
+
+<script>
+// Modal helper animations and functions
+function showModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.add('active');
+  const content = modal.querySelector('.modal-content');
+  if (content) {
+    content.style.transform = 'translateY(-10px) scale(0.98)';
+    content.style.opacity = '0';
+    requestAnimationFrame(() => {
+      content.style.transition = 'transform 260ms ease, opacity 200ms ease';
+      content.style.transform = 'translateY(0) scale(1)';
+      content.style.opacity = '1';
+    });
+  }
+}
+
+function hideModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  const content = modal.querySelector('.modal-content');
+  if (content) {
+    content.style.transform = 'translateY(-10px) scale(0.98)';
+    content.style.opacity = '0';
+    setTimeout(() => modal.classList.remove('active'), 220);
+  } else {
+    modal.classList.remove('active');
+  }
+}
+
+function closeModal(id) { hideModal(id); }
+
+// Edit property: fetch data and populate addModal form
+function editProperty(propertyID) {
+  fetch(`/admin/getProperty/${propertyID}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data) return console.error('No data received');
+      // Populate form fields
+      const fieldsToPopulate = ['newTitle','newType','newDescription','newPrice','newLocation','newSize','newBedrooms','newBathrooms','newParking','newCorporation','newAgent'];
+      const mapping = {
+        newTitle: data.Title || '',
+        newType: data.Property_Type || '',
+        newDescription: data.Description || '',
+        newPrice: data.Price || '',
+        newLocation: data.Location || '',
+        newSize: data.Size || '',
+        newBedrooms: data.Bedrooms || '',
+        newBathrooms: data.Bathrooms || '',
+        newParking: data.Parking_Spaces || '',
+        newCorporation: data.Corporation || '',
+        newAgent: data.agent_assigned || ''
+      };
+
+      fieldsToPopulate.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = mapping[id] || '';
+        // make text black when editing so it's visible
+        el.style.color = '#000';
+      });
+      // set hidden PropertyID so server knows to update
+      document.getElementById('PropertyID').value = propertyID;
+      // open modal
+      // Open modal
+      showModal('addModal');
+    })
+    .catch(err => console.error('Error fetching property for edit:', err));
+}
+
+// Ensure cancel buttons close modals
+  document.getElementById('cancelAdd').addEventListener('click', () => {
+    // reset PropertyID and input text colors when canceling
+    const propIdEl = document.getElementById('PropertyID');
+    if (propIdEl) propIdEl.value = '';
+    ['newTitle','newType','newDescription','newPrice','newLocation','newSize','newBedrooms','newBathrooms','newParking','newCorporation','newAgent'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.color = '';
+    });
+    hideModal('addModal');
+  });
+
+// viewProperty should open view modal with animation (ensure it uses showModal)
+const originalViewProperty = window.viewProperty;
+window.viewProperty = function(propID) {
+  // call existing implementation (which fetches and opens modal)
+  originalViewProperty(propID);
+  // ensure animation
+  setTimeout(() => showModal('viewModal'), 80);
+}
+
 </script>
 
 <script>
@@ -645,7 +780,8 @@ function prevImage() {
 }
 
 function closeModal(modalId) {
-  document.getElementById(modalId).classList.remove('active');
+  // Delegate to animated hide helper for consistent behavior
+  try { hideModal(modalId); } catch(e) { document.getElementById(modalId).classList.remove('active'); }
 }
 
 

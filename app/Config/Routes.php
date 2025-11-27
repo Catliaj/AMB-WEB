@@ -106,6 +106,7 @@ $routes->get('/admin/adminHomepage', 'AdminController::adminDashboard');
 $routes->get('/admin/Reports', 'AdminController::generateReports');
 $routes->get('/admin/ManageProperties', 'AdminController::manageProperties');
 $routes->get('/admin/manageUsers', 'AdminController::manageUsers');
+$routes->get('/admin/manage-users', 'AdminController::manageUsers');
 // userBookings removed: route deprecated and page deleted
 // Fetch booking details (JSON) for Admin detail popups
 $routes->get('/admin/booking/(:num)', 'AdminController::getBookingDetails/$1');

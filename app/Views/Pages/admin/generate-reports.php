@@ -28,7 +28,8 @@
       --hover-overlay: rgba(0,0,0,0.04);
     }
     /* Sidebar and table header overrides to use the light palette */
-    .sidebar { background: var(--panel, #ffffff); border-color: var(--divider); }
+    .sidebar { background: linear-gradient(120deg, #d3f0ff 0%, #c8f5d2 100%); border-color: var(--divider); }
+    html[data-theme="dark"] .sidebar { background: linear-gradient(120deg, #252e42 0%, #2d4038 100%); }
     .nav a { color: var(--text); }
     thead { background: var(--th-bg, var(--card)); }
     th { color: var(--th-text, var(--text)); }
@@ -58,7 +59,7 @@
       <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
       <!-- User Bookings removed -->
       <!-- View Chats removed for privacy -->
-      <a href="/admin/Reports" class="active"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
+      <a href="/admin/Reports" class="active" style="background: linear-gradient(90deg, #2e7d32, #1565c0);"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
     </nav>
 
     <div class="profile-box">
@@ -75,14 +76,6 @@
       <div class="left-header">
         <button id="toggleSidebar" class="btn"><i data-lucide="menu"></i></button>
         <h1><i data-lucide="bar-chart-2"></i> Generate Reports</h1>
-      </div>
-      <div class="header-actions">
-        <div class="controls-help">Actions: Generate updates the table; Export downloads the current filtered report.</div>
-        <div class="controls">
-          <button class="btn primary" id="generateReportBtn"><i data-lucide="refresh-ccw"></i> Generate</button>
-          <button class="btn secondary" id="exportPdf"><i data-lucide="file-down"></i> PDF</button>
-          <button class="btn secondary" id="exportExcel"><i data-lucide="file-spreadsheet"></i> Excel</button>
-        </div>
       </div>
     </header>
 
@@ -108,6 +101,11 @@
         <option>Rejected</option>
       </select>
     </div>
+<div class="header-actions" style="display: flex; gap: 10px;">
+          <button class="btn" id="generateReportBtn" style="background: linear-gradient(90deg, #2e7d32, #1565c0); color: white; border: none;"><i data-lucide="refresh-ccw"></i> Generate</button>
+          <button class="btn" id="exportPdf" style="background: linear-gradient(90deg, #2e7d32, #1565c0); color: white; border: none;"><i data-lucide="file-down"></i> PDF</button>
+          <button class="btn" id="exportExcel" style="background: linear-gradient(90deg, #2e7d32, #1565c0); color: white; border: none;"><i data-lucide="file-spreadsheet"></i> Excel</button>
+        </div>
 
     <section class="summary-wrapper">
       <h2>Summary</h2>
@@ -135,7 +133,7 @@
       <div class="report-preview">
         <h3>Report Preview</h3>
         <table id="reportTable">
-          <thead>
+          <thead style="background: white;">
             <tr>
               <th>Report ID</th>
               <th>Property</th>
