@@ -43,6 +43,9 @@
                     <li class="nav-item">
                         <a class="nav-link nav-link-custom" href="/users/clientbrowse">Browse Properties</a>
                     </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom" href="/users/clientreservations">Reservations</a>
+                            </li>
                     <li class="nav-item">
                         <a class="nav-link nav-link-custom" href="/users/clientbookings">My Bookings</a>
                     </li>
@@ -127,6 +130,9 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content property-modal-content">
             <div class="modal-body p-0 position-relative">
+
+                <!-- Close button (visible) -->
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
 
                 <!-- Image Area with Overlayed Details -->
                 <div class="property-modal-image-wrapper position-relative">
@@ -318,10 +324,25 @@
                                 <div class="col-md-6">
                                     <label for="bookingDate" class="form-label">
                                         <i class="bi bi-calendar-event me-1"></i>
-                                        Booking Date
+                                        Preferred Date
                                     </label>
-                                    <input type="date" class="form-control" id="bookingDate" name="booking_date"
-                                        required>
+                                    <input type="date" id="bookingDate" name="booking_date" class="form-control">
+                                    <div class="form-text small">Optional — agent may reschedule.</div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="bookingTime" class="form-label">
+                                        <i class="bi bi-clock me-1"></i>
+                                        Preferred Time
+                                    </label>
+                                    <div class="d-flex gap-2">
+                                        <input type="text" id="bookingTime" name="booking_time" class="form-control" placeholder="hh:mm" aria-label="Time (hh:mm)">
+                                        <select id="bookingTimeAmpm" name="booking_time_ampm" class="form-select" aria-label="AM or PM">
+                                            <option value="AM">AM</option>
+                                            <option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-text small">Optional — enter hour and minutes (e.g. 10:30).</div>
                                 </div>
 
                                 <div class="col-md-6">

@@ -99,6 +99,43 @@
         </div>
       </div>
 
+      <!-- Gender & Civil Status Charts -->
+      <div class="col-12 mt-3">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card p-3 shadow-sm h-100">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="text-muted mb-0">Bookings by Gender</h6>
+                <small class="text-muted">Booked vs Reserved</small>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <canvas id="genderChart" style="max-height:220px; width:100%;"></canvas>
+              </div>
+              <div class="mt-2 d-flex gap-3">
+                <div><strong id="genderBookedTotal">0</strong> <small class="text-muted">booked</small></div>
+                <div><strong id="genderReservedTotal">0</strong> <small class="text-muted">reserved</small></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card p-3 shadow-sm h-100">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="text-muted mb-0">Bookings by Civil Status</h6>
+                <small class="text-muted">Booked vs Reserved</small>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <canvas id="civilChart" style="max-height:220px; width:100%;"></canvas>
+              </div>
+              <div class="mt-2 d-flex gap-3">
+                <div><strong id="civilBookedTotal">0</strong> <small class="text-muted">booked</small></div>
+                <div><strong id="civilReservedTotal">0</strong> <small class="text-muted">reserved</small></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Clients List -->
       <div class="col-md-3">
         <div class="card p-3 shadow-sm h-100 animate__animated animate__fadeInRight">
@@ -157,6 +194,79 @@
     });
 
 clientList.innerHTML = html;
+    
+    // --- Extra charts: gender & civil status ---
+    // Server may provide these variables as associative arrays. Fallback to empty objects.
+    const genderBooked = <?= json_encode($genderBooked ?? []) ?>;
+    const genderReserved = <?= json_encode($genderReserved ?? []) ?>;
+    const civilBooked = <?= json_encode($civilBooked ?? []) ?>;
+    const civilReserved = <?= json_encode($civilReserved ?? []) ?>;
+
+    function buildLabels(a,b){
+      const keys = new Set();
+      Object.keys(a||{}).forEach(k=>keys.add(k));
+      Object.keys(b||{}).forEach(k=>keys.add(k));
+      return Array.from(keys);
+    }
+
+    function numbersForLabels(obj, labels){
+      return labels.map(l => Number(obj?.[l] ?? 0));
+    }
+
+    // Gender chart
+    (function(){
+      const labels = buildLabels(genderBooked, genderReserved);
+      const bookedData = numbersForLabels(genderBooked, labels);
+      const reservedData = numbersForLabels(genderReserved, labels);
+
+      const gctx = document.getElementById('genderChart');
+      if (gctx && labels.length){
+        new Chart(gctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              { label: 'Booked', data: bookedData, backgroundColor: '#0d6efd' },
+              { label: 'Reserved', data: reservedData, backgroundColor: '#ffc107' }
+            ]
+          },
+          options: { responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}} }
+        });
+      }
+
+      // totals
+      const gb = bookedData.reduce((s,v)=>s+v,0);
+      const gr = reservedData.reduce((s,v)=>s+v,0);
+      document.getElementById('genderBookedTotal').innerText = gb;
+      document.getElementById('genderReservedTotal').innerText = gr;
+    })();
+
+    // Civil status chart
+    (function(){
+      const labels = buildLabels(civilBooked, civilReserved);
+      const bookedData = numbersForLabels(civilBooked, labels);
+      const reservedData = numbersForLabels(civilReserved, labels);
+
+      const cctx = document.getElementById('civilChart');
+      if (cctx && labels.length){
+        new Chart(cctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              { label: 'Booked', data: bookedData, backgroundColor: '#198754' },
+              { label: 'Reserved', data: reservedData, backgroundColor: '#6f42c1' }
+            ]
+          },
+          options: { responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}} }
+        });
+      }
+
+      const cb = bookedData.reduce((s,v)=>s+v,0);
+      const cr = reservedData.reduce((s,v)=>s+v,0);
+      document.getElementById('civilBookedTotal').innerText = cb;
+      document.getElementById('civilReservedTotal').innerText = cr;
+    })();
   </script>
 </body>
 </html>

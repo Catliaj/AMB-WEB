@@ -360,6 +360,8 @@ class PropertyController extends BaseController
             'LastName'  => $user['LastName'] ?? '',
             'Email'     => $user['Email'] ?? '',
             'phone'     => $user['phoneNumber'] ?? ($user['phone'] ?? ''),
+            // expose Birthdate so clients can compute age for contract proposals
+            'Birthdate' => $user['Birthdate'] ?? $user['birthdate'] ?? $user['DOB'] ?? null,
             'Role'      => $user['Role'] ?? '',
         ];
 

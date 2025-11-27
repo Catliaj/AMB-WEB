@@ -430,6 +430,28 @@ class UserController extends BaseController
             ]);
     }
 
+    public function ClientReservations()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+         if ($session->get('role') !== 'Client') {
+            return redirect()->to('/'); 
+        }
+
+
+       return view('Pages/client/reservations', [
+                'UserID' => session()->get('UserID'),
+                'email' => session()->get('inputEmail'),
+                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
+                get('LastName')),
+                'currentUserId' => session()->get('UserID'),
+                'otherUser' => null
+            ]);
+    }
+
     public function ClientProfile()
     {
         $session = session();
@@ -551,14 +573,25 @@ class UserController extends BaseController
             }
         }
 
-        // Now validate required fields
+        // Now parse/normalize input fields
         $propertyID = $input['property_id'] ?? $input['propertyID'] ?? null;
-        $bookingDate = $input['booking_date'] ?? $input['bookingDate'] ?? null;
+        $bookingDate = $input['booking_date'] ?? $input['bookingDate'] ?? null; // optional for clients
         $purpose = $input['booking_purpose'] ?? $input['purpose'] ?? null;
         $notes = $input['booking_notes'] ?? $input['notes'] ?? null;
 
-        if (empty($propertyID) || empty($bookingDate)) {
-            return $this->response->setStatusCode(400)->setJSON(['error' => 'property_id and booking_date are required']);
+        // property_id is required; bookingDate is optional (agents will assign dates)
+        if (empty($propertyID)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'property_id is required']);
+        }
+
+        // Determine default status based on purpose: Viewing bookings should appear on bookings page,
+        // Reserve/Reservation should appear on reservations page (Pending)
+        $purposeNorm = strtolower(trim((string)$purpose ?? ''));
+        if (in_array($purposeNorm, ['viewing','view'])) {
+            $status = 'Viewing';
+        } else {
+            // default to Pending for reservations or unknown purposes
+            $status = 'Pending';
         }
 
         // Save booking using your BookingModel
@@ -567,8 +600,9 @@ class UserController extends BaseController
         $data = [
             'userID'     => $session->get('UserID'),
             'propertyID' => $propertyID,
-            'bookingDate'=> $bookingDate,
-            'status'     => 'Pending',
+            // Allow NULL bookingDate for client-created bookings; agents will set the date later
+            'bookingDate'=> !empty($bookingDate) ? $bookingDate : null,
+            'status'     => $status,
             'Reason'     => $purpose,
             'Notes'      => $notes,
             'created_at' => $now,
@@ -610,7 +644,15 @@ class UserController extends BaseController
                 booking.Notes,
                 property.PropertyID,
                 property.Title AS PropertyTitle,
+                property.Description AS PropertyDescription,
+                property.Property_Type,
                 property.Location AS PropertyLocation,
+                property.Size AS PropertySize,
+                property.Bedrooms AS PropertyBedrooms,
+                property.Bathrooms AS PropertyBathrooms,
+                property.Parking_Spaces AS PropertyParking,
+                property.agent_assigned,
+                property.Corporation,
                 property.Price AS PropertyPrice
             ')
             ->join('property', 'property.PropertyID = booking.propertyID', 'left')
@@ -725,6 +767,102 @@ class UserController extends BaseController
             return $this->response->setJSON(['success' => true, 'bookingID' => $bookingId, 'status' => $status]);
         } catch (\Exception $e) {
             log_message('error', 'Booking cancel failed: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+        }
+    }
+
+    /**
+     * Client proposes a contract for a booking (persist proposal).
+     * POST: booking_id, mode, monthly
+     */
+    public function proposeContract()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Client') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        $post = $this->request->getPost();
+        if (empty($post)) {
+            parse_str($this->request->getBody(), $post);
+        }
+
+        $bookingID = $post['booking_id'] ?? $post['bookingID'] ?? null;
+        $mode = $post['mode'] ?? null;
+        $monthly = $post['monthly'] ?? null;
+
+        if (empty($bookingID) || empty($mode)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'booking_id and mode are required']);
+        }
+
+        $contractModel = new \App\Models\ContractModel();
+        $now = date('Y-m-d H:i:s');
+        $data = [
+            'bookingID' => $bookingID,
+            'mode' => $mode,
+            'monthly' => $monthly ?? null,
+            'proposedBy' => $session->get('UserID'),
+            'status' => 'proposed',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ];
+
+        try {
+            $id = $contractModel->insert($data);
+            if ($id === false) {
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to save contract proposal']);
+            }
+
+            return $this->response->setJSON(['success' => true, 'contractID' => $contractModel->getInsertID()]);
+        } catch (\Throwable $e) {
+            log_message('error', 'proposeContract failed: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+        }
+    }
+
+    /**
+     * Agent confirms a contract proposal.
+     * POST: contract_id
+     */
+    public function confirmContract()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Agent') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        $post = $this->request->getPost();
+        if (empty($post)) {
+            parse_str($this->request->getBody(), $post);
+        }
+
+        $contractID = $post['contract_id'] ?? $post['contractID'] ?? null;
+        if (empty($contractID)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'contract_id is required']);
+        }
+
+        $contractModel = new \App\Models\ContractModel();
+        $contract = $contractModel->find($contractID);
+        if (!$contract) {
+            return $this->response->setStatusCode(404)->setJSON(['error' => 'Contract not found']);
+        }
+
+        try {
+            $now = date('Y-m-d H:i:s');
+            $updated = $contractModel->update($contractID, [
+                'status' => 'confirmed',
+                'confirmedBy' => $session->get('UserID'),
+                'confirmed_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            if ($updated === false) {
+                return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to confirm contract']);
+            }
+
+            return $this->response->setJSON(['success' => true]);
+        } catch (\Throwable $e) {
+            log_message('error', 'confirmContract failed: ' . $e->getMessage());
             return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
         }
     }

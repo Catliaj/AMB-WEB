@@ -420,8 +420,11 @@ function renderBookingsList(bookings) {
     }
 
     const html = bookings.map(b => {
-        const date = b.bookingDate ? new Date(b.bookingDate).toLocaleDateString() : '—';
+        // Clients do not set booking dates; show placeholder instead
+        const date = '—';
         const status = b.BookingStatus || b.status || 'Pending';
+        // Map confirmed -> Scheduled for display
+        const statusDisplay = String(status || '').toLowerCase() === 'confirmed' ? 'Scheduled' : (status ? String(status).charAt(0).toUpperCase() + String(status).slice(1) : 'Pending');
         const img = (b.Images && b.Images[0]) ? b.Images[0] : 'uploads/properties/no-image.jpg';
         const reason = b.Reason ? `<div><strong>Reason:</strong> ${escapeHtml(b.Reason)}</div>` : '';
         const notes = b.Notes ? `<div><strong>Notes:</strong> ${escapeHtml(b.Notes)}</div>` : '';
@@ -436,7 +439,7 @@ function renderBookingsList(bookings) {
               <div class="card-body">
                 <h5 class="card-title mb-1">${escapeHtml(b.PropertyTitle || 'Property')}</h5>
                 <p class="mb-1 text-muted small">${escapeHtml(b.PropertyLocation || '')}</p>
-                <div class="mb-1"><strong>Date:</strong> ${escapeHtml(date)} &nbsp; <span class="badge ${badgeClassForStatus(status)}">${escapeHtml(status)}</span></div>
+                <div class="mb-1"><strong>Date:</strong> ${escapeHtml(date)} &nbsp; <span class="badge ${badgeClassForStatus(status)}">${escapeHtml(statusDisplay)}</span></div>
                 ${reason}
                 ${notes}
               </div>
@@ -581,10 +584,25 @@ async function openBookingModal(propertyData) {
     const idInput = document.getElementById('bookingPropertyId');
     if (idInput) idInput.value = propertyData.id || '';
 
-    // Set minimum date
-    const today = new Date().toISOString().split('T')[0];
-    const dateInput = document.getElementById('bookingDate');
-    if (dateInput) dateInput.setAttribute('min', today);
+        // Ensure booking date input cannot select past dates: set `min` to current local datetime
+            // For separate date input (YYYY-MM-DD), set min to today's date
+            const bookingDateEl = document.getElementById('bookingDate');
+            if (bookingDateEl) {
+                const now = new Date();
+                const pad = (n) => String(n).padStart(2, '0');
+                const today = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+                bookingDateEl.min = today;
+                if (bookingDateEl.value) {
+                    const selected = new Date(bookingDateEl.value + 'T00:00:00');
+                    if (isNaN(selected.getTime()) || selected < new Date(today + 'T00:00:00')) bookingDateEl.value = '';
+                }
+            }
+
+            // Clear time fields when opening modal
+            const timeEl = document.getElementById('bookingTime');
+            const ampmEl = document.getElementById('bookingTimeAmpm');
+            if (timeEl) timeEl.value = '';
+            if (ampmEl) ampmEl.value = 'AM';
 
     // Reset form
     const form = document.getElementById('propertyBookingForm');
@@ -632,12 +650,46 @@ setText('bookingPropertyAgentEmail', agentEmail || '');
   const form = document.getElementById('propertyBookingForm');
   if (!form) return;
 
-  form.addEventListener('submit', async function (e) {
+    form.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const payload = new URLSearchParams();
     payload.append('property_id', document.getElementById('bookingPropertyId').value);
-    payload.append('booking_date', document.getElementById('bookingDate').value);
+        // Include preferred booking date/time when provided by client.
+        // We accept separate date input + typable time + AM/PM and combine into local ISO-like string: YYYY-MM-DDTHH:MM
+        const bookingDateEl2 = document.getElementById('bookingDate');
+        const bookingTimeEl = document.getElementById('bookingTime');
+        const bookingAmpmEl = document.getElementById('bookingTimeAmpm');
+        let combined = '';
+        if (bookingDateEl2 && bookingDateEl2.value) {
+            const datePart = bookingDateEl2.value; // YYYY-MM-DD
+            let hour = null, minute = '00';
+            if (bookingTimeEl && bookingTimeEl.value) {
+                const t = bookingTimeEl.value.trim();
+                const m = t.match(/^(\d{1,2}):(\d{2})$/);
+                if (m) {
+                    hour = parseInt(m[1], 10);
+                    minute = m[2];
+                }
+            }
+
+            if (hour !== null) {
+                // adjust hour based on AM/PM if provided
+                const ampm = bookingAmpmEl?.value || '';
+                if (/^am$/i.test(ampm)) {
+                    if (hour === 12) hour = 0;
+                } else if (/^pm$/i.test(ampm)) {
+                    if (hour < 12) hour = hour + 12;
+                }
+                const pad = (n) => String(n).padStart(2, '0');
+                combined = `${datePart}T${pad(hour)}:${pad(Number(minute))}`;
+            } else {
+                // date only
+                combined = datePart;
+            }
+
+            if (combined) payload.append('booking_date', combined);
+        }
     payload.append('booking_purpose', document.getElementById('bookingPurpose').value || '');
     payload.append('booking_notes', document.getElementById('bookingNotes').value || '');
     if (csrfName && csrfHash) payload.append(csrfName, csrfHash);
@@ -658,21 +710,32 @@ setText('bookingPropertyAgentEmail', agentEmail || '');
         throw new Error(data?.error || ('Server error: ' + res.status));
       }
 
-      if (typeof Swal !== 'undefined') {
-        Swal.fire({
-          icon: 'success',
-          title: 'Booking Submitted!',
-          html: `<p><strong>${document.getElementById('bookingPropertyTitle')?.textContent || ''}</strong></p>
-                 <p>Date: ${new Date(document.getElementById('bookingDate').value).toLocaleDateString()}</p>`
-        });
-      } else {
-        alert('Booking submitted successfully.');
-      }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Booking Submitted!',
+                    html: `<p><strong>${document.getElementById('bookingPropertyTitle')?.textContent || ''}</strong></p>
+                                 <p>Date: —</p>`
+                });
+            } else {
+                alert('Booking submitted successfully.');
+            }
 
-      // close modal
-      bootstrap.Modal.getInstance(document.getElementById('bookingModal'))?.hide();
-      // refresh bookings list
-      loadMyBookings();
+                        // close modal
+            bootstrap.Modal.getInstance(document.getElementById('bookingModal'))?.hide();
+            // navigate user depending on purpose: Viewing -> bookings page; Reserve -> reservations page
+            const purpose = document.getElementById('bookingPurpose')?.value || '';
+            try {
+                if (String(purpose).toLowerCase() === 'viewing') {
+                    window.location.href = '/users/clientbookings';
+                } else {
+                    // default reserve -> reservations
+                    window.location.href = '/users/clientreservations';
+                }
+            } catch (e) {
+                // fallback: reload bookings list
+                loadMyBookings();
+            }
 
     } catch (err) {
       console.error('Booking save failed', err);
@@ -761,3 +824,114 @@ function navigateBookingImage(step) {
     const el = document.getElementById('bookingPropertyImage');
     if (el) el.src = currentBookingImages[currentBookingImageIndex];
 }
+
+// Global handler used from inline onclick in bookings list: viewBookingDetails(id)
+async function viewBookingDetails(id) {
+    if (!id) return;
+    try {
+        const res = await fetch(myBookingsUrl, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) throw new Error('Failed to load booking');
+        const list = await res.json();
+        const booking = (Array.isArray(list) ? list : []).find(b => String(b.bookingID) === String(id));
+        if (!booking) throw new Error('Booking not found');
+
+        // populate modal fields (same IDs expected in bookings/reservations views)
+        const titleEl = document.getElementById('bookingModalTitle');
+        if (titleEl) titleEl.textContent = 'Booking #' + (booking.bookingID || '');
+        const propTitle = document.getElementById('bookingModalPropertyTitle');
+        if (propTitle) propTitle.textContent = booking.PropertyTitle || booking.Title || 'Property';
+        const loc = document.getElementById('bookingModalLocation');
+        if (loc) loc.textContent = booking.PropertyLocation || booking.Location || '';
+
+        const status = booking.BookingStatus || booking.status || 'Pending';
+        const statusDisplay = String(status || '').toLowerCase() === 'confirmed' ? 'Scheduled' : (status ? String(status).charAt(0).toUpperCase() + String(status).slice(1) : 'Pending');
+        const statusEl = document.getElementById('bookingModalStatus');
+        if (statusEl) {
+            statusEl.textContent = statusDisplay;
+            statusEl.className = 'badge ' + (statusEl.className ? statusEl.className : (statusDisplay ? 'bg-secondary text-white' : ''));
+        }
+
+        const img = (booking.Images && booking.Images[0]) ? booking.Images[0] : (booking.Image ? booking.Image : 'uploads/properties/no-image.jpg');
+        const imgEl = document.getElementById('bookingModalImage');
+        if (imgEl) imgEl.src = img;
+
+        const priceEl = document.getElementById('bookingModalPrice');
+        if (priceEl) priceEl.textContent = booking.PropertyPrice ? `₱${Number(booking.PropertyPrice).toLocaleString()}` : (booking.Price ? `₱${Number(booking.Price).toLocaleString()}` : '—');
+
+        const notesEl = document.getElementById('bookingModalNotes');
+        if (notesEl) notesEl.textContent = booking.Notes || booking.Reason || 'No notes provided.';
+
+        // Additional property details
+        setText('bookingModalBeds', booking.PropertyBedrooms || booking.Bedrooms || '—');
+        setText('bookingModalBaths', booking.PropertyBathrooms || booking.Bathrooms || '—');
+        setText('bookingModalSize', booking.PropertySize || booking.Size || '—');
+        setText('bookingModalParking', booking.PropertyParking || booking.Parking_Spaces || '—');
+        setText('bookingModalPropertyType', booking.Property_Type || '—');
+        setText('bookingModalCorporation', booking.Corporation || '—');
+        const descEl = document.getElementById('bookingModalDescription');
+        if (descEl) descEl.textContent = booking.PropertyDescription || booking.Description || '—';
+
+        // agent info
+        const agentId = booking.agent_id ?? booking.assigned_agent ?? booking.Agent_Assigned ?? null;
+        const agentName = booking.agent_name ?? booking.assigned_agent_name ?? booking.assigned_agent ?? null;
+        const agentPhone = booking.agent_phone ?? booking.agent_contact ?? booking.agentPhone ?? '';
+        const agentEmail = booking.agent_email ?? booking.agent_contact_email ?? booking.agentEmail ?? '';
+
+        const agentEl = document.getElementById('bookingModalAgent');
+        if (agentEl) agentEl.textContent = agentName || (agentId ? String(agentId) : 'Unassigned');
+        const phoneEl = document.getElementById('bookingModalAgentPhone');
+        if (phoneEl) phoneEl.textContent = agentPhone || '—';
+        const emailEl = document.getElementById('bookingModalAgentEmail');
+        if (emailEl) emailEl.textContent = agentEmail || '—';
+
+        const agentIdInput = document.getElementById('bookingModalAgentId');
+        if (agentIdInput) agentIdInput.value = agentId ?? '';
+
+        const cancelBtn = document.getElementById('modalCancelBookingBtn');
+        if (cancelBtn) {
+            if (['pending','confirmed','viewing'].includes(String(status).toLowerCase())) {
+                cancelBtn.style.display = '';
+                cancelBtn.dataset.id = booking.bookingID;
+                cancelBtn.onclick = () => cancelBooking(booking.bookingID);
+            } else {
+                cancelBtn.style.display = 'none';
+                cancelBtn.onclick = null;
+            }
+        }
+
+        const contactBtn = document.getElementById('modalContactAgentBtn');
+        if (contactBtn) {
+            contactBtn.onclick = () => {
+                if (agentId) {
+                    window.location.href = `/users/chat?agent=${encodeURIComponent(agentId)}&property=${encodeURIComponent(booking.PropertyID || booking.property_id || '')}`;
+                    return;
+                }
+                if (agentEmail) {
+                    window.location.href = `mailto:${encodeURIComponent(agentEmail)}?subject=${encodeURIComponent('Inquiry about ' + (booking.PropertyTitle || 'property'))}`;
+                    return;
+                }
+                window.location.href = '/users/chat';
+            };
+        }
+
+        // show modal
+        const modalEl = document.getElementById('bookingDetailModal');
+        if (modalEl) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+    } catch (err) {
+        console.error('Failed to show booking', err);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Unable to load booking details.' });
+        } else {
+            alert('Unable to load booking details.');
+        }
+    }
+}
+
+// Expose helpers globally so other scripts (e.g., bookings.js) can call them reliably
+window.openPropertyDetails = openPropertyDetails;
+window.updatePropertyModal = updatePropertyModal;
+window.bookPropertyDirectly = bookPropertyDirectly;
