@@ -79,7 +79,15 @@
      const clients = <?= json_encode($clients) ?>;
 
     const listContainer = document.getElementById("clientsList");
-    const detailsDiv = document.getElementById("clientDetails");
+      const detailsDiv = document.getElementById("clientDetails");
+
+    // Small helper to safely escape HTML in injected strings
+    function escapeHtml(s){
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/[&<>"']/g, function(ch){
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);
+      });
+    }
 
     clients.forEach((c, i) => {
     const clientItem = document.createElement("div");
@@ -117,9 +125,46 @@
         <p><strong>Email:</strong> ${c.Email}</p>
         <p><strong>Phone:</strong> ${c.phoneNumber}</p>
         <p><strong>Birthday:</strong> ${c.Birthdate}</p>
-        
+        <hr />
+        <div id="clientBookingsContainer">
+          <div class="text-muted small">Loading booking history...</div>
+        </div>
       </div>
     `;
+
+    // fetch booking history for this client (agent-only endpoint)
+    (async () => {
+      try {
+        const res = await fetch('/users/clientBookings/' + encodeURIComponent(c.UserID || c.UserId || c.UserId), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const container = document.getElementById('clientBookingsContainer');
+        if (!res.ok) {
+          container.innerHTML = '<div class="text-danger small">Could not load booking history.</div>';
+          return;
+        }
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) {
+          container.innerHTML = '<div class="text-muted small">No bookings found for this client.</div>';
+          return;
+        }
+
+        const rows = data.map(b => {
+          const when = b.bookingDate ? new Date(b.bookingDate).toLocaleString() : '—';
+          const status = b.BookingStatus || b.status || b.statusName || 'Pending';
+          const title = b.PropertyTitle || b.Title || 'Property';
+          return `<div class="mb-2">
+                    <div><strong>${escapeHtml(title)}</strong></div>
+                    <div class="small text-muted">Date: ${escapeHtml(when)} • Status: <span class="badge bg-secondary">${escapeHtml(status)}</span></div>
+                    <div class="mt-1 small">Notes: ${escapeHtml(b.Notes || b.booking_notes || '')}</div>
+                  </div>`;
+        }).join('');
+
+        container.innerHTML = rows;
+      } catch (err) {
+        console.error(err);
+        const container = document.getElementById('clientBookingsContainer');
+        if (container) container.innerHTML = '<div class="text-danger small">Failed to load bookings.</div>';
+      }
+    })();
   }
 
     function viewID(src) {
