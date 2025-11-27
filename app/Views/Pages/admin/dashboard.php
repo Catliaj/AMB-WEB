@@ -6,6 +6,25 @@
   <title>Admin Dashboard</title>
  
   <link rel="stylesheet" href="<?= base_url('assets/styles/admin-style.css')?>">
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent1: #4e9eff;
+      --accent2: #2a405a;
+      --accent3: #68b76b;
+      --shadow: 0 6px 18px rgba(20,25,30,0.06);
+      --divider: #e6e9ef;
+      --hover-overlay: rgba(0,0,0,0.04);
+    }
+    /* Sidebar and table header overrides to use the light palette */
+    .dashboard-page .sidebar, .sidebar { background: var(--panel, #ffffff); border-color: var(--divider); }
+    .dashboard-page .nav a, .nav a { color: var(--text); }
+    thead { background: var(--th-bg, var(--card)); }
+    th { color: var(--th-text, var(--text)); }
+  </style>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script defer src="https://unpkg.com/lucide@latest"></script>

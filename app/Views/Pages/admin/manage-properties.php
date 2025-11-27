@@ -8,6 +8,26 @@
   <script src="https://unpkg.com/lucide@latest"></script>
    <link rel="stylesheet" href="<?= base_url('bootstrap5/css/bootstrap.min.css')?>">
   <link rel="stylesheet" href="<?= base_url('assets/styles/admin-style.css')?>">
+  <link rel="stylesheet" href="<?= base_url('client/clientstyle.css')?>">
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent1: #4e9eff;
+      --accent2: #2a405a;
+      --accent3: #68b76b;
+      --shadow: 0 6px 18px rgba(20,25,30,0.06);
+      --divider: #e6e9ef;
+      --hover-overlay: rgba(0,0,0,0.04);
+    }
+    /* Sidebar and table header overrides to use the light palette */
+    .sidebar { background: var(--panel, #ffffff); border-color: var(--divider); }
+    .nav a { color: var(--text); }
+    thead { background: var(--th-bg, var(--card)); }
+    th { color: var(--th-text, var(--text)); }
+  </style>
 
   <style>
     /* smaller preview images */
