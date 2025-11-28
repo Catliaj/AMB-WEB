@@ -254,7 +254,8 @@ class AgentController extends BaseController
         $status = $this->request->getPost('status');
 
         $db = \Config\Database::connect();
-        $builder = $db->table('propertyStatusHistory');
+        // use the model's canonical table name (lowercase) to match PropertyStatusHistoryModel
+        $builder = $db->table('propertystatushistory');
         $builder->where('PropertyID', $propertyID);
         $builder->update(['New_Status' => $status]);
 
@@ -334,7 +335,7 @@ class AgentController extends BaseController
                 if ($updateResult !== false) {
                     log_message('debug', "Model update succeeded for booking {$bookingId}");
                     // Verify the update
-                    $verifyBooking = $db->table('booking')->select('Status')->where('bookingID', $bookingId)->get()->getRowArray();
+                    $verifyBooking = $bookingModel->select('Status')->where('bookingID', $bookingId)->first();
                     $verifiedStatus = $verifyBooking['Status'] ?? '';
                     log_message('debug', "Verified status after model update: '{$verifiedStatus}'");
                     return $this->response->setJSON(['success' => true, 'updated' => true, 'status' => $normalizedStatus, 'verified_status' => $verifiedStatus]);
@@ -344,7 +345,7 @@ class AgentController extends BaseController
             }
             
             // Fallback to direct DB update using query builder
-            $builder = $db->table('booking');
+            $builder = $bookingModel->builder();
             $builder->set('Status', $normalizedStatus);
             $builder->set('updated_at', date('Y-m-d H:i:s'));
             if ($reason !== null) {
@@ -363,7 +364,7 @@ class AgentController extends BaseController
             if ($updated === 0) {
                 log_message('warning', "No rows updated for booking {$bookingId} - booking may not exist or status unchanged");
                 // Verify current status
-                $currentBooking = $db->table('booking')->select('Status')->where('bookingID', $bookingId)->get()->getRowArray();
+                $currentBooking = $bookingModel->select('Status')->where('bookingID', $bookingId)->first();
                 $currentStatus = $currentBooking['Status'] ?? '';
                 log_message('debug', "Current status for booking {$bookingId}: '{$currentStatus}', trying to set: '{$normalizedStatus}'");
                 if ($currentStatus === $normalizedStatus) {
@@ -375,7 +376,7 @@ class AgentController extends BaseController
             log_message('debug', "Successfully updated booking {$bookingId} - {$updated} row(s) affected");
             
             // Verify the update by fetching the booking again
-            $verifyBooking = $db->table('booking')->select('Status')->where('bookingID', $bookingId)->get()->getRowArray();
+            $verifyBooking = $bookingModel->select('Status')->where('bookingID', $bookingId)->first();
             $verifiedStatus = $verifyBooking['Status'] ?? '';
             log_message('debug', "Verified status after update for booking {$bookingId}: '{$verifiedStatus}'");
             

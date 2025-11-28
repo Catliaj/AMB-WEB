@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class ChatSessionModel extends Model
 {
-    protected $table            = 'chatSession';
+    protected $table            = 'chatsession';
     protected $primaryKey       = 'SessionID';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
@@ -74,9 +74,9 @@ class ChatSessionModel extends Model
         $messageModel = new \App\Models\MessageModel();
 
         return $messageModel
-            ->select('messages.*, chatSession.UserID, chatSession.AgentID')
-            ->join('chatSession', 'chatSession.chatSessionID = messages.chatSessionID')
-            ->where('chatSession.UserID', $userId)
+            ->select('messages.*, chatsession.UserID, chatsession.AgentID')
+            ->join('chatsession', 'chatsession.chatSessionID = messages.chatSessionID')
+            ->where('chatsession.UserID', $userId)
             ->orderBy('messages.created_at', 'ASC')
             ->findAll();
     }
@@ -87,9 +87,9 @@ class ChatSessionModel extends Model
         $messageModel = new \App\Models\MessageModel();
 
         return $messageModel
-            ->select('messages.*, chatSession.UserID, chatSession.AgentID')
-            ->join('chatSession', 'chatSession.chatSessionID = messages.chatSessionID')
-            ->where('chatSession.AgentID', $agentId)
+            ->select('messages.*, chatsession.UserID, chatsession.AgentID')
+            ->join('chatsession', 'chatsession.chatSessionID = messages.chatSessionID')
+            ->where('chatsession.AgentID', $agentId)
             ->orderBy('messages.created_at', 'ASC')
             ->findAll();
     }    
@@ -104,13 +104,13 @@ class ChatSessionModel extends Model
     {
         // Use DISTINCT to avoid duplicates if a client has multiple sessions
         // Also include Image and employmentStatus so callers can build full photo URLs
-        return $this->db->table('chatSession AS cs')
-                        ->select('u.UserID, u.FirstName, u.MiddleName, u.LastName, u.Email, u.phoneNumber, u.Birthdate, u.Image, u.employmentStatus')
-                        ->join('users AS u', 'u.UserID = cs.UserID')
-                        ->where('cs.AgentID', $agentId)
-                        ->distinct()
-                        ->get()
-                        ->getResultArray();
+        return $this->db->table('chatsession AS cs')
+                ->select('u.UserID, u.FirstName, u.MiddleName, u.LastName, u.Email, u.phoneNumber, u.Birthdate, u.Image, u.employmentStatus')
+                ->join('users AS u', 'u.UserID = cs.UserID')
+                ->where('cs.AgentID', $agentId)
+                ->distinct()
+                ->get()
+                ->getResultArray();
     }
 
 
