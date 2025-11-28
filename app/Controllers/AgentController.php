@@ -61,13 +61,16 @@ class AgentController extends BaseController
         }
 
 
+        $usersModel = new \App\Models\UsersModel();
+        $user = $usersModel->find(session()->get('UserID'));
+
         return view('Pages/agent/view-profile', [
                 'UserID' => session()->get('UserID'),
                 'email' => session()->get('inputEmail'),
-                'fullname' => trim(session()->get('FirstName') . ' ' . session()->
-                get('LastName')),
+                'fullname' => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
                 'currentUserId' => session()->get('UserID'),
-                'otherUser' => null
+                'otherUser' => null,
+                'user' => $user
             ]);
     }
 
@@ -416,6 +419,66 @@ class AgentController extends BaseController
             return $this->response->setJSON($bookings);
         } catch (\Throwable $e) {
             log_message('error', 'clientBookings error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
+        }
+    }
+
+
+    /**
+     * Return document filenames/URLs for a given client (userID).
+     * GET /users/clientDocuments/{userID}
+     */
+    public function clientDocuments($userID = null)
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Agent') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Forbidden']);
+        }
+
+        if (empty($userID)) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'UserID required']);
+        }
+
+        $resp = [
+            'profileImage' => null,
+            'govIdImage' => null,
+            'local' => [],
+            'ofw' => []
+        ];
+
+        try {
+            $usersModel = new \App\Models\UsersModel();
+            $user = $usersModel->find($userID);
+            if ($user) {
+                if (!empty($user['Image'])) $resp['profileImage'] = base_url('uploads/profiles/' . $user['Image']);
+                if (!empty($user['govIdImage'])) $resp['govIdImage'] = base_url('uploads/governmentid/' . $user['govIdImage']);
+            }
+
+            // Try to fetch local employment docs if model exists
+            if (class_exists('\App\Models\LocalEmploymentModel')) {
+                $localModel = new \App\Models\LocalEmploymentModel();
+                $local = $localModel->where('UserID', $userID)->first();
+                if ($local) {
+                    foreach (['Id_With_Signature','Payslip','proof_of_billing'] as $k) {
+                        if (!empty($local[$k])) $resp['local'][] = ['key' => $k, 'url' => base_url('uploads/locallyemployed/' . $local[$k])];
+                    }
+                }
+            }
+
+            // Try to fetch OFW docs if model exists
+            if (class_exists('\App\Models\OFWModel')) {
+                $ofwModel = new \App\Models\OFWModel();
+                $ofw = $ofwModel->where('UserID', $userID)->first();
+                if ($ofw) {
+                    foreach (['Job_Contract','Passport','Official_Identity_Documents'] as $k) {
+                        if (!empty($ofw[$k])) $resp['ofw'][] = ['key' => $k, 'url' => base_url('uploads/ofw/' . $ofw[$k])];
+                    }
+                }
+            }
+
+            return $this->response->setJSON($resp);
+        } catch (\Throwable $e) {
+            log_message('error', 'clientDocuments error: ' . $e->getMessage());
             return $this->response->setStatusCode(500)->setJSON(['error' => 'Server error']);
         }
     }

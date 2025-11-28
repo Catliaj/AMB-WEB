@@ -602,6 +602,89 @@ class UserController extends BaseController
             ]);
     }
 
+    /**
+     * POST /users/updateProfile
+     * Update logged-in user's basic profile and avatar
+     */
+    public function updateProfile()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/');
+        }
+
+        $userID = $session->get('UserID');
+        if (!$userID) return redirect()->back();
+
+        $usersModel = new UsersModel();
+        $user = $usersModel->find($userID);
+        if (!$user) return redirect()->back()->with('error', 'User not found');
+
+        $fullName = trim($this->request->getPost('full_name') ?? '');
+        $email = trim($this->request->getPost('email') ?? '');
+        $phone = trim($this->request->getPost('phone') ?? '');
+        $removeAvatar = $this->request->getPost('remove_avatar') === '1';
+
+        $data = [];
+        if ($fullName !== '') {
+            // naive split into first and last
+            $parts = preg_split('/\s+/', $fullName);
+            $data['FirstName'] = $parts[0] ?? $fullName;
+            $data['LastName'] = isset($parts[1]) ? implode(' ', array_slice($parts,1)) : '';
+        }
+        if ($email !== '') $data['Email'] = $email;
+        if ($phone !== '') $data['phoneNumber'] = $phone;
+
+        // Handle avatar upload
+        try {
+            $avatarFile = $this->request->getFile('avatar');
+            if ($avatarFile && $avatarFile->getName() !== '') {
+                if ($avatarFile->isValid() && !$avatarFile->hasMoved()) {
+                    $uploadDir = FCPATH . 'uploads/profiles/';
+                    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                    $newName = $avatarFile->getRandomName();
+                    $moved = $avatarFile->move($uploadDir, $newName);
+                    if ($moved) {
+                        // delete old file if present
+                        if (!empty($user['Image'])) {
+                            $old = $uploadDir . $user['Image'];
+                            if (is_file($old)) @unlink($old);
+                        }
+                        $data['Image'] = $newName;
+                    }
+                }
+            } elseif ($removeAvatar) {
+                // remove existing avatar
+                if (!empty($user['Image'])) {
+                    $old = FCPATH . 'uploads/profiles/' . $user['Image'];
+                    if (is_file($old)) @unlink($old);
+                }
+                $data['Image'] = null;
+            }
+        } catch (\Throwable $e) {
+            log_message('warning', 'Avatar upload error: ' . $e->getMessage());
+        }
+
+        if (!empty($data)) {
+            try {
+                $usersModel->update($userID, $data);
+                // refresh session name/email if present
+                if (isset($data['FirstName'])) $session->set('FirstName', $data['FirstName']);
+                if (isset($data['LastName'])) $session->set('LastName', $data['LastName']);
+                if (isset($data['Email'])) $session->set('inputEmail', $data['Email']);
+                $session->setFlashdata('success', 'Profile updated successfully.');
+            } catch (\Throwable $e) {
+                log_message('error', 'Failed to update profile: ' . $e->getMessage());
+                $session->setFlashdata('error', 'Unable to update profile.');
+            }
+        }
+
+        // Redirect back to role-specific profile page
+        $role = $session->get('role') ?? '';
+        if (strtolower($role) === 'agent') return redirect()->to('/users/agentprofile');
+        return redirect()->to('/users/clientprofile');
+    }
+
       public function cleintChat()
     {
         $session = session();
