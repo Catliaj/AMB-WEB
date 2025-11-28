@@ -519,7 +519,8 @@ class UserController extends BaseController
         }
         $db = \Config\Database::connect();
         $bookingFields = $db->getFieldNames('booking');
-        $scheduledBookingsQuery = $db->table('booking');
+        // use model builder to ensure table name comes from model
+        $scheduledBookingsQuery = $bookingModel->builder();
         $selectSql = '\n                booking.bookingID,\n                booking.BookingDate AS bookingDate,\n                booking.Status AS BookingStatus,\n                booking.Reason,\n                booking.Notes,\n                property.PropertyID,\n                property.Title AS PropertyTitle,\n                property.Description AS PropertyDescription,\n                property.Property_Type,\n                property.Location AS PropertyLocation,\n                property.Size AS PropertySize,\n                property.Bedrooms AS PropertyBedrooms,\n                property.Bathrooms AS PropertyBathrooms,\n                property.Parking_Spaces AS PropertyParking,\n                property.agent_assigned,\n                property.Corporation,\n                property.Price AS PropertyPrice\n            ';
 
         if (in_array('Purpose', $bookingFields, true)) {
@@ -828,8 +829,9 @@ class UserController extends BaseController
         }
 
         try {
-            $db->table('booking')->insert($data);
-            $insertId = $db->insertID();
+            // prefer model insert so model table/fields are respected
+            $bookingModel->insert($data);
+            $insertId = $bookingModel->getInsertID();
             if (!$insertId) {
                 log_message('error', 'Booking insert failed');
                 return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to create booking']);
@@ -952,24 +954,15 @@ class UserController extends BaseController
 
         // Attach DB-backed rating for each booking if a reviews table exists.
         // This is done in a safe try/catch so apps without a reviews table keep working.
-        $db = \Config\Database::connect();
+        $reviewsModel = new \App\Models\ReviewsModel();
         foreach ($bookings as &$b) {
             $b['Rating'] = null;
             try {
-                // Attempt to read the latest review for this booking (if table exists)
-                $review = $db->table('reviews')
-                    ->select('rating')
-                    ->where('bookingID', $b['bookingID'])
-                    ->orderBy('created_at', 'DESC')
-                    ->limit(1)
-                    ->get()
-                    ->getRowArray();
-
+                $review = $reviewsModel->where('bookingID', $b['bookingID'])->orderBy('created_at', 'DESC')->limit(1)->first();
                 if ($review && array_key_exists('rating', $review)) {
                     $b['Rating'] = $review['rating'];
                 }
             } catch (\Throwable $e) {
-                // Table doesn't exist or other DB error — leave Rating as null
                 $b['Rating'] = null;
             }
         }
@@ -1057,21 +1050,16 @@ class UserController extends BaseController
         }
         $booking['Images'] = $images;
 
-        // attach rating if reviews table exists
+        // attach rating if reviews table exists (via ReviewsModel)
         $booking['Rating'] = null;
         try {
-            $review = $db->table('reviews')
-                ->select('rating')
-                ->where('bookingID', $booking['bookingID'])
-                ->orderBy('created_at', 'DESC')
-                ->limit(1)
-                ->get()
-                ->getRowArray();
+            $reviewsModel = new \App\Models\ReviewsModel();
+            $review = $reviewsModel->where('bookingID', $booking['bookingID'])->orderBy('created_at', 'DESC')->limit(1)->first();
             if ($review && array_key_exists('rating', $review)) {
                 $booking['Rating'] = $review['rating'];
             }
         } catch (\Throwable $e) {
-            // ignore if table not present
+            // ignore if model/table not present
         }
 
         return $this->response->setJSON($booking);
@@ -1136,7 +1124,9 @@ class UserController extends BaseController
             
             // Use direct DB update to ensure PascalCase Status column works
             $db = \Config\Database::connect();
-            $updated = $db->table('booking')->where('bookingID', $bookingId)->update([
+            // use model update (BookingModel) so table name comes from model definition
+            $bookingModel = new \App\Models\BookingModel();
+            $updated = $bookingModel->update($bookingId, [
                 'Status' => $status,
                 'updated_at' => $now
             ]);
@@ -1370,9 +1360,9 @@ class UserController extends BaseController
                 return $this->response->setStatusCode(500)->setJSON(['error' => 'Failed to create reservation']);
             }
 
-            // Update booking status to indicate it's now a reservation
-            $db = \Config\Database::connect();
-            $db->table('booking')->where('bookingID', $bookingId)->update([
+            // Update booking status to indicate it's now a reservation (use model)
+            $bookingModel = new \App\Models\BookingModel();
+            $bookingModel->update($bookingId, [
                 'Status' => 'Reserved',
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
@@ -1477,14 +1467,14 @@ class UserController extends BaseController
         }
 
             try {
-                $updateData = [
-                    'Term_Months' => $calculation['months'] ?? null,
-                    'Monthly_Amortization' => $calculation['monthly_payment'] ?? $propertyPrice,
-                    'updated_at' => date('Y-m-d H:i:s')
-                ];
+                    $updateData = [
+                        'Term_Months' => $calculation['months'] ?? null,
+                        'Monthly_Amortization' => $calculation['monthly_payment'] ?? $propertyPrice,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ];
 
-                // Filter fields to existing columns
-                $db->table('reservations')->where('reservationID', $reservationId)->update($this->filterTableFields('reservations', $updateData));
+                    // Filter fields to existing columns then use ReservationModel update
+                    $reservationModel->update($reservationId, $this->filterTableFields('reservations', $updateData));
 
                 return $this->response->setJSON([
                     'success' => true,

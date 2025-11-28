@@ -445,7 +445,7 @@
       <div align="center" style="color:var(--muted);">Are you sure you want to logout?</div>
       <div class="modal-actions">
         <button class="btn" id="cancelLogout"><i data-lucide="x"></i> Cancel</button>
-        <button onclick="closeTab()" class="btn danger" id="confirmLogout"><i data-lucide="log-out"></i> Logout</button>
+        <button class="btn danger" id="confirmLogout"><i data-lucide="log-out"></i> Logout</button>
       </div>
     </div>
   </div>
@@ -508,9 +508,7 @@
     })();
   </script>
   <script>
-    function closeTab() {
-      window.close();
-    }
+    // Logout now handled by the confirmLogout click listener (redirect to /admin/logout)
   </script>
 </body>
 </html>

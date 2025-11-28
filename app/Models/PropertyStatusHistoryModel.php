@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class PropertyStatusHistoryModel extends Model
 {
-    protected $table            = 'propertyStatusHistory';
+    protected $table            = 'propertystatushistory';
     protected $primaryKey       = 'propertStatusID';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';

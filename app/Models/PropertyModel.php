@@ -68,7 +68,7 @@ class PropertyModel extends Model
                 propertyStatusHistory.New_Status AS New_Status,
                 CONCAT(users.FirstName, " ", users.LastName) AS agent_name
             ')
-            ->join('propertyStatusHistory', 'propertyStatusHistory.PropertyID = property.PropertyID', 'left')
+            ->join('propertystatushistory', 'propertystatushistory.PropertyID = property.PropertyID', 'left')
             ->join('users', 'users.UserID = property.agent_assigned', 'left')
             ->findAll();
     }
@@ -114,8 +114,8 @@ class PropertyModel extends Model
                 propertyImage.Image,
                 propertyStatusHistory.New_Status AS New_Status
             ')
-            ->join('propertyStatusHistory', 'propertyStatusHistory.PropertyID = property.PropertyID', 'left')
-            ->join('propertyImage', 'propertyImage.PropertyID = property.PropertyID', 'left')
+            ->join('propertystatushistory', 'propertystatushistory.PropertyID = property.PropertyID', 'left')
+            ->join('propertyimage', 'propertyimage.PropertyID = property.PropertyID', 'left')
             ->join('users', 'users.UserID = property.agent_assigned', 'left')
             ->where('property.agent_assigned', $agentID)
             ->groupBy('property.PropertyID') 
