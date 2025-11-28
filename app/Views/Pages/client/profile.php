@@ -96,9 +96,11 @@
                         <div class="col-md">
                             <h3 class="h5 mb-1"><?= esc(trim($first . ' ' . $last) ?: 'User') ?></h3>
                             <p class="text-muted small mb-3"><?= esc($user['Email'] ?? session()->get('inputEmail') ?? '') ?></p>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <button class="btn btn-primary btn-sm">Change Photo</button>
-                                <button class="btn btn-outline-secondary btn-sm">Remove Photo</button>
+                            <div class="d-flex gap-2 flex-wrap align-items-center">
+                                <input type="file" id="profilePhotoInput" name="profilePhoto" accept="image/*" style="display:none">
+                                <button class="btn btn-primary btn-sm" id="btnChangePhoto">Change Photo</button>
+                                <button class="btn btn-outline-secondary btn-sm" id="btnRemovePhoto">Remove Photo</button>
+                                <div id="photoUploadStatus" style="margin-left:8px; font-size:0.9rem; color:#666"></div>
                             </div>
                         </div>
                     </div>
@@ -137,52 +139,53 @@
                 <div class="tab-pane fade show active" id="profile" role="tabpanel">
                     <div class="card">
                         <div class="card-body">
-                            <h3 class="h5 fw-medium mb-4">Personal Information</h3>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">First Name</label>
-                                    <div class="input-icon-wrapper">
-                                        <i class="bi bi-person input-icon"></i>
-                                        <input type="text" class="form-control input-with-icon" value="<?= esc($user['FirstName'] ?? '') ?>">
-                                    </div>
+                                    <h3 class="h5 fw-medium mb-4">Personal Information</h3>
+                                    <form id="profileForm" method="post" action="<?= site_url('users/updateProfile') ?>" enctype="multipart/form-data">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="full_name" id="full_name_input" value="<?= esc(trim(($user['FirstName'] ?? '') . ' ' . ($user['LastName'] ?? ''))) ?>">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">First Name</label>
+                                                <div class="input-icon-wrapper">
+                                                    <i class="bi bi-person input-icon"></i>
+                                                    <input id="inputFirstName" type="text" class="form-control input-with-icon" value="<?= esc($user['FirstName'] ?? '') ?>">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Last Name</label>
+                                                <div class="input-icon-wrapper">
+                                                    <i class="bi bi-person input-icon"></i>
+                                                    <input id="inputLastName" type="text" class="form-control input-with-icon" value="<?= esc($user['LastName'] ?? '') ?>">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Email</label>
+                                                <div class="input-icon-wrapper">
+                                                    <i class="bi bi-envelope input-icon"></i>
+                                                    <input id="inputEmail" name="email" type="email" class="form-control input-with-icon" value="<?= esc($user['Email'] ?? '') ?>">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Phone Number</label>
+                                                <div class="input-icon-wrapper">
+                                                    <i class="bi bi-telephone input-icon"></i>
+                                                    <input id="inputPhone" name="phone" type="tel" class="form-control input-with-icon" value="<?= esc($user['phoneNumber'] ?? '') ?>">
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label">Address</label>
+                                                <div class="input-icon-wrapper">
+                                                    <i class="bi bi-geo-alt input-icon"></i>
+                                                    <input id="inputAddress" type="text" class="form-control input-with-icon" value="<?= esc($user['Address'] ?? '') ?>">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4 d-flex justify-content-end gap-2">
+                                            <button type="button" class="btn btn-outline-secondary" id="btnCancelProfile">Cancel</button>
+                                            <button type="button" class="btn btn-primary" id="btnSaveProfile">Save Changes</button>
+                                        </div>
+                                    </form>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Last Name</label>
-                                    <div class="input-icon-wrapper">
-                                        <i class="bi bi-person input-icon"></i>
-                                        <input type="text" class="form-control input-with-icon" value="<?= esc($user['LastName'] ?? '') ?>">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Email</label>
-                                    <div class="input-icon-wrapper">
-                                        <i class="bi bi-envelope input-icon"></i>
-                                        <input type="email" class="form-control input-with-icon"
-                                            value="<?= esc($user['Email'] ?? '') ?>">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Phone Number</label>
-                                    <div class="input-icon-wrapper">
-                                        <i class="bi bi-telephone input-icon"></i>
-                                        <input type="tel" class="form-control input-with-icon"
-                                            value="<?= esc($user['phoneNumber'] ?? '') ?>">
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Address</label>
-                                    <div class="input-icon-wrapper">
-                                        <i class="bi bi-geo-alt input-icon"></i>
-                                        <input type="text" class="form-control input-with-icon"
-                                            value="<?= esc($user['Address'] ?? '') ?>">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-4 d-flex justify-content-end gap-2">
-                                <button class="btn btn-outline-secondary">Cancel</button>
-                                <button class="btn btn-primary">Save Changes</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -324,8 +327,94 @@
 
     <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
     <script src="<?= base_url("assets/js/client.js")?>"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
     (function(){
+        // Profile Save / Cancel with SweetAlert2
+        const profileForm = document.getElementById('profileForm');
+        const btnSave = document.getElementById('btnSaveProfile');
+        const btnCancel = document.getElementById('btnCancelProfile');
+        const firstInput = document.getElementById('inputFirstName');
+        const lastInput = document.getElementById('inputLastName');
+        const emailInput = document.getElementById('inputEmail');
+        const phoneInput = document.getElementById('inputPhone');
+        const addressInput = document.getElementById('inputAddress');
+        const fullNameHidden = document.getElementById('full_name_input');
+
+        const initialProfile = {
+            first: firstInput ? firstInput.value : '',
+            last: lastInput ? lastInput.value : '',
+            email: emailInput ? emailInput.value : '',
+            phone: phoneInput ? phoneInput.value : '',
+            address: addressInput ? addressInput.value : ''
+        };
+
+        function hasProfileChanged(){
+            return (firstInput && firstInput.value !== initialProfile.first)
+                || (lastInput && lastInput.value !== initialProfile.last)
+                || (emailInput && emailInput.value !== initialProfile.email)
+                || (phoneInput && phoneInput.value !== initialProfile.phone)
+                || (addressInput && addressInput.value !== initialProfile.address);
+        }
+
+        if (btnSave && profileForm) {
+            btnSave.addEventListener('click', function(e){
+                e.preventDefault();
+                if (!hasProfileChanged()) {
+                    Swal.fire({icon: 'info', title: 'No changes', text: 'There are no changes to save.'});
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Save changes?',
+                    text: 'Are you sure you want to save the changes to your profile?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, save',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // set hidden full_name and submit form normally to allow server redirect & flashdata
+                        if (fullNameHidden && firstInput) {
+                            fullNameHidden.value = (firstInput.value || '') + (lastInput && lastInput.value ? (' ' + lastInput.value) : '');
+                        }
+                        profileForm.submit();
+                    }
+                });
+            });
+        }
+
+        if (btnCancel) {
+            btnCancel.addEventListener('click', function(e){
+                e.preventDefault();
+                if (!hasProfileChanged()) {
+                    // nothing changed, simply inform
+                    Swal.fire({icon: 'info', title: 'Nothing to discard', text: 'No changes to discard.'});
+                    return;
+                }
+                Swal.fire({
+                    title: 'Discard changes?',
+                    text: 'Any unsaved changes will be lost.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, discard',
+                    cancelButtonText: 'Continue editing'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (firstInput) firstInput.value = initialProfile.first;
+                        if (lastInput) lastInput.value = initialProfile.last;
+                        if (emailInput) emailInput.value = initialProfile.email;
+                        if (phoneInput) phoneInput.value = initialProfile.phone;
+                        if (addressInput) addressInput.value = initialProfile.address;
+                        Swal.fire({icon: 'success', title: 'Changes discarded', timer: 1200, showConfirmButton: false});
+                    }
+                });
+            });
+        }
+
+        // end profile handlers
+
+    
         const form = document.getElementById('changePasswordForm');
         const alertHolder = document.getElementById('securityAlert');
         const btn = document.getElementById('changePasswordBtn');
@@ -333,6 +422,79 @@
         function showAlert(message, type = 'danger'){
             alertHolder.innerHTML = `<div class="alert alert-${type} alert-dismissible" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
         }
+    
+        // Photo upload/remove handlers
+        (function(){
+            const btnChange = document.getElementById('btnChangePhoto');
+            const btnRemove = document.getElementById('btnRemovePhoto');
+            const fileInput = document.getElementById('profilePhotoInput');
+            const statusEl = document.getElementById('photoUploadStatus');
+            const avatarImg = document.querySelector('.avatar-large-img');
+            const avatarPlaceholder = document.querySelector('.avatar-large');
+
+            function setStatus(msg, isError) {
+                if (!statusEl) return; statusEl.textContent = msg || ''; statusEl.style.color = isError ? '#c00' : '#666';
+            }
+
+            if (btnChange && fileInput) {
+                btnChange.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
+                fileInput.addEventListener('change', async (ev) => {
+                    const f = fileInput.files && fileInput.files[0];
+                    if (!f) return;
+                    setStatus('Uploading...');
+                    const fd = new FormData();
+                    fd.append('profilePhoto', f);
+                    // include CSRF if available
+                    if (window.csrfName && window.csrfHash) fd.append(window.csrfName, window.csrfHash);
+                    try {
+                        const res = await fetch('<?= site_url('users/upload-profile-photo') ?>', { method: 'POST', body: fd, credentials: 'same-origin' });
+                        const json = await res.json();
+                        if (!res.ok || json.status !== 'success') {
+                            setStatus(json.message || 'Upload failed', true);
+                            return;
+                        }
+                        setStatus('Uploaded', false);
+                        // update UI
+                        if (avatarImg) {
+                            avatarImg.src = json.url || '<?= base_url('uploads/profiles/default-profile.jpg') ?>';
+                            if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+                        } else if (avatarPlaceholder) {
+                            avatarPlaceholder.style.display = 'none';
+                            // create img
+                            const img = document.createElement('img'); img.src = json.url; img.className = 'avatar-large-img rounded-circle'; img.style.width='96px'; img.style.height='96px'; img.style.objectFit='cover';
+                            avatarPlaceholder.parentElement.insertBefore(img, avatarPlaceholder);
+                        }
+                    } catch (err) {
+                        console.error('Upload error', err);
+                        setStatus('Network error', true);
+                    }
+                });
+            }
+
+            if (btnRemove) {
+                btnRemove.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (!confirm('Remove profile photo?')) return;
+                    setStatus('Removing...');
+                    try {
+                        const res = await fetch('<?= site_url('users/remove-profile-photo') ?>', { method: 'POST', credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                        const json = await res.json();
+                        if (!res.ok || json.status !== 'success') {
+                            setStatus(json.message || 'Remove failed', true);
+                            return;
+                        }
+                        setStatus('Removed', false);
+                        // update UI: show default placeholder
+                        if (avatarImg) {
+                            avatarImg.src = json.url || '<?= base_url('uploads/profiles/default-profile.jpg') ?>';
+                        }
+                    } catch (err) {
+                        console.error('Remove error', err);
+                        setStatus('Network error', true);
+                    }
+                });
+            }
+        })();
 
         form && form.addEventListener('submit', async function(e){
             e.preventDefault();

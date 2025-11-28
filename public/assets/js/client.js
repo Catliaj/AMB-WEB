@@ -1532,3 +1532,50 @@ function updateResultsCount() {
     resultsCount.textContent = `${filteredProperties.length} properties found`;
   }
 }
+
+// ---------------------------
+// Homepage search wiring + browse prefill
+// ---------------------------
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    // Homepage: if body has class 'home', wire the hero search box to redirect to browse
+    if (document.body && document.body.classList.contains('home')) {
+      const heroInput = document.querySelector('.search-box input');
+      const heroBtn = document.querySelector('.search-box button');
+      if (heroInput && heroBtn) {
+        const doSearch = () => {
+          const q = heroInput.value.trim();
+          if (!q) return; // nothing to do
+          // Navigate to client browse page with search param
+          const target = (window.location.origin || '') + '/users/clientbrowse' + '?search=' + encodeURIComponent(q);
+          window.location.href = target;
+        };
+        heroBtn.addEventListener('click', (e) => { e.preventDefault(); doSearch(); });
+        heroInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); doSearch(); } });
+      }
+    }
+
+    // Browse page: read ?search=... and prefill #searchFilter then call applyFilters()
+    const params = new URLSearchParams(window.location.search);
+    const searchParam = params.get('search') || params.get('q') || '';
+    if (searchParam) {
+      // If searchFilter exists, set it and if properties are already loaded, call applyFilters
+      const applySearchToFilter = () => {
+        const sf = document.getElementById('searchFilter');
+        if (sf) {
+          sf.value = searchParam;
+          try { applyFilters(); } catch (e) { /* applyFilters may be defined later; ignore */ }
+        }
+      };
+
+      // If properties already loaded, apply immediately; else wait a short time for loadProperties
+      if (Array.isArray(allProperties) && allProperties.length > 0) {
+        applySearchToFilter();
+      } else {
+        // try again after a small delay; this covers typical loadProperties timing
+        setTimeout(applySearchToFilter, 600);
+        setTimeout(applySearchToFilter, 1600);
+      }
+    }
+  } catch (err) { console.warn('search wiring error', err); }
+});

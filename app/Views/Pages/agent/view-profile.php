@@ -381,27 +381,28 @@
               <form id="agentProfileForm" method="post" action="<?= esc($saveUrl ?? '/index.php/users/updateProfile') ?>" enctype="multipart/form-data">
                 <?php if (function_exists('csrf_field')) echo csrf_field(); ?>
                 <input type="hidden" name="remove_avatar" id="removeAvatarInput" value="0">
+                <input type="hidden" name="full_name" id="agent_full_name" value="<?= esc(trim($first . ' ' . $last)) ?>">
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label">First Name</label>
-                    <input type="text" class="form-control" name="first_name" value="<?= esc($first) ?>">
+                    <input id="inputFirstNameAgent" type="text" class="form-control" name="first_name" value="<?= esc($first) ?>">
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Last Name</label>
-                    <input type="text" class="form-control" name="last_name" value="<?= esc($last) ?>">
+                    <input id="inputLastNameAgent" type="text" class="form-control" name="last_name" value="<?= esc($last) ?>">
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email" value="<?= esc($user['Email'] ?? '') ?>">
+                    <input id="inputEmailAgent" type="email" class="form-control" name="email" value="<?= esc($user['Email'] ?? '') ?>">
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Phone Number</label>
-                    <input type="tel" class="form-control" name="phone" value="<?= esc($user['phoneNumber'] ?? '') ?>">
+                    <input id="inputPhoneAgent" type="tel" class="form-control" name="phone" value="<?= esc($user['phoneNumber'] ?? '') ?>">
                   </div>
                 </div>
                 <div class="mt-4 d-flex justify-content-end gap-2">
-                  <a class="btn btn-outline-secondary" href="/users/agentHomepage">Cancel</a>
-                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-outline-secondary" id="btnCancelProfileAgent">Cancel</button>
+                  <button type="button" class="btn btn-primary" id="btnSaveProfileAgent">Save Changes</button>
                 </div>
               </form>
             </div>
@@ -456,6 +457,7 @@
   </main>
 
   <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <script>
   // Theme Toggle
@@ -532,6 +534,82 @@
         if (avatarInput) avatarInput.value = '';
       });
     }
+  })();
+  
+  // Save / Cancel with SweetAlert for agent profile
+  (function(){
+    const form = document.getElementById('agentProfileForm');
+    const btnSave = document.getElementById('btnSaveProfileAgent');
+    const btnCancel = document.getElementById('btnCancelProfileAgent');
+    const first = document.getElementById('inputFirstNameAgent');
+    const last = document.getElementById('inputLastNameAgent');
+    const email = document.getElementById('inputEmailAgent');
+    const phone = document.getElementById('inputPhoneAgent');
+    const fullHidden = document.getElementById('agent_full_name');
+
+    const initial = {
+      first: first ? first.value : '',
+      last: last ? last.value : '',
+      email: email ? email.value : '',
+      phone: phone ? phone.value : ''
+    };
+
+    function changed(){
+      return (first && first.value !== initial.first)
+        || (last && last.value !== initial.last)
+        || (email && email.value !== initial.email)
+        || (phone && phone.value !== initial.phone);
+    }
+
+    if (btnSave && form) {
+      btnSave.addEventListener('click', function(e){
+        e.preventDefault();
+        if (!changed()) {
+          Swal.fire({icon:'info', title:'No changes', text:'There are no changes to save.'});
+          return;
+        }
+        Swal.fire({
+          title: 'Save changes?',
+          text: 'Are you sure you want to save the changes to your profile?',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, save',
+          cancelButtonText: 'Cancel'
+        }).then((res)=>{
+          if (res.isConfirmed) {
+            if (fullHidden && first) fullHidden.value = (first.value || '') + (last && last.value ? (' ' + last.value) : '');
+            form.submit();
+          }
+        });
+      });
+    }
+
+    if (btnCancel) {
+      btnCancel.addEventListener('click', function(e){
+        e.preventDefault();
+        if (!changed()) {
+          Swal.fire({icon:'info', title:'Nothing to discard', text:'No changes to discard.'});
+          return;
+        }
+        Swal.fire({
+          title: 'Discard changes?',
+          text: 'Any unsaved changes will be lost.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, discard',
+          cancelButtonText: 'Continue editing'
+        }).then((res)=>{
+          if (res.isConfirmed) {
+            if (first) first.value = initial.first;
+            if (last) last.value = initial.last;
+            if (email) email.value = initial.email;
+            if (phone) phone.value = initial.phone;
+            Swal.fire({icon:'success', title:'Changes discarded', timer:1200, showConfirmButton:false});
+          }
+        });
+      });
+    }
+
   })();
   </script>
 </body>
