@@ -22,7 +22,7 @@ class ChatController extends BaseController
         $currentRole = session()->get('role'); // 'User' or 'Agent'
 
         // Check if this session belongs to the logged-in user/agent
-        $builder = $db->table('chatSession')->where('chatSessionID', $sessionId);
+        $builder = $db->table('chatsession')->where('chatSessionID', $sessionId);
 
         if ($currentRole === 'Agent') {
             $builder->where('AgentID', $currentUserId);
@@ -147,7 +147,7 @@ class ChatController extends BaseController
         $db = \Config\Database::connect();
 
         // Fetch session to make sure user/agent can access it
-        $session = $db->table('chatSession')
+        $session = $db->table('chatsession')
                     ->where('chatSessionID', $sessionId)
                     ->where("(UserID = $currentUserId OR AgentID = $currentUserId)")
                     ->get()->getRowArray();
@@ -157,11 +157,11 @@ class ChatController extends BaseController
         }
 
         // Fetch all sessions for sidebar
-        $clients = $db->table('chatSession')
+        $clients = $db->table('chatsession')
                     ->join('users', 'chatSession.UserID = users.UserID')
-                    ->select('chatSession.chatSessionID, CONCAT(users.FirstName," ",users.LastName) as fullname, "" as lastMessage')
-                    ->where('chatSession.UserID', $currentUserId)
-                    ->orWhere('chatSession.AgentID', $currentUserId)
+                    ->select('chatsession.chatSessionID, CONCAT(users.FirstName," ",users.LastName) as fullname, "" as lastMessage')
+                    ->where('chatsession.UserID', $currentUserId)
+                    ->orWhere('chatsession.AgentID', $currentUserId)
                     ->get()->getResultArray();
 
         return view('chat/chat_view', [

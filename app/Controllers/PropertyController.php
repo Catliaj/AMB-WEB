@@ -108,7 +108,7 @@ class PropertyController extends BaseController
         // Get all properties that are not sold
         $builder = $propertyModel->builder();
         $builder->select('property.*');
-        $builder->join('propertyStatusHistory AS psh', 'psh.PropertyID = property.PropertyID', 'left');
+        $builder->join('propertystatushistory AS psh', 'psh.PropertyID = property.PropertyID', 'left');
         $builder->where('psh.New_Status !=', 'Sold');
         $properties = $builder->get()->getResultArray();
 
