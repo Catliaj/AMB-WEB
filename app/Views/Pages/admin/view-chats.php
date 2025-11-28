@@ -43,24 +43,27 @@
 </head>
 <body>
 
-  <aside class="sidebar">
-     <img src="<?= base_url('assets/img/amb_logo.png')?>" alt="AMB Logo">
-    <nav class="nav">
-      <a href="/admin/adminHomepage"><i data-lucide="layout-dashboard"></i> Dashboard</a>
-      <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
-      <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
-      <!-- User Bookings removed -->
-      <a href="/admin/viewChats" class="active" style="background: linear-gradient(90deg, #2e7d32, #1565c0);"><i data-lucide="message-circle"></i> View Chats</a>
-      <a href="/admin/Reports"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
-    </nav>
+  <aside class="sidebar" style="display:flex;flex-direction:column;justify-content:space-between;">
+    <div>
+      <img src="<?= base_url('assets/img/amb_logo.png')?>" alt="AMB Logo">
+      <nav class="nav">
+        <a href="/admin/adminHomepage"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+        <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
+        <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
+        <!-- User Bookings removed -->
+        <a href="/admin/viewChats" class="active" style="background: linear-gradient(90deg, #2e7d32, #1565c0);"><i data-lucide="message-circle"></i> View Chats</a>
+        <a href="/admin/Reports"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
+        <a href="/admin/editProfile"><i data-lucide="user"></i> Edit Profile</a>
+      </nav>
+    </div>
 
-    <div class="profile-box">
+    <a href="<?= base_url('/admin/editProfile') ?>" class="profile-box" style="text-decoration:none;color:inherit;display:block;margin-top:10px;">
       <div class="profile-avatar">A</div>
        <div class="profile-info">
         <strong><?= session('FirstName') . ' ' . session('LastName'); ?></strong>
         <span><?= session('inputEmail'); ?></span>
       </div>
-    </div>
+    </a>
   </aside>
 
   <main class="main">

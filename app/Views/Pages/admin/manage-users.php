@@ -68,6 +68,16 @@
       color: #f87171;
     }
 
+    .icon-btn.view {
+      background-color: green;
+      color: white;
+    }
+
+    .icon-btn.edit {
+      background-color: blue;
+      color: white;
+    }
+
     .icon-btn svg {
       width: 20px;
       height: 20px;
@@ -75,7 +85,6 @@
 
     /* Use Bootstrap's modal styles — avoid overriding global .modal rules */
     .modal-content {
-      width: 380px;
       background: var(--card);
       padding: 20px;
       border-radius: 12px;
@@ -132,7 +141,9 @@
       background: #fff !important;
       border: 1px solid var(--divider) !important;
     }
-    #viewDocumentsModal.modal {
+    #viewDocumentsModal.modal,
+    #chooseActionModal.modal,
+    #confirmActionModal.modal {
       z-index: 2080 !important;
     }
 
@@ -346,30 +357,31 @@
 </head>
 
 <body>
-    <aside class="sidebar">
+    <aside class="sidebar" style="display:flex;flex-direction:column;justify-content:space-between;">
      <img src="<?= base_url('assets/img/amb_logo.png')?>" alt="AMB Logo">
     <nav class="nav">
-      <a href="/admin/adminHomepage" ><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a href="/admin/adminHomepage"><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="/admin/manageUsers" class="active" style="background: linear-gradient(90deg, #2e7d32, #1565c0);"><i data-lucide="users"></i> Manage Users</a>
       <a href="/admin/ManageProperties"><i data-lucide="home"></i> Manage Properties</a>
       <!-- User Bookings removed -->
       <!-- View Chats removed for privacy -->
       <a href="/admin/Reports"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
+      <a href="/admin/editProfile"><i data-lucide="user"></i> Edit Profile</a>
     </nav>
 
-    <div class="profile-box">
+    <a href="<?= base_url('/admin/editProfile') ?>" class="profile-box" style="text-decoration:none;color:inherit;display:block;margin-top:10px;">
       <div class="profile-avatar">A</div>
       <div class="profile-info">
         <strong><?= session('FirstName') . ' ' . session('LastName'); ?></strong>
         <span><?= session('inputEmail'); ?></span>
       </div>
-    </div>
+    </a>
   </aside>
   <section class="main" style="padding:20px;width:100%;">
     <header style="display:flex;justify-content:space-between;align-items:center;">
       <h1><i data-lucide="users"></i> Manage Users</h1>
-      <button class="btn primary" id="addUserBtn" style="padding:8px 14px;border:none;border-radius:8px;background:#2563eb;color:white;cursor:pointer;">
-        <i data-lucide="user-plus"></i> Add Agent
+      <button class="btn primary" id="addUserBtn" style="padding:8px 14px;border:none;border-radius:8px;background:#2563eb;color:white;cursor:pointer;" title="Add Agent">
+        <i data-lucide="user-plus"></i>
       </button>
     </header>
 
@@ -441,8 +453,8 @@
 
 
 <div class="modal fade" id="addAgentModal" tabindex="-1" aria-labelledby="addAgentModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-3 bg-dark">
+   <div class="modal-dialog modal-lg modal-dialog-centered">
+     <div class="modal-content border-0 shadow-lg rounded-3 bg-dark">
       
       <div class="modal-header bg-primary text-white">
         <h5 class="modal-title" id="addAgentModalLabel">
@@ -485,7 +497,12 @@
 
           <div class="mb-3">
             <label for="Password" class="form-label">Password</label>
-            <input type="password" class="form-control" name="Password" id="Password" required>
+            <div class="input-group">
+              <input type="password" class="form-control" name="Password" id="Password" required>
+              <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                <i data-lucide="eye"></i>
+              </button>
+            </div>
           </div>
 
           <input type="hidden" name="Role" value="Agent">
@@ -495,7 +512,7 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" id="reactivateBtn" class="btn btn-success" style="display:none;margin-right:auto;">Reactivate</button>
-          <button type="submit" class="btn btn-primary">Add Agent</button>
+          <button type="submit" class="btn btn-success">Save</button>
         </div>
       </form>
 
@@ -621,7 +638,6 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 <!-- Bootstrap JS (make sure this is included before your script) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -671,12 +687,12 @@ document.addEventListener("DOMContentLoaded", () => {
           </span>
         </td>
         <td class="actions">
-          <button class="icon-btn" data-edit="${i}" title="Edit"><i data-lucide="edit-3"></i></button>
+          <button class="icon-btn edit" data-edit="${i}" title="Edit"><i data-lucide="edit-3"></i></button>
           ${u.status === 'Deactivated' ?
             `<button class="icon-btn success" data-reactivate="${i}" title="Reactivate"><i data-lucide="refresh-ccw"></i></button>` :
             `<button class="icon-btn danger" data-del="${i}" title="Delete"><i data-lucide="trash-2"></i></button>`
           }
-          <button class="icon-btn" data-view="${i}" title="View"><i data-lucide="eye"></i></button>
+          <button class="icon-btn view" data-view="${i}" title="View"><i data-lucide="eye"></i></button>
         </td>
       `;
       userTable.appendChild(tr);
@@ -753,12 +769,12 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('MiddleName').value = u.MiddleName || '';
       document.getElementById('LastName').value = u.LastName || '';
       document.getElementById('Birthdate').value = u.Birthdate || '';
-      document.getElementById('PhoneNumber').value = u.PhoneNumber || '';
+      document.getElementById('PhoneNumber').value = u.phoneNumber || '';
       document.getElementById('Email').value = u.Email || '';
-      document.getElementById('Password').value = '';
+      document.getElementById('Password').value = u.Password || '';
       // UI hints
       document.getElementById('addAgentModalLabel').textContent = 'Edit User';
-      document.querySelector('#addAgentModal .btn-primary').textContent = 'Save Changes';
+      document.querySelector('#addAgentModal .btn-success').textContent = 'Save';
       // show reactivate button if user is deactivated
       const reactivateBtn = document.getElementById('reactivateBtn');
       if (u.status === 'Deactivated') {
@@ -785,7 +801,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('rp_role').textContent = u.Role || '';
       document.getElementById('rp_status').textContent = u.status || '';
       document.getElementById('rp_email').textContent = u.Email || '';
-      document.getElementById('rp_phone').textContent = u.PhoneNumber || '';
+      document.getElementById('rp_phone').textContent = u.phoneNumber || '';
       document.getElementById('rp_bday').textContent = u.Birthdate || '';
 
       // show meta and actions
@@ -943,6 +959,17 @@ document.addEventListener('DOMContentLoaded', () => {
       // editing -> populate editingUserId hidden
       document.getElementById('editingUserId').value = selectedId;
     }
+  });
+
+  // Toggle password visibility
+  const togglePasswordBtn = document.getElementById('togglePassword');
+  const passwordInput = document.getElementById('Password');
+  togglePasswordBtn.addEventListener('click', () => {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    const icon = togglePasswordBtn.querySelector('i');
+    icon.setAttribute('data-lucide', type === 'password' ? 'eye' : 'eye-off');
+    lucide.createIcons();
   });
 
   // Reactivate handler

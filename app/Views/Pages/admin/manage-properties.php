@@ -109,21 +109,43 @@
     object-fit: contain;
   }
 
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .booking-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+
+  #viewModal .modal-content p, #viewModal .modal-content strong, #viewModal .modal-content span {
+    color: #000 !important;
+  }
+
   .carousel-btn {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.4);
-    color: white;
-    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: black;
+    border: 2px solid #000;
     font-size: 24px;
     padding: 10px 15px;
     cursor: pointer;
     border-radius: 50%;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
   }
 
   .carousel-btn:hover {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(255, 255, 255, 1);
   }
 
   .prev-btn {
@@ -133,6 +155,11 @@
   .next-btn {
     right: 10px;
   }
+/* Action button backgrounds */
+.action-btn.view { background-color: green; color: white; }
+.action-btn.edit { background-color: blue; color: white; }
+.action-btn.danger { background-color: red; color: white; }
+
 /* Universal Modal Styling */
 .modal {
   display: none;
@@ -154,12 +181,12 @@
 
 /* Modal Content Styling */
 .modal-content {
-  background: #222;
+  background: #fff;
   padding: 25px;
   border-radius: 10px;
   width: 90%;
   max-width: 800px;
-  color: white;
+  color: black;
   overflow-y: auto; /* 🔥 scroll inside modal if needed */
   max-height: 90vh; /* prevent overflow off screen */
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
@@ -204,24 +231,25 @@
 </head>
 
 <body>
-  <aside class="sidebar">
+  <aside class="sidebar" style="display:flex;flex-direction:column;justify-content:space-between;">
      <img src="<?= base_url('assets/img/amb_logo.png')?>" alt="AMB Logo">
     <nav class="nav">
-      <a href="/admin/adminHomepage" ><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a href="/admin/adminHomepage"><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="/admin/manageUsers"><i data-lucide="users"></i> Manage Users</a>
-      <a href="/admin/ManageProperties" class="active" style="background: linear-gradient(90deg, #428d46ff, #2376d4ff);"><i data-lucide="home"></i> Manage Properties</a>
+      <a href="/admin/ManageProperties" class="active" style="background: linear-gradient(90deg, #2e7d32, #1565c0);"><i data-lucide="home"></i> Manage Properties</a>
       <!-- User Bookings removed -->
       <!-- View Chats removed for privacy -->
       <a href="/admin/Reports"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
+      <a href="/admin/editProfile"><i data-lucide="user"></i> Edit Profile</a>
     </nav>
 
-    <div class="profile-box">
+    <a href="<?= base_url('/admin/editProfile') ?>" class="profile-box" style="text-decoration:none;color:inherit;display:block;margin-top:10px;">
       <div class="profile-avatar">A</div>
        <div class="profile-info">
         <strong><?= session('FirstName') . ' ' . session('LastName'); ?></strong>
         <span><?= session('inputEmail'); ?></span>
       </div>
-    </div>
+    </a>
   </aside>
 
   <main class="main">
@@ -289,14 +317,14 @@
                   <td><?= esc($property['New_Status'] ?? 'N/A'); ?></td>
                   <td><?= esc($getAgentName ?? 'Unassigned'); ?></td>
                   <td class="actions">
-                      <button class="action-btn" onclick="viewProperty(<?= $property['PropertyID']; ?>)">
+                      <button class="action-btn view" onclick="viewProperty(<?= $property['PropertyID']; ?>)">
                           <i data-lucide="eye"></i>
                       </button>
-                      <button class="action-btn" onclick="editProperty(<?= $property['PropertyID']; ?>)">
+                      <button class="action-btn edit" onclick="editProperty(<?= $property['PropertyID']; ?>)">
                           <i data-lucide="edit-2"></i>
                       </button>
-                      <button class="btn btn-danger btn-sm" onclick="openDeleteModal(<?= $property['PropertyID'] ?>)">
-                        <i class="bi bi-trash"></i>
+                      <button class="action-btn danger" onclick="openDeleteModal(<?= $property['PropertyID'] ?>)">
+                        <i data-lucide="trash-2"></i>
                       </button>
 
                   </td>
@@ -311,21 +339,179 @@
   <div class="modal-content">
     <h2>Property Details</h2>
 
-    <!-- Image Carousel -->
-    <div class="image-preview-container position-relative" id="viewImageGallery">
-      <button type="button" class="carousel-btn prev-btn" onclick="prevImage()">&#10094;</button>
-      <img id="currentImage" src="" alt="Property Image" class="img-fluid rounded shadow">
-      <button type="button" class="carousel-btn next-btn" onclick="nextImage()">&#10095;</button>
+    <!-- Bootstrap Carousel (dynamically populated) -->
+    <div id="imageCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+      <div class="carousel-inner" id="carouselImages">
+        <!-- Images will be inserted here dynamically -->
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
     </div>
 
-    <div class="mt-3">
-      <p><strong>ID:</strong> <span id="viewID"></span></p>
-      <p><strong>Title:</strong> <span id="viewTitle"></span></p>
-      <p><strong>Type:</strong> <span id="viewType"></span></p>
-      <p><strong>Price:</strong> <span id="viewPrice"></span></p>
-      <p><strong>Location:</strong> <span id="viewLocation"></span></p>
-      <p><strong>Status:</strong> <span id="viewStatus"></span></p>
-      <p><strong>Agent:</strong> <span id="viewAgent"></span></p>
+    <!-- Thumbnails for carousel -->
+    <div id="imageThumbnails" class="d-flex gap-2 mt-2 justify-content-center"></div>
+
+    <!-- Image Lightbox Modal -->
+    <div class="modal" id="imageModal">
+      <div class="modal-content" style="max-width:90%; max-height:90vh;">
+        <button class="btn btn-sm btn-secondary" style="position:absolute;right:12px;top:12px;z-index:20;" onclick="closeModal('imageModal')">Close</button>
+        <img id="lightboxImage" src="" alt="Enlarged Image" style="display:block;max-width:100%;max-height:80vh;margin:40px auto 20px;"/>
+      </div>
+    </div>
+
+    <!-- Property Details Grid -->
+    <div class="booking-property-details mb-4">
+      <h5 class="booking-section-title">Property Details</h5>
+      <div class="row g-3">
+        <!-- Price -->
+        <div class="col-6 col-md-3">
+          <div class="detail-item">
+            <i class="bi bi-currency-dollar text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Price</small>
+              <strong id="viewPrice"></strong>
+            </div>
+          </div>
+        </div>
+        <!-- Bedrooms -->
+        <div class="col-6 col-md-3">
+          <div class="detail-item">
+            <i class="bi bi-house-door text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Bedrooms</small>
+              <strong id="viewBedrooms"></strong>
+            </div>
+          </div>
+        </div>
+        <!-- Agent -->
+        <div class="col-6 col-md-3">
+          <div class="detail-item">
+            <i class="bi bi-person-badge text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Agent</small>
+              <strong id="viewAgent"></strong>
+            </div>
+          </div>
+        </div>
+        <!-- Bathrooms -->
+        <div class="col-6 col-md-3">
+          <div class="detail-item">
+            <i class="bi bi-droplet text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Bathrooms</small>
+              <strong id="viewBathrooms"></strong>
+            </div>
+          </div>
+        </div>
+        <!-- Corporation -->
+        <div class="col-6 col-md-3">
+          <div class="detail-item">
+            <i class="bi bi-building text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Corporation</small>
+              <strong id="viewCorporation"></strong>
+            </div>
+          </div>
+        </div>
+        <!-- Size -->
+        <div class="col-6 col-md-3">
+          <div class="detail-item">
+            <i class="bi bi-arrows-fullscreen text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Size</small>
+              <strong id="viewSize"></strong>
+            </div>
+          </div>
+        </div>
+        <!-- Parking -->
+        <div class="col-6 col-md-3">
+          <div class="detail-item">
+            <i class="bi bi-p-square text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Parking</small>
+              <strong id="viewParking"></strong>
+            </div>
+          </div>
+        </div>
+        <!-- Status -->
+        <div class="col-6 col-md-3">
+          <div class="detail-item">
+            <i class="bi bi-info-circle text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Status</small>
+              <strong id="viewStatus"></strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="booking-description mb-4">
+      <h5 class="booking-section-title">Description</h5>
+      <p class="text-muted" id="viewDescription"></p>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="mb-4">
+      <h5 class="booking-section-title">Additional Information</h5>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="detail-item">
+            <i class="bi bi-hash text-primary"></i>
+            <div>
+              <small class="text-muted d-block">ID</small>
+              <strong id="viewID"></strong>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item">
+            <i class="bi bi-tag text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Title</small>
+              <strong id="viewTitle"></strong>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item">
+            <i class="bi bi-house text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Type</small>
+              <strong id="viewType"></strong>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item">
+            <i class="bi bi-geo-alt text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Location</small>
+              <strong id="viewLocation"></strong>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-item">
+            <i class="bi bi-person-badge text-primary"></i>
+            <div>
+              <small class="text-muted d-block">Agent ID</small>
+              <strong id="viewAgentAssigned"></strong>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="bookedUsersSection" class="mt-4">
+        <h5 class="booking-section-title">Booked Users</h5>
+        <div id="bookedUsersList" class="row g-3"></div>
+      </div>
     </div>
 
     <div class="actions mt-3">
@@ -446,7 +632,7 @@
         <!-- Buttons -->
         <div class="actions d-flex justify-content-end gap-2 mt-4">
           <button class="btn btn-secondary cancel" type="button" id="cancelAdd">Cancel</button>
-          <button class="btn btn-primary" type="submit" id="saveProperty">Save</button>
+          <button class="btn btn-success" type="submit" id="saveProperty">Save</button>
         </div>
 
       </form>
@@ -471,6 +657,8 @@
 
 <script>
   lucide.createIcons();
+
+  const BASE_URL = '<?= base_url() ?>';
 
   const tableBody = document.querySelector("#propertyTable tbody");
   const addModal = document.getElementById("addModal");
@@ -532,10 +720,10 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
         <td>${p.New_Status ?? "N/A"}</td>
         <td>${p.agent_name ?? "Unassigned"}</td>
         <td class="actions">
-          <button class="action-btn" onclick="viewProperty(${p.PropertyID})">
+          <button class="action-btn view" onclick="viewProperty(${p.PropertyID})">
             <i data-lucide='eye'></i>
           </button>
-          <button class="action-btn" onclick="editProperty(${p.PropertyID})">
+          <button class="action-btn edit" onclick="editProperty(${p.PropertyID})">
             <i data-lucide='edit-2'></i>
           </button>
           <button class="action-btn danger" onclick="openDeleteModal(${p.PropertyID})">
@@ -673,7 +861,7 @@ function closeModal(id) { hideModal(id); }
 
 // Edit property: fetch data and populate addModal form
 function editProperty(propertyID) {
-  fetch(`/admin/getProperty/${propertyID}`)
+  fetch(`${BASE_URL}/admin/getProperty/${propertyID}`)
     .then(res => res.json())
     .then(data => {
       if (!data) return console.error('No data received');
@@ -721,14 +909,7 @@ function editProperty(propertyID) {
     hideModal('addModal');
   });
 
-// viewProperty should open view modal with animation (ensure it uses showModal)
-const originalViewProperty = window.viewProperty;
-window.viewProperty = function(propID) {
-  // call existing implementation (which fetches and opens modal)
-  originalViewProperty(propID);
-  // ensure animation
-  setTimeout(() => showModal('viewModal'), 80);
-}
+// Note: viewProperty now calls showModal itself; no wrapper needed.
 
 </script>
 
@@ -737,34 +918,136 @@ let currentImages = [];
 let currentImageIndex = 0;
 
 function viewProperty(propertyID) {
-  fetch(`/admin/getProperty/${propertyID}`)
+  fetch(`${BASE_URL}/admin/getProperty/${propertyID}`)
     .then(res => res.json())
     .then(data => {
       if (!data) return console.error('No data received');
 
       // Fill details
       document.getElementById('viewID').textContent = data.PropertyID;
-      document.getElementById('viewTitle').textContent = data.Title;
-      document.getElementById('viewType').textContent = data.Property_Type;
+      document.getElementById('viewTitle').textContent = data.Title || 'N/A';
+      document.getElementById('viewDescription').textContent = data.Description || 'N/A';
+      document.getElementById('viewType').textContent = data.Property_Type || 'N/A';
       document.getElementById('viewPrice').textContent = '₱' + parseFloat(data.Price).toLocaleString();
-      document.getElementById('viewLocation').textContent = data.Location;
-      document.getElementById('viewStatus').textContent = data.New_Status || 'N/A';
+      document.getElementById('viewLocation').textContent = data.Location || 'N/A';
+      document.getElementById('viewSize').textContent = (data.Size ? data.Size + ' sqm' : 'N/A');
+      document.getElementById('viewBedrooms').textContent = data.Bedrooms || 'N/A';
+      document.getElementById('viewBathrooms').textContent = data.Bathrooms || 'N/A';
+      document.getElementById('viewParking').textContent = data.Parking_Spaces || 'N/A';
+      document.getElementById('viewAgentAssigned').textContent = data.agent_assigned || 'N/A';
+      document.getElementById('viewCorporation').textContent = data.Corporation || 'N/A';
       document.getElementById('viewAgent').textContent = data.AgentName || 'Unassigned';
+      document.getElementById('viewStatus').textContent = data.Status || 'N/A';
+
+      // Booked users
+      const usersList = document.getElementById('bookedUsersList');
+      usersList.innerHTML = '';
+      if (data.bookedUsers && data.bookedUsers.length > 0) {
+        data.bookedUsers.forEach(user => {
+          const col = document.createElement('div');
+          col.className = 'col-md-6';
+          col.innerHTML = `
+            <div class="detail-item">
+              <i class="bi bi-person text-primary"></i>
+              <div>
+                <small class="text-muted d-block">${user.Name}</small>
+                <strong>${user.Email}</strong><br>
+                <small>Status: ${user.Status}, Reason: ${user.Reason}</small>
+              </div>
+            </div>
+          `;
+          usersList.appendChild(col);
+        });
+        document.getElementById('bookedUsersSection').style.display = 'block';
+      } else {
+        document.getElementById('bookedUsersSection').style.display = 'none';
+      }
 
       // Images
       currentImages = Array.isArray(data.images) ? data.images : [];
       currentImageIndex = 0;
+
+      if (!currentImages.length) {
+        console.info('getProperty returned no images; showing placeholder image');
+      }
+
+      // Render images (updateImageDisplay will fall back to placeholder if empty)
       updateImageDisplay();
 
-      document.getElementById('viewModal').classList.add('active');
+      // Show modal with animation helper
+      showModal('viewModal');
     })
     .catch(err => console.error('Error fetching property:', err));
 }
 
 function updateImageDisplay() {
-  const imgEl = document.getElementById('currentImage');
-  
-  imgEl.src = currentImages.length ? currentImages[currentImageIndex] : '/uploads/properties/no-image.jpg';
+  const carouselInner = document.getElementById('carouselImages');
+  const thumbs = document.getElementById('imageThumbnails');
+  carouselInner.innerHTML = '';
+  thumbs.innerHTML = '';
+
+  const carouselEl = document.getElementById('imageCarousel');
+  const bsCarousel = (window.bootstrap && carouselEl) ? window.bootstrap.Carousel.getOrCreateInstance(carouselEl) : null;
+
+  if (currentImages.length) {
+    currentImages.forEach((s, idx) => {
+      let src = s || '';
+      if (!/^https?:\/\//i.test(src) && src.indexOf('/') !== 0) src = BASE_URL + '/' + src;
+      else if (!/^https?:\/\//i.test(src) && src.indexOf('/') === 0) src = BASE_URL + src;
+
+      const item = document.createElement('div');
+      item.className = 'carousel-item' + (idx === currentImageIndex ? ' active' : '');
+
+      const img = document.createElement('img');
+      img.src = src;
+      img.className = 'd-block w-100 rounded shadow';
+      img.alt = `image-${idx}`;
+      img.onerror = function() { console.error('Failed to load carousel image:', img.src); img.src = BASE_URL + '/uploads/properties/no-image.jpg'; };
+      img.onclick = function() { document.getElementById('lightboxImage').src = src; showModal('imageModal'); };
+
+      item.appendChild(img);
+      carouselInner.appendChild(item);
+
+      // thumbnail
+      const t = document.createElement('img');
+      t.src = src;
+      t.alt = `thumbnail-${idx}`;
+      t.style.width = '60px';
+      t.style.height = '60px';
+      t.style.objectFit = 'cover';
+      t.style.borderRadius = '6px';
+      t.style.cursor = 'pointer';
+      t.style.border = idx === currentImageIndex ? '2px solid #2563eb' : '1px solid #ddd';
+      t.onclick = () => {
+        if (bsCarousel) try { bsCarousel.to(idx); } catch(e) {}
+        currentImageIndex = idx;
+        updateThumbnails();
+        document.getElementById('lightboxImage').src = src;
+        showModal('imageModal');
+      };
+      t.onerror = function() { console.error('Failed to load thumbnail:', t.src); t.style.opacity = '0.4'; };
+      thumbs.appendChild(t);
+    });
+  } else {
+    const item = document.createElement('div');
+    item.className = 'carousel-item active';
+    const img = document.createElement('img');
+    img.src = BASE_URL + '/uploads/properties/no-image.jpg';
+    img.className = 'd-block w-100 rounded shadow';
+    img.alt = 'no-image';
+    item.appendChild(img);
+    carouselInner.appendChild(item);
+  }
+
+  function updateThumbnails() {
+    Array.from(thumbs.children).forEach((el, i) => {
+      el.style.border = i === currentImageIndex ? '2px solid #2563eb' : '1px solid #ddd';
+    });
+  }
+
+  // ensure carousel shows the selected slide
+  try { if (bsCarousel) bsCarousel.to(currentImageIndex); } catch(e) {}
+  updateThumbnails();
 }
 
 function nextImage() {
