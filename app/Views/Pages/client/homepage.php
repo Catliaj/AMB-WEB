@@ -13,6 +13,109 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?= base_url("assets/styles/clientstyle.css")?>">
+
+    <style>
+        .search-box {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: white;
+        border-radius: 50px;
+        padding: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        max-width: 100%;
+        width: 80%;
+        transition: all 0.3s ease;
+        animation: fadeInUp 1.2s ease;
+        }
+
+        .search-box:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+        }
+
+        .search-box input {
+        border: none;
+        padding: 10px 20px;
+        flex: 1;
+        outline: none;
+        min-width: 0;
+        font-size: 16px;
+        }
+
+        .search-box button {
+        background: #469541;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        }
+
+        .search-box button:hover {
+        background: #357a34;
+        transform: scale(1.05);
+        }
+
+        .search-box button i {
+        color: white;
+        font-size: 18px;
+        }
+
+        /* Tablet Responsive - 768px and below */
+        @media (max-width: 768px) {
+        .search-box {
+            width: 95%;
+            padding: 6px;
+            margin: 0 auto;
+        }
+        }
+
+        /* Mobile Responsive - 576px and below */
+        @media (max-width: 576px) {
+        .search-box {
+            width: 100%;
+            max-width: calc(100% - 20px);
+            padding: 6px;
+            margin: 0 10px;
+        }
+        
+        .search-box input {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        
+        .search-box button {
+            padding: 10px 18px;
+        }
+        
+        .search-box button i {
+            font-size: 16px;
+        }
+        }
+
+        /* Extra Small Devices - 375px and below */
+        @media (max-width: 375px) {
+        .search-box {
+            max-width: calc(100% - 10px);
+            margin: 0 5px;
+        }
+        
+        .search-box input {
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+        
+        .search-box button {
+            padding: 8px 15px;
+        }
+        
+        .search-box button i {
+            font-size: 14px;
+        }
+        }
+        </style>
 </head>
 
 <body>
