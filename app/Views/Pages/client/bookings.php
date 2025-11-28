@@ -14,20 +14,21 @@
     <!-- Enhanced Booking Styles -->
     <style>
         /* Fix for modal property titles to follow theme */
-#bookingModalPropertyTitle,
-#modalPropertyTitle {
-    color: var(--text-color) !important;
-}
+        #bookingModalPropertyTitle,
+        #modalPropertyTitle {
+            color: var(--text-color) !important;
+            
+        }
 
-/* Ensure all modal text follows theme */
-.modal-enhanced .modal-body,
-.modal-enhanced .modal-content {
-    color: var(--text-color);
-}
+        /* Ensure all modal text follows theme */
+        .modal-enhanced .modal-body,
+        .modal-enhanced .modal-content {
+            color: var(--text-color);
+        }
 
-.modal-enhanced .text-muted {
-    color: var(--text-muted) !important;
-}
+        .modal-enhanced .text-muted {
+            color: var(--text-muted) !important;
+        }
         /* Enhanced Booking Card Styles */
         .booking-card-enhanced {
             background-color: var(--card-bg);
@@ -96,6 +97,11 @@
             color: var(--text-color);
             margin-bottom: 0.5rem;
             line-height: 1.3;
+            text-shadow: 
+        -1px -1px 0 #000,  /* Shadow top left */
+        1px -1px 0 #000,   /* Shadow top right */
+        -1px 1px 0 #000,   /* Shadow bottom left */
+        1px 1px 0 #000;    /* Shadow bottom right */
         }
 
         .booking-location {
@@ -293,19 +299,36 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
+            /* Target the specific button container structure from client.js */
+            #bookingsList .col-auto .d-flex.flex-column {
+                flex-direction: row !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 0.5rem !important;
+            }
+            
+            /* Make buttons equal width and horizontal */
+            #bookingsList .col-auto .d-flex button {
+                flex: 1 !important;
+                min-width: 110px !important;
+                max-width: 150px !important;
+                margin-bottom: 15px;
+            }
+            
+            /* Adjust the parent column to center buttons */
+            #bookingsList .col-auto {
+                width: 100% !important;
+                padding: 0 1rem !important;
+                margin-top: 1rem;
+            }
+
+            /* Ensure the meta grid stays correct */
             .booking-meta-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.75rem;
             }
 
-            .booking-actions {
-                flex-direction: column;
-            }
-
-            .booking-btn {
-                min-width: 100%;
-            }
-
+            /* Other existing mobile styles */
             .modal-enhanced .modal-body {
                 padding: 1.5rem;
             }
@@ -313,9 +336,28 @@
             .stat-card {
                 padding: 1.25rem;
             }
+            
         }
 
         @media (max-width: 576px) {
+            .booking-card-body {
+                padding: 1.25rem;
+            }
+
+            .booking-meta-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .booking-card-enhanced .booking-btn,
+            .booking-card .booking-btn,
+            .card-body .btn {
+                flex: 1 1 48% !important;
+                min-width: 110px !important;
+                font-size: 0.8rem !important;
+                padding: 0.5rem 0.75rem !important;
+            }
+
             .booking-card-body {
                 padding: 1.25rem;
             }
@@ -361,6 +403,7 @@
                 background-position: -200% 0;
             }
         }
+        
 
         
     </style>
@@ -383,7 +426,7 @@
                         <span class="navbar-toggler-icon"></span>
                     </button>
                     <!-- Confirm Contract Modal (used by bookings.js) -->
-                    <div class="modal fade" id="confirmContractModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal fade modal-enhanced" id="confirmContractModal" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">
@@ -525,7 +568,7 @@
         </div>
     </main>
     <!-- Property Details Modal (reused from browse view) -->
-    <div class="modal fade" id="propertyDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade modal-enhanced" id="propertyDetailsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content property-modal-content">
                 <div class="modal-body p-0 position-relative">
@@ -573,7 +616,7 @@
 
                             <!-- Action buttons -->
                             <div class="price-book">
-                                <button class="btn btn-outline-primary" id="modalChatBtn">
+                                <button class="btn btn-primary" id="modalChatBtn">
                                     <i class="bi bi-chat-dots-fill me-1"></i>Chat Agent
                                 </button>
                                
@@ -587,81 +630,78 @@
         </div>
     </div>
 
-    <!-- Booking Detail Modal (paste into the bookings view before closing </body>) -->
-    <!-- Booking Detail Modal (paste into the bookings view before closing </body>) -->
-<div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="bookingModalTitle">Booking Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="col-md-5">
-            <div id="bookingImageWrapper" class="mb-3 text-center">
-              <img id="bookingModalImage" src="<?= base_url('uploads/properties/no-image.jpg') ?>" class="img-fluid rounded" alt="Property image" style="max-height:300px; object-fit:cover;">
-            </div>
-            <div class="d-flex justify-content-center gap-2">
-              <button id="modalContactAgentBtn" class="btn btn-outline-primary btn-sm"><i class="bi bi-chat-dots"></i> Contact Agent</button>
-            </div>
+    <!-- Booking Detail Modal -->
+    <div class="modal fade modal-enhanced" id="bookingDetailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="bookingModalTitle">Booking Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
 
-          <div class="col-md-7">
-            <h5 id="bookingModalPropertyTitle" class="mb-1">Property title</h5>
-            <p id="bookingModalLocation" class="text-muted small mb-2">Location</p>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-5">
+                <div id="bookingImageWrapper" class="mb-3 text-center">
+                  <img id="bookingModalImage" src="<?= base_url('uploads/properties/no-image.jpg') ?>" class="img-fluid rounded" alt="Property image" style="max-height:300px; object-fit:cover;">
+                </div>
+                <div class="d-flex justify-content-center gap-2">
+                  <button id="modalContactAgentBtn" class="btn btn-primary btn-sm"><i class="bi bi-chat-dots"></i> Contact Agent</button>
+                </div>
+              </div>
 
-            <div class="mb-2">
-              <span id="bookingModalStatus" class="badge bg-secondary">Status</span>
-              <span class="ms-2 text-muted" id="bookingModalDate">Date</span>
+              <div class="col-md-7">
+                <h5 id="bookingModalPropertyTitle" class="mb-1">Property title</h5>
+                <p id="bookingModalLocation" class="text-muted small mb-2">Location</p>
+
+                <div class="mb-2">
+                  <span id="bookingModalStatus" class="badge bg-secondary">Status</span>
+                  <span class="ms-2 text-muted" id="bookingModalDate">Date</span>
+                </div>
+
+                <div id="bookingModalMeta" class="mb-2 small">
+                  <div class="mb-1"><strong>Agent:</strong> <span id="bookingModalAgent">—</span></div>
+                  <div id="bookingModalAgentContacts" class="small text-muted mb-2">
+                    <div><i class="bi bi-telephone me-1"></i><span id="bookingModalAgentPhone">—</span></div>
+                    <div><i class="bi bi-envelope me-1"></i><span id="bookingModalAgentEmail">—</span></div>
+                  </div>
+                  <div class="row g-2">
+                    <div class="col-6"><small class="text-muted d-block">Price</small><strong id="bookingModalPrice">—</strong></div>
+                    <div class="col-6"><small class="text-muted d-block">Date & Time</small><span id="bookingModalDateTime">—</span></div>
+                    <div class="col-6"><small class="text-muted d-block">Bedrooms</small><span id="bookingModalBeds">—</span></div>
+                    <div class="col-6"><small class="text-muted d-block">Bathrooms</small><span id="bookingModalBaths">—</span></div>
+                    <div class="col-6"><small class="text-muted d-block">Size</small><span id="bookingModalSize">—</span></div>
+                    <div class="col-6"><small class="text-muted d-block">Parking</small><span id="bookingModalParking">—</span></div>
+                    <div class="col-6"><small class="text-muted d-block">Property Type</small><span id="bookingModalPropertyType">—</span></div>
+                    <div class="col-12"><small class="text-muted d-block">Corporation</small><span id="bookingModalCorporation">—</span></div>
+                  </div>
+                </div>
+                
+                <div class="mt-3">
+                  <h6 class="mb-1">Property Description</h6>
+                  <p id="bookingModalDescription" class="small text-muted mb-0">—</p>
+                </div>
+              </div>
             </div>
 
-                        <div id="bookingModalMeta" class="mb-2 small text-muted">
-                            <div class="mb-1"><strong>Agent:</strong> <span id="bookingModalAgent">—</span></div>
-                            <div id="bookingModalAgentContacts" class="small text-muted mb-2">
-                                <div><i class="bi bi-telephone me-1"></i><span id="bookingModalAgentPhone">—</span></div>
-                                <div><i class="bi bi-envelope me-1"></i><span id="bookingModalAgentEmail">—</span></div>
-                            </div>
-                            <div class="row g-2">
-                                <div class="col-6"><small class="text-muted d-block">Price</small><strong id="bookingModalPrice">—</strong></div>
-                                <div class="col-6"><small class="text-muted d-block">Date & Time</small><span id="bookingModalDate">—</span></div>
-                                <div class="col-6"><small class="text-muted d-block">Bedrooms</small><span id="bookingModalBeds">—</span></div>
-                                <div class="col-6"><small class="text-muted d-block">Bathrooms</small><span id="bookingModalBaths">—</span></div>
-                                <div class="col-6"><small class="text-muted d-block">Size</small><span id="bookingModalSize">—</span></div>
-                                <div class="col-6"><small class="text-muted d-block">Parking</small><span id="bookingModalParking">—</span></div>
-                                <div class="col-6"><small class="text-muted d-block">Property Type</small><span id="bookingModalPropertyType">—</span></div>
-                                <div class="col-12"><small class="text-muted d-block">Corporation</small><span id="bookingModalCorporation">—</span></div>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <h6 class="mb-1">Property Description</h6>
-                            <p id="bookingModalDescription" class="small text-muted mb-0">—</p>
-                        </div>
-
-            
-
-                                                                                                                <div class="mt-3 d-flex justify-content-end">
-                                                                                                                <!-- Hidden agent id (if available) -->
-                                                                                                                <input type="hidden" id="bookingModalAgentId" value="">
-                                                                                                                        <button id="modalReserveBtn" class="btn btn-success btn-sm me-2" style="display:none">Reserve</button>
-                                                                                                                        <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
-                                                                                                                           
-                                                                                                                            <button id="modalCloseBtn" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                                                                                                </div>
+            <div id="bookingModalHistory" class="mt-3 small text-muted">
+              <!-- optional status history/other details will be injected here -->
+            </div>
           </div>
-        </div>
-
-        <div id="bookingModalHistory" class="mt-3 small text-muted">
-          <!-- optional status history/other details will be injected here -->
+          
+          <div class="modal-footer">
+            <!-- Hidden agent id (if available) -->
+            <input type="hidden" id="bookingModalAgentId" value="">
+            <button id="modalReserveBtn" class="btn btn-success btn-sm me-2" style="display:none">Reserve</button>
+            <button id="modalCancelBookingBtn" class="btn btn-danger btn-sm me-2">Cancel Booking</button>
+            <button id="modalCloseBtn" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
     <!-- Sign Contract Modal (signature pad + preview) -->
-    <div class="modal fade" id="signContractModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade modal-enhanced" id="signContractModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
