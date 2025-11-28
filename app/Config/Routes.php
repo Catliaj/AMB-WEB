@@ -72,6 +72,9 @@ $routes->get('users/getAge/(:num)', 'UserController::getAge/$1');
 
 // Profile update for clients/agents
 $routes->post('/users/updateProfile', 'UserController::updateProfile');
+// Profile photo API
+$routes->post('/users/upload-profile-photo', 'UserController::uploadProfilePhoto');
+$routes->post('/users/remove-profile-photo', 'UserController::removeProfilePhoto');
 
 
 

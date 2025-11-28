@@ -409,9 +409,6 @@
                         <span class="badge <?= $statusClass ?>"><?= esc($statusText) ?></span>
                       </td>
                       <td>
-                        <button class="btn btn-sm btn-outline-primary me-1 btn-view" type="button" title="View">
-                          <i class="bi bi-eye"></i>
-                        </button>
 
                         <?php if ($hasId && $isPending): ?>
                           <button class="btn btn-sm btn-outline-success me-1 btn-approve" type="button" title="Confirm">

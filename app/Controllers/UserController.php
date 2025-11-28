@@ -62,6 +62,86 @@ class UserController extends BaseController
     }
 
     /**
+     * Upload or change profile photo for logged-in user
+     * POST /users/upload-profile-photo
+     * Expects multipart/form-data with file input name 'profilePhoto'
+     */
+    public function uploadProfilePhoto()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+
+        $userId = $session->get('UserID');
+        $usersModel = new UsersModel();
+
+        $photoFile = $this->request->getFile('profilePhoto');
+        if (!$photoFile || $photoFile->getName() === '') {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'No file uploaded']);
+        }
+
+        if (!$photoFile->isValid() || $photoFile->hasMoved()) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Uploaded file is invalid']);
+        }
+
+        // Use a consistent uploads/profiles directory for user images
+        $dir = FCPATH . 'uploads/profiles/';
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+
+        $newName = $photoFile->getRandomName();
+        try {
+            $moved = $photoFile->move($dir, $newName);
+            if (!$moved) {
+                return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Failed to move uploaded file']);
+            }
+
+            // Optionally remove previous file if exists
+            $existing = $usersModel->find($userId);
+            if ($existing && !empty($existing['Image'])) {
+                $oldPath = $dir . $existing['Image'];
+                if (is_file($oldPath)) unlink($oldPath);
+            }
+
+            // Update user record
+            $usersModel->update($userId, ['Image' => $newName, 'employmentStatus' => 'profiles']);
+
+            // Return new image URL
+            $url = base_url('uploads/profiles/' . $newName);
+            return $this->response->setJSON(['status' => 'success', 'message' => 'Profile image updated', 'url' => $url]);
+        } catch (\Throwable $e) {
+            log_message('error', 'uploadProfilePhoto exception: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Server error']);
+        }
+    }
+
+    /**
+     * Remove profile photo for logged-in user
+     * POST /users/remove-profile-photo
+     */
+    public function removeProfilePhoto()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+
+        $userId = $session->get('UserID');
+        $usersModel = new UsersModel();
+        $user = $usersModel->find($userId);
+        if (!$user) return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'User not found']);
+
+        $dir = FCPATH . 'uploads/profiles/';
+        if (!empty($user['Image'])) {
+            $oldPath = $dir . $user['Image'];
+            if (is_file($oldPath)) @unlink($oldPath);
+        }
+
+        $usersModel->update($userId, ['Image' => null, 'employmentStatus' => null]);
+        return $this->response->setJSON(['status' => 'success', 'message' => 'Profile photo removed', 'url' => base_url('uploads/profiles/default-profile.jpg')]);
+    }
+
+    /**
      * Return the user's age and birthdate as JSON
      * GET /users/getAge/{id}
      */
