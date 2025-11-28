@@ -347,8 +347,20 @@
 
 
 
-        <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
-        <script src="<?= base_url("assets/js/client.js")?>"></script>
+                <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
+                <script>
+                        // Provide client-side globals expected by `assets/js/client.js`
+                        window.propertiesUrl = <?= json_encode(site_url('properties/all')) ?>;
+                        window.propertiesViewUrl = <?= json_encode(site_url('properties/view')) ?>;
+                        window.getUserUrlBase = <?= json_encode(site_url('users/getUser')) ?>;
+                        window.myBookingsUrl = <?= json_encode(site_url('bookings/mine')) ?>;
+                        // CSRF tokens (if CSRF enabled)
+                        <?php if (function_exists('csrf_token')): ?>
+                            window.csrfName = <?= json_encode(csrf_token()) ?>;
+                            window.csrfHash = <?= json_encode(csrf_hash()) ?>;
+                        <?php endif; ?>
+                </script>
+                <script src="<?= base_url("assets/js/client.js")?>"></script>
         <script>
     function checkScreenSize() {
         const heroImage = document.querySelector('.hero-image');
