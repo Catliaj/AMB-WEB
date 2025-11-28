@@ -70,6 +70,9 @@ $routes->get('users/getUser/(:num)', 'PropertyController::getUser/$1');
 // Return computed age and birthdate for a given user id (used by client-side contract modal)
 $routes->get('users/getAge/(:num)', 'UserController::getAge/$1');
 
+// Profile update for clients/agents
+$routes->post('/users/updateProfile', 'UserController::updateProfile');
+
 
 
 
@@ -79,6 +82,8 @@ $routes->get('/users/agentprofile', 'AgentController::agentProfile');
 
 
 $routes->get('/users/agentclients', 'AgentController::agentClients');
+// Documents for a client (agent access)
+$routes->get('users/clientDocuments/(:num)', 'AgentController::clientDocuments/$1');
 $routes->get('/users/agentchat', 'AgentController::agentChat');
 $routes->get('/users/agentbookings', 'AgentController::agentBookings');
 $routes->get('/users/logoutagent', 'AgentController::logoutAgent');

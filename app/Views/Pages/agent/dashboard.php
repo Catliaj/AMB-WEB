@@ -99,42 +99,7 @@
         </div>
       </div>
 
-      <!-- Gender & Civil Status Charts -->
-      <div class="col-12 mt-3">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <div class="card p-3 shadow-sm h-100">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="text-muted mb-0">Bookings by Gender</h6>
-                <small class="text-muted">Booked vs Reserved</small>
-              </div>
-              <div class="d-flex align-items-center gap-3">
-                <canvas id="genderChart" style="max-height:220px; width:100%;"></canvas>
-              </div>
-              <div class="mt-2 d-flex gap-3">
-                <div><strong id="genderBookedTotal">0</strong> <small class="text-muted">booked</small></div>
-                <div><strong id="genderReservedTotal">0</strong> <small class="text-muted">reserved</small></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="card p-3 shadow-sm h-100">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="text-muted mb-0">Bookings by Civil Status</h6>
-                <small class="text-muted">Booked vs Reserved</small>
-              </div>
-              <div class="d-flex align-items-center gap-3">
-                <canvas id="civilChart" style="max-height:220px; width:100%;"></canvas>
-              </div>
-              <div class="mt-2 d-flex gap-3">
-                <div><strong id="civilBookedTotal">0</strong> <small class="text-muted">booked</small></div>
-                <div><strong id="civilReservedTotal">0</strong> <small class="text-muted">reserved</small></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    
 
       <!-- Clients List -->
       <div class="col-md-3">

@@ -10,6 +10,15 @@
   <link href="<?= base_url('bootstrap5/css/bootstrap.min.css') ?>" rel="stylesheet">
   <link rel="stylesheet" href="<?= base_url('assets/styles/agenStyle.css') ?>">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    .client-list-scroll { max-height: 60vh; overflow: auto; }
+    .client-item { display:flex; align-items:center; gap:12px; padding:10px; border-bottom:1px solid #f1f1f1; cursor:pointer; }
+    .client-item:hover { background:#fbfbfb; }
+    .client-photo { width:48px; height:48px; object-fit:cover; }
+    .client-name { font-weight:600; color:#333; }
+    .client-detail-photo { width:120px; height:120px; object-fit:cover; }
+    .client-details .btn { min-width:120px; }
+  </style>
 </head>
 
 <body>
@@ -68,6 +77,24 @@
         </div>
         <div class="modal-body text-center">
           <img id="idImage" src="" alt="Valid ID" class="img-fluid rounded shadow-sm">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔹 Documents Modal -->
+  <div class="modal fade" id="documentsModal" tabindex="-1" aria-labelledby="documentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-sm">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-semibold" id="documentsModalLabel">Client Documents</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="documentsModalBody">
+          <div class="text-muted small">No documents available for this client.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
@@ -136,12 +163,19 @@
         <p><strong>Email:</strong> ${c.Email}</p>
         <p><strong>Phone:</strong> ${c.phoneNumber}</p>
         <p><strong>Birthday:</strong> ${c.Birthdate}</p>
+        <div class="d-flex justify-content-center gap-2 my-3">
+          <button class="btn btn-sm btn-outline-primary" id="viewDocsBtn">View Documents</button>
+        </div>
         <hr />
         <div id="clientBookingsContainer">
           <div class="text-muted small">Loading booking history...</div>
         </div>
       </div>
     `;
+
+    // attach view documents handler (fetch documents for the specific user)
+    const viewDocsBtn = document.getElementById('viewDocsBtn');
+    if (viewDocsBtn) viewDocsBtn.addEventListener('click', () => openDocumentsById(c.UserID || c.UserId || c.userID || c.UserId));
 
     // fetch booking history for this client (agent-only endpoint)
     (async () => {
@@ -182,6 +216,47 @@
       const defaultImage = "<?= base_url('uploads/properties/no-image.jpg') ?>"; // default fallback
       document.getElementById("idImage").src = src && src.trim() !== "" ? src : defaultImage;
       new bootstrap.Modal(document.getElementById("idModal")).show();
+    }
+
+    // Fetch and show documents for a specific user id
+    async function openDocumentsById(userId) {
+      const body = document.getElementById('documentsModalBody');
+      if (!body) return;
+      if (!userId) { body.innerHTML = '<div class="text-muted small">No user selected.</div>'; new bootstrap.Modal(document.getElementById('documentsModal')).show(); return; }
+
+      try {
+        body.innerHTML = '<div class="text-muted small">Loading documents…</div>';
+        const res = await fetch('/users/clientDocuments/' + encodeURIComponent(userId), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) {
+          body.innerHTML = '<div class="text-danger small">Failed to load documents.</div>';
+          new bootstrap.Modal(document.getElementById('documentsModal')).show();
+          return;
+        }
+        const data = await res.json();
+        const rows = [];
+
+        const push = (title, url) => { if (!url) return; rows.push({ title, url, isImage: /\.(png|jpe?g|gif)$/i.test(url) }); };
+
+
+        if (data.govIdImage) push('Government ID', data.govIdImage);
+        if (Array.isArray(data.local)) data.local.forEach(d => push(d.key.replace(/_/g,' '), d.url));
+        if (Array.isArray(data.ofw)) data.ofw.forEach(d => push(d.key.replace(/_/g,' '), d.url));
+
+        if (rows.length === 0) {
+          body.innerHTML = '<div class="text-muted small">No documents available for this client.</div>';
+        } else {
+          body.innerHTML = rows.map(r => {
+            if (r.isImage) return `<div class="mb-3 text-center"><div class="fw-semibold mb-1">${escapeHtml(r.title)}</div><img src="${escapeHtml(r.url)}" class="img-fluid rounded shadow-sm" style="max-height:300px;" alt="${escapeHtml(r.title)}"></div>`;
+            return `<div class="mb-2"><div class="fw-semibold">${escapeHtml(r.title)}</div><div><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary mt-1">Open / Download</a></div></div>`;
+          }).join('');
+        }
+
+        new bootstrap.Modal(document.getElementById('documentsModal')).show();
+      } catch (err) {
+        console.error('openDocumentsById error', err);
+        body.innerHTML = '<div class="text-danger small">Error loading documents.</div>';
+        new bootstrap.Modal(document.getElementById('documentsModal')).show();
+      }
     }
 
   </script>
