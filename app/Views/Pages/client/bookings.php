@@ -415,7 +415,7 @@
                 <div class="container-fluid">
                     <!-- Logo -->
                     <a class="navbar-brand d-flex align-items-center" href="homepage.html">
-                        <img src="<?= base_url('assets/img/AMB_logo.png') ?>" alt="AMB Logo" height="50" class="me-2">
+                        <img src="<?= base_url('assets/img/amb_logo.png') ?>" alt="AMB Logo" height="50" class="me-2">
                         <span class="logo-text">PROPERTY</span>
                     </a>
 

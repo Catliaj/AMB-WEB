@@ -65,7 +65,7 @@ class PropertyModel extends Model
     {
         return $this->select('
                 property.*, 
-                propertyStatusHistory.New_Status AS New_Status,
+                propertystatushistory.New_Status AS New_Status,
                 CONCAT(users.FirstName, " ", users.LastName) AS agent_name
             ')
             ->join('propertystatushistory', 'propertystatushistory.PropertyID = property.PropertyID', 'left')
@@ -111,8 +111,8 @@ class PropertyModel extends Model
     {
         return $this->select('
                 property.*, 
-                propertyImage.Image,
-                propertyStatusHistory.New_Status AS New_Status
+                propertyimage.Image,
+                propertystatushistory.New_Status AS New_Status
             ')
             ->join('propertystatushistory', 'propertystatushistory.PropertyID = property.PropertyID', 'left')
             ->join('propertyimage', 'propertyimage.PropertyID = property.PropertyID', 'left')

@@ -212,6 +212,34 @@
             }
         }
 
+        /* Adjust background image behavior on small screens */
+        @media (max-width: 767.98px) {
+            /* Fixed backgrounds perform poorly on mobile (iOS/Android) — switch to scroll */
+            body {
+                background-attachment: scroll;
+                background-position: center top;
+                background-size: cover;
+            }
+
+            /* Reduce large hero margins/padding for mobile to keep content visible */
+            .hero-section {
+                margin-top: 80px;
+                margin-bottom: 120px;
+                padding: 2rem 1rem;
+                border-radius: 12px;
+                backdrop-filter: none; /* improve performance on low-end devices */
+                background: rgba(0,0,0,0.35);
+            }
+
+            /* If the background image still causes layout issues, hide it on very small screens */
+            @media (max-width: 420px) {
+                body {
+                    background-image: none;
+                    background-color: #7cb8c4;
+                }
+            }
+        }
+
         /* Services Section */
         .services-section {
             padding: 5rem 2rem;

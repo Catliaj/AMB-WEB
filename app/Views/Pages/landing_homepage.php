@@ -127,73 +127,6 @@
         </div>
     </section>
 
-    <!-- Properties Section -->
-    <section id="properties" class="properties-section">
-        <div class="container">
-            <h2 class="properties-title">PROPERTIES</h2>
-            <div class="properties-grid">
-                <!-- Card 1 -->
-                <article class="property-card">
-                    <div class="property-image-wrapper">
-                        <button class="property-nav-btn">&lt;</button>
-                        <img src="/assets/img/house_pic/house_BG.jpg" alt="Single Detach property">
-                        <button class="property-nav-btn">&gt;</button>
-                    </div>
-                    <div class="property-body">
-                        <h3>Single Detach</h3>
-                        <p>Are you looking for a simple yet beautiful house? Look no further as Phrist offers this Single Detach perfect for a family.</p>
-                        <div class="property-facts">
-                            <span>65.5 sqm</span>
-                            <span>40 sqm lot</span>
-                            <span>2 bedrooms</span>
-                            <span>1 bathroom</span>
-                        </div>
-                        <button class="property-cta" onclick="showLoginPrompt(event)">More Info</button>
-                    </div>
-                </article>
-
-                <!-- Card 2 -->
-                <article class="property-card">
-                    <div class="property-image-wrapper">
-                        <button class="property-nav-btn">&lt;</button>
-                        <img src="/assets/img/house_pic/house_BG.jpg" alt="Single Detach property">
-                        <button class="property-nav-btn">&gt;</button>
-                    </div>
-                    <div class="property-body">
-                        <h3>Single Detach</h3>
-                        <p>Are you looking for a simple yet beautiful house? Look no further as Phrist offers this Single Detach perfect for a family.</p>
-                        <div class="property-facts">
-                            <span>65.5 sqm</span>
-                            <span>40 sqm lot</span>
-                            <span>2 bedrooms</span>
-                            <span>1 bathroom</span>
-                        </div>
-                        <button class="property-cta" onclick="showLoginPrompt(event)">More Info</button>
-                    </div>
-                </article>
-
-                <!-- Card 3 -->
-                <article class="property-card">
-                    <div class="property-image-wrapper">
-                        <button class="property-nav-btn">&lt;</button>
-                        <img src="/assets/img/house_pic/house_BG.jpg" alt="Single Detach property">
-                        <button class="property-nav-btn">&gt;</button>
-                    </div>
-                    <div class="property-body">
-                        <h3>Single Detach</h3>
-                        <p>Are you looking for a simple yet beautiful house? Look no further as Phrist offers this Single Detach perfect for a family.</p>
-                        <div class="property-facts">
-                            <span>65.5 sqm</span>
-                            <span>40 sqm lot</span>
-                            <span>2 bedrooms</span>
-                            <span>1 bathroom</span>
-                        </div>
-                        <button class="property-cta" onclick="showLoginPrompt(event)">More Info</button>
-                    </div>
-                </article>
-            </div>
-        </div>
-    </section>
 
     <!-- Contact Section -->
     <section id="contact" class="contact-section">
@@ -208,19 +141,6 @@
                     <p><span class="contact-icon">⏰</span>Mon-Sat: 8AM-6PM</p>
                 </div>
             </div>
-            <form class="contact-form">
-                <label>Name</label>
-                <input type="text" placeholder="Your Name">
-                <label>Email</label>
-                <input type="email" placeholder="Email Address">
-                <label>Contact Number</label>
-                <input type="text" placeholder="Phone Number">
-                <label>Subject</label>
-                <input type="text" placeholder="Subject">
-                <label>Message</label>
-                <textarea rows="4" placeholder="Your Message"></textarea>
-                <button type="submit">Send</button>
-            </form>
         </div>
     </section>
 
