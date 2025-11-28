@@ -51,7 +51,7 @@
 </head>
 
 <body>
-  <aside class="sidebar">
+  <aside class="sidebar" style="display:flex;flex-direction:column;justify-content:space-between;">
      <img src="<?= base_url('assets/img/amb_logo.png')?>" alt="AMB Logo">
     <nav class="nav">
       <a href="/admin/adminHomepage"><i data-lucide="layout-dashboard"></i> Dashboard</a>
@@ -60,15 +60,16 @@
       <!-- User Bookings removed -->
       <!-- View Chats removed for privacy -->
       <a href="/admin/Reports" class="active" style="background: linear-gradient(90deg, #2e7d32, #1565c0);"><i data-lucide="bar-chart-2"></i> Generate Reports</a>
+      <a href="/admin/editProfile"><i data-lucide="user"></i> Edit Profile</a>
     </nav>
 
-    <div class="profile-box">
+    <a href="<?= base_url('/admin/editProfile') ?>" class="profile-box" style="text-decoration:none;color:inherit;display:block;margin-top:10px;">
       <div class="profile-avatar">A</div>
       <div class="profile-info">
         <strong><?= session('FirstName') . ' ' . session('LastName'); ?></strong>
         <span><?= session('inputEmail'); ?></span>
       </div>
-    </div>
+    </a>
   </aside>
 
   <main class="main">

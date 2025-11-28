@@ -678,22 +678,41 @@ class AdminController extends BaseController
         $propertyImagesModel = new \App\Models\PropertyImageModel();
         $userModel = new \App\Models\UsersModel();
         $statusModel = new \App\Models\PropertyStatusHistoryModel();
+        $bookingModel = new \App\Models\BookingModel();
 
         $property = $propertyModel->find($id);
         if (!$property) return $this->response->setJSON(['error' => 'Property not found']);
 
-        
+        // Get status
         $status = $statusModel->where('PropertyID', $id)->orderBy('Date', 'DESC')->first();
-        $property['New_Status'] = $status['New_Status'] ?? 'Available';
+        $property['Status'] = $status['New_Status'] ?? 'Available';
 
+        // Agent name
         $agent = $userModel->find($property['agent_assigned']);
         $property['AgentName'] = $agent ? $agent['FirstName'] . ' ' . $agent['LastName'] : 'Unassigned';
 
-       
+        // Images
         $images = $propertyImagesModel->where('PropertyID', $id)->findAll();
         $property['images'] = array_map(function($img) {
-            return base_url('/uploads/properties/' . $img['Image']); 
+            return base_url('/uploads/properties/' . $img['Image']);
         }, $images);
+
+        // Bookings/users
+        $bookings = $bookingModel->where('PropertyID', $id)->findAll();
+        $bookedUsers = [];
+        foreach ($bookings as $booking) {
+            $user = $userModel->find($booking['UserID']);
+            if ($user) {
+                $bookedUsers[] = [
+                    'UserID' => $user['UserID'],
+                    'Name' => $user['FirstName'] . ' ' . $user['LastName'],
+                    'Email' => $user['Email'],
+                    'Status' => $booking['Status'],
+                    'Reason' => $booking['Reason']
+                ];
+            }
+        }
+        $property['bookedUsers'] = $bookedUsers;
 
         return $this->response->setJSON($property);
     }
@@ -849,5 +868,71 @@ class AdminController extends BaseController
         }
 
         return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to update user'])->setStatusCode(500);
+    }
+
+    public function editProfile()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('/'); // not logged in
+        }
+
+        if ($session->get('role') !== 'Admin') {
+            return redirect()->to('/');
+        }
+
+        $userModel = new \App\Models\UsersModel();
+        $user = $userModel->find(session()->get('UserID'));
+
+        return view('Pages/admin/edit-profile', [
+            'UserID' => session()->get('UserID'),
+            'email' => session()->get('inputEmail'),
+            'fullname' => trim(session()->get('FirstName') . ' ' . session()->get('LastName')),
+            'currentUserId' => session()->get('UserID'),
+            'otherUser' => null,
+            'user' => $user
+        ]);
+    }
+
+    public function updateProfile()
+    {
+        $session = session();
+        if (!$session->get('isLoggedIn') || $session->get('role') !== 'Admin') {
+            return redirect()->to('/')->with('error', 'Unauthorized');
+        }
+
+        $userModel = new \App\Models\UsersModel();
+        $userId = session()->get('UserID');
+        $user = $userModel->find($userId);
+        if (!$user) {
+            return redirect()->back()->with('error', 'User not found');
+        }
+
+        $data = [];
+        $post = $this->request->getPost();
+        if (isset($post['FirstName'])) $data['FirstName'] = $post['FirstName'];
+        if (isset($post['MiddleName'])) $data['MiddleName'] = $post['MiddleName'];
+        if (isset($post['LastName'])) $data['LastName'] = $post['LastName'];
+        if (isset($post['Birthdate'])) $data['Birthdate'] = $post['Birthdate'];
+        if (isset($post['PhoneNumber'])) $data['PhoneNumber'] = $post['PhoneNumber'];
+        if (isset($post['Email'])) $data['Email'] = $post['Email'];
+        if (!empty($post['Password'])) {
+            $data['Password'] = password_hash($post['Password'], PASSWORD_BCRYPT);
+        }
+        $data['updated_at'] = date('Y-m-d H:i:s');
+
+        $updated = $userModel->update($userId, $data);
+
+        if ($updated) {
+            // Update session data if email or name changed
+            if (isset($data['Email'])) $session->set('inputEmail', $data['Email']);
+            if (isset($data['FirstName']) || isset($data['LastName'])) {
+                $session->set('FirstName', $data['FirstName'] ?? $user['FirstName']);
+                $session->set('LastName', $data['LastName'] ?? $user['LastName']);
+            }
+            return redirect()->to('/admin/editProfile')->with('success', 'Profile updated successfully');
+        }
+
+        return redirect()->back()->with('error', 'Failed to update profile');
     }
 }
