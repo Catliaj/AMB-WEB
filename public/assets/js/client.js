@@ -542,7 +542,7 @@ function renderBookingsList(bookings) {
             </div>
             <div class="col-auto pe-3">
               <div class="d-flex flex-column gap-2">
-                <button class="btn btn-sm btn-outline-primary" onclick="viewBookingDetails(${
+                <button class="btn btn-sm btn-primary" onclick="viewBookingDetails(${
                   b.bookingID
                 })">View</button>
                 ${

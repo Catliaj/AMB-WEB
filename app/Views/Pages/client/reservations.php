@@ -293,6 +293,28 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
+            /* Target the specific button container structure from client.js */
+            #bookingsList .col-auto .d-flex.flex-column {
+                flex-direction: row !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 0.5rem !important;
+            }
+            
+            /* Make buttons equal width and horizontal */
+            #bookingsList .col-auto .d-flex button {
+                flex: 1 !important;
+                min-width: 110px !important;
+                max-width: 150px !important;
+                margin-bottom: 15px;
+            }
+            
+            /* Adjust the parent column to center buttons */
+            #bookingsList .col-auto {
+                width: 100% !important;
+                padding: 0 1rem !important;
+                margin-top: 1rem;
+            }
             .booking-meta-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.75rem;
