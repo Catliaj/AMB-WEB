@@ -1,18 +1,331 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Profile - AMB</title>
+  <title>Profile - ABM Property</title>
 
   <link href="<?= base_url("bootstrap5/css/bootstrap.min.css")?>" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="<?= base_url("assets/styles/clientstyle.css")?>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  
+  <style>
+    /* CSS VARIABLES */
+    :root {
+      --primary: #469541;
+      --primary-hover: #357a34;
+      --secondary: #000000;
+      --accent: #2d9fa8;
+      --light-bg: #d3f0ff;
+      --light-accent: #c8f5d2;
+      --bg-color: #ffffff;
+      --text-color: #333333;
+      --text-muted: #666666;
+      --card-bg: #ffffff;
+      --border-color: rgba(0, 0, 0, 0.1);
+      --shadow: rgba(0, 0, 0, 0.1);
+      --heading-color: #333333;
+    }
+
+    html[data-theme="dark"] {
+      --primary: #5ab34f;
+      --primary-hover: #469541;
+      --secondary: #c4aee3;
+      --accent: #3eb3bd;
+      --light-bg: #252e42;
+      --light-accent: #2d4038;
+      --bg-color: #1a1f2e;
+      --text-color: #f0f0f0;
+      --text-muted: #a0a0a0;
+      --card-bg: #252a3a;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --shadow: rgba(0, 0, 0, 0.3);
+      --heading-color: #f0f0f0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* NAVIGATION */
+    .navbar {
+      background: linear-gradient(120deg, #d3f0ff 0%, #c8f5d2 100%);
+      padding: 10px 50px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      border: none !important;
+      height: 100px;
+    }
+
+    html[data-theme="dark"] .navbar {
+      background: linear-gradient(120deg, #252e42 0%, #2d4038 100%);
+    }
+
+    .logo-text {
+      color: var(--secondary);
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 3px;
+    }
+
+    html[data-theme="dark"] .logo-text {
+      color: var(--primary);
+    }
+
+    .nav-link-custom {
+      color: var(--text-color) !important;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 18px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .nav-link-custom:hover,
+    .nav-link-custom.active {
+      color: var(--primary) !important;
+    }
+
+    .main-links .nav-item {
+      margin: 0 1.5rem;
+    }
+
+    #themeToggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.5rem;
+    }
+
+    #themeToggle i {
+      color: var(--text-color);
+      transition: color 0.3s;
+    }
+
+    #themeToggle:hover i {
+      color: var(--primary);
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      padding: 2rem;
+      min-height: calc(100vh - 100px);
+    }
+
+    /* CARDS */
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+
+    /* HEADINGS - FIXED FOR THEME */
+    h1, h2, h3, h4, h5, h6,
+    .h1, .h2, .h3, .h4, .h5, .h6 {
+      color: var(--heading-color) !important;
+    }
+
+    /* Specific targeting for profile headings */
+    .card-body h3,
+    .card-body .h5,
+    .h5.fw-medium,
+    .card-body h5 {
+      color: var(--heading-color) !important;
+    }
+
+    /* Force all heading elements to follow theme */
+    h1, h2, h3, h4, h5, h6,
+    .h1, .h2, .h3, .h4, .h5, .h6,
+    .card-title,
+    .card-header,
+    .modal-title,
+    .nav-pills .nav-link {
+      color: var(--heading-color);
+    }
+
+    /* AVATAR */
+    .avatar-large {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 500;
+    }
+
+    .avatar-large-img {
+      border: 3px solid var(--border-color);
+    }
+
+    /* NAV PILLS */
+    .nav-pills .nav-link {
+      color: var(--text-color);
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .nav-pills .nav-link:hover {
+      background-color: var(--light-bg);
+    }
+
+    .nav-pills .nav-link.active {
+      background-color: var(--primary) !important;
+      color: white !important;
+    }
+
+    /* FORMS */
+    .form-control,
+    .form-select {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      background-color: var(--card-bg);
+      border-color: var(--primary);
+      color: var(--text-color);
+      box-shadow: 0 0 0 0.2rem rgba(70, 149, 65, 0.15);
+    }
+
+    .form-label {
+      color: var(--text-color);
+      font-weight: 500;
+    }
+
+    /* BUTTONS */
+    .btn-primary {
+      background-color: var(--primary) !important;
+      border-color: var(--primary) !important;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover) !important;
+    }
+
+    .btn-outline-primary {
+      color: var(--primary) !important;
+      border-color: var(--primary) !important;
+    }
+
+    .btn-outline-primary:hover {
+      background-color: var(--primary) !important;
+      color: white !important;
+    }
+
+    .btn-outline-secondary {
+      color: var(--text-color) !important;
+      border-color: var(--border-color) !important;
+    }
+
+    .btn-outline-secondary:hover {
+      background-color: var(--text-muted) !important;
+      color: white !important;
+    }
+
+    .btn-danger {
+      background-color: #dc3545 !important;
+      border-color: #dc3545 !important;
+    }
+
+    /* TEXT - ENHANCED THEME SUPPORT */
+    h1, h2, h3, h4, h5, h6, p, span, label, strong, div {
+      color: var(--text-color);
+    }
+
+    .text-muted {
+      color: var(--text-muted) !important;
+    }
+
+    /* Specific targeting for user name and email */
+    .card-body .h5.mb-1,
+    .card-body h3.h5,
+    .card-body h5 {
+      color: var(--heading-color) !important;
+    }
+
+    /* Ensure all text in card bodies follows theme */
+    .card-body * {
+      color: var(--text-color);
+    }
+
+    .card-body h1,
+    .card-body h2,
+    .card-body h3,
+    .card-body h4,
+    .card-body h5,
+    .card-body h6 {
+      color: var(--heading-color) !important;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 992px) {
+      .navbar {
+        padding: 10px 20px;
+        height: auto;
+      }
+      .main-links .nav-item {
+        margin: 0;
+      }
+      .nav-link-custom {
+        text-align: left;
+        padding-left: 1.8rem;
+      }
+      .main-content {
+        padding: 1rem;
+      }
+    }
+  </style>
 </head>
 
-<body class="site-wrapper">
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center" href="/users/agentHomepage">
+        <img src="<?= base_url('assets/img/AMB_logo.png') ?>" alt="AMB Logo" height="50" class="me-2">
+        <span class="logo-text">PROPERTY</span>
+      </a>
 
-  <main id="mainContent" class="page-bg-muted py-4">
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mx-lg-auto text-center main-links">
+          <li class="nav-item"><a class="nav-link nav-link-custom" href="/users/agentHomepage">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-custom" href="/users/agentclients">Clients</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-custom" href="/users/agentbookings">Bookings</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-custom" href="/users/agentproperties">Properties</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-custom" href="/users/agentchat">Chat</a></li>
+          <li class="nav-item d-lg-none"><a class="nav-link nav-link-custom active" href="/users/agentprofile">Profile</a></li>
+        </ul>
+
+        <ul class="navbar-nav align-items-center d-none d-lg-flex">
+          <li class="nav-item"><a class="nav-link nav-link-custom active" href="/users/agentprofile"><i class="bi bi-person me-2"></i></a></li>
+          <li class="nav-item ms-2">
+            <button class="btn btn-link p-2" id="themeToggle" onclick="toggleTheme()">
+              <i class="bi bi-sun-fill fs-5" id="themeIcon"></i>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
     <div class="container">
       <?php
         $user = isset($user) ? $user : [];
@@ -26,7 +339,7 @@
         }
       ?>
 
-      <div class="card mb-4">
+      <div class="card mb-4 animate__animated animate__fadeInUp">
         <div class="card-body">
           <div class="row align-items-center">
             <div class="col-md-auto text-center text-md-start mb-3 mb-md-0">
@@ -123,57 +436,103 @@
           </div>
         </div>
 
-        <div class="tab-pane fade" id="notifications" role="tabpanel"><div class="card"><div class="card-body">Notification settings coming soon.</div></div></div>
-        <div class="tab-pane fade" id="preferences" role="tabpanel"><div class="card"><div class="card-body">Preferences coming soon.</div></div></div>
+        <div class="tab-pane fade" id="notifications" role="tabpanel">
+          <div class="card">
+            <div class="card-body">
+              <p class="text-muted">Notification settings coming soon.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="tab-pane fade" id="preferences" role="tabpanel">
+          <div class="card">
+            <div class="card-body">
+              <p class="text-muted">Preferences coming soon.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
 
   <script src="<?= base_url("bootstrap5/js/bootstrap.bundle.min.js")?>"></script>
+  
   <script>
-    (function(){
-      const avatarInput = document.getElementById('avatarInput');
-      const removeBtn = document.getElementById('removePhotoBtn');
-      const removeInput = document.getElementById('removeAvatarInput');
-      const avatarImg = document.querySelector('.avatar-large-img') || document.querySelector('.avatar-large');
+  // Theme Toggle
+  function toggleTheme() {
+    const html = document.documentElement;
+    const themeIcon = document.getElementById('themeIcon');
+    const currentTheme = html.getAttribute('data-theme');
+    
+    if (currentTheme === 'light') {
+      html.setAttribute('data-theme', 'dark');
+      themeIcon.classList.remove('bi-sun-fill');
+      themeIcon.classList.add('bi-moon-fill');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      html.setAttribute('data-theme', 'light');
+      themeIcon.classList.remove('bi-moon-fill');
+      themeIcon.classList.add('bi-sun-fill');
+      localStorage.setItem('theme', 'light');
+    }
+  }
 
-      if (avatarInput && avatarImg) {
-        avatarInput.addEventListener('change', (e)=>{
-          const f = avatarInput.files && avatarInput.files[0];
-          if (!f) return;
-          const reader = new FileReader();
-          reader.onload = function(ev){
-            try {
-              if (avatarImg.tagName && avatarImg.tagName.toLowerCase() === 'img') {
-                avatarImg.src = ev.target.result;
-              } else {
-                avatarImg.style.backgroundImage = `url(${ev.target.result})`;
-                avatarImg.style.backgroundSize = 'cover';
-                avatarImg.textContent = '';
-              }
-              if (removeInput) removeInput.value = '0';
-            } catch(e){/* ignore */}
-          };
-          reader.readAsDataURL(f);
-        });
-      }
+  // Load saved theme
+  document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const themeIcon = document.getElementById('themeIcon');
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    if (savedTheme === 'dark') {
+      themeIcon.classList.remove('bi-sun-fill');
+      themeIcon.classList.add('bi-moon-fill');
+    }
+  });
 
-      if (removeBtn) {
-        removeBtn.addEventListener('click', ()=>{
-          if (!confirm('Remove profile photo?')) return;
-          if (avatarImg) {
+  // Profile Photo Management
+  (function(){
+    const avatarInput = document.getElementById('avatarInput');
+    const removeBtn = document.getElementById('removePhotoBtn');
+    const removeInput = document.getElementById('removeAvatarInput');
+    const avatarImg = document.querySelector('.avatar-large-img') || document.querySelector('.avatar-large');
+
+    if (avatarInput && avatarImg) {
+      avatarInput.addEventListener('change', (e)=>{
+        const f = avatarInput.files && avatarInput.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = function(ev){
+          try {
             if (avatarImg.tagName && avatarImg.tagName.toLowerCase() === 'img') {
-              avatarImg.src = '<?= base_url('uploads/profiles/default-profile.jpg') ?>';
+              avatarImg.src = ev.target.result;
             } else {
-              avatarImg.style.backgroundImage = '';
-              avatarImg.textContent = '<?= esc($initials ?: 'U') ?>';
+              avatarImg.style.backgroundImage = `url(${ev.target.result})`;
+              avatarImg.style.backgroundSize = 'cover';
+              avatarImg.textContent = '';
             }
+            if (removeInput) removeInput.value = '0';
+          } catch(e){/* ignore */}
+        };
+        reader.readAsDataURL(f);
+      });
+    }
+
+    if (removeBtn) {
+      removeBtn.addEventListener('click', ()=>{
+        if (!confirm('Remove profile photo?')) return;
+        if (avatarImg) {
+          if (avatarImg.tagName && avatarImg.tagName.toLowerCase() === 'img') {
+            avatarImg.src = '<?= base_url('uploads/profiles/default-profile.jpg') ?>';
+          } else {
+            avatarImg.style.backgroundImage = '';
+            avatarImg.textContent = '<?= esc($initials ?: 'U') ?>';
           }
-          if (removeInput) removeInput.value = '1';
-          if (avatarInput) avatarInput.value = '';
-        });
-      }
-    })();
+        }
+        if (removeInput) removeInput.value = '1';
+        if (avatarInput) avatarInput.value = '';
+      });
+    }
+  })();
   </script>
 </body>
 </html>
